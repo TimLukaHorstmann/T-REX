@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Fact-Checking Explorer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="images/favicon_io/favicon.ico" type="image/x-icon"> 
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <a href="https://www.ip-paris.fr/" target="_blank">
+        <img src="images/ipp.png" alt="IP Paris Logo" class="logo">
+      </a>
+      <h1>Table Fact-Checking Explorer</h1>
+      <div class="toggle-switch">
+        <input type="checkbox" id="darkModeToggle" />
+        <label for="darkModeToggle"></label>
+        <p> Mode</p>
+      </div>      
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Mode Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="precomputed">Table Fact-Checking Results</button>
+      <button class="mode-tab" data-mode="live">Live Table Fact-Checking</button>
+      <button class="mode-tab" data-mode="report">Report</button>
+    </div>
+
+    <!-- Precomputed Results Section -->
+    <section id="resultsSection" class="results-section">
+      <!-- Controls for precomputed results -->
+      <section class="controls">
+        <div class="select-group">
+          <label for="modelSelect">Model:</label>
+          <select id="modelSelect" class="paginated"></select>
+        </div>
+        <div class="select-group">
+          <label for="datasetSelect">Dataset:</label>
+          <select id="datasetSelect" class="paginated"></select>
+        </div>
+        <div class="select-group">
+          <label for="learningTypeSelect">Learning Type:</label>
+          <select id="learningTypeSelect" class="paginated"></select>
+        </div>
+        <div class="select-group">
+          <label for="nValueSelect"># Tables:</label>
+          <select id="nValueSelect" class="paginated"></select>
+        </div>
+        <div class="select-group">
+          <label for="formatTypeSelect">Format:</label>
+          <select id="formatTypeSelect" class="paginated"></select>
+        </div>
+        <button id="loadBtn" class="btn-primary">Load Results</button>
+      </section>
+
+      <div id="infoPanel" class="info-panel">
+        <p>Please choose and load results.</p>
+      </div>
+
+      <!-- Collapsible Performance Metrics Section (native plots) -->
+      <div id="performanceMetrics" class="performance-metrics" style="display: none;">
+        <div id="performanceMetricsToggle" class="metrics-toggle">
+          <span id="toggleArrow" class="toggle-arrow">►</span>
+          <span class="toggle-text">Overall Performance Metrics</span>
+        </div>
+        <div id="metricsContent" class="metrics-content" style="display: none;">
+          <div id="confusionMatrixPlot" style="width:49%;height:250px;display:inline-block;"></div>
+          <div id="performanceSummaryPlot" style="width:49%;height:250px;display:inline-block;vertical-align:top;"></div>
+        </div>
+      </div>
+
+      <hr/>
+      
+      <!-- Results header: table dropdown and chart summary -->
+      <div class="results-header" style="display: none;" id="resultsHeader">
+        <div id="tableDropDown" class="table-chooser">
+          <label for="tableSelect">Table:</label>
+          <select id="tableSelect"></select>
+        </div>
+        <div id="chartContainer">
+          <canvas id="resultsChart"></canvas>
+        </div>
+      </div>
+      <div id="tableMetaInfo" class="info-panel" style="display: none;"></div>
+      <div id="claimList" class="claim-list"></div>
+      <div id="table-container"></div>
+      <div id="legend-precomputed" class="legend">
+        <p id="full-highlight-legend-precomputed"><span class="highlight-legend"></span> Model-highlighted cells (i.e. cells that the LLM considered relevant to the claim)</p>
+        <p id="full-entity-highlight-legend-precomputed"><span class="entity-highlight-legend"></span> Entity-linked cells (i.e. cells that Wenhuchen et al. automatically identified as relevant to the claim)</p>
+      </div>
+    </section>
+
+    <!-- Live Check Section -->
+    <section id="liveCheckSection" class="results-section" style="display: none;">
+      <div class="live-input-section">
+        <!-- Although a local model chooser remains for consistency, it is now disabled -->
+        <div class="model-chooser">
+          <label for="liveModelSelect">Model:</label>
+          <select id="liveModelSelect">
+            <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B">DeepSeek-R1</option>
+            <option value="gpt2">GPT-2</option>
+            <option value="microsoft/Phi-4-mini-instruct">Phi-4-mini-instruct</option>
+            <!-- Add additional backend-supported model options here -->
+          </select>
+          <button id="loadLiveModel" class="btn-primary">Load Model</button>
+          <div id="modelLoadingStatus" style="display: none;">
+            <span id="modelLoadingText">Loading model:</span>
+            <br />
+            <span id="modelLoadingProgress">0%</span>
+            <div id="modelProgressBarContainer" class="progress-bar-container" style="display: none;">
+              <div id="modelProgressBar" class="progress-bar"></div>
+            </div>
+          </div>
+        </div>
+        <p id="loadInfo">Live check uses our backend inference service.</p>
+
+        <!-- CSV input + live preview -->
+        <div class="input-group">
+          <label for="inputTable">Paste Table (CSV format, # delimited):</label>
+          <div class="inline-dropdown">
+            <label for="existingTableSelect">or choose an existing one from the TabFact dataset:</label>
+            <select id="existingTableSelect"></select>
+          </div>
+          <div class="inline-dropdown">
+            <label for="fileUpload">or upload a CSV File from your computer:</label>
+            <input type="file" id="fileUpload" accept=".csv">
+          </div>
+          <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
+            <label for="includeTableNameCheck">
+              <input type="checkbox" id="includeTableNameCheck" />
+              Include table title in prompt
+            </label>
+          </div>
+          <textarea id="inputTable" rows="6"></textarea>
+          <div id="liveTableMetaInfo" class="info-panel" style="display:none;"></div>
+          <div id="livePreviewTable" class="table-container"></div>
+          <div id="legend-live" class="legend">
+            <p id="full-highlight-legend-live">
+              <span class="highlight-legend"></span> Model-highlighted cells (i.e. cells that the LLM considered relevant to the claim)
+            </p>
+            <p id="full-entity-highlight-legend-live">
+              <span class="entity-highlight-legend"></span> Entity-linked cells (i.e. cells that Wenhuchen et al. automatically identified as relevant to the claim)
+            </p>
+          </div>
+        </div>
+
+        <!-- Claim input -->
+        <div class="input-group">
+          <label for="inputClaim">Enter Claim:</label>
+          <div class="input-group" id="existingClaimsWrapper" style="display:none;">
+            <label for="existingClaimsSelect">or choose an existing one from the TabFact dataset:</label>
+            <select id="existingClaimsSelect">
+              <option value="">-- Select a Claim --</option>
+            </select>
+          </div>
+          <textarea id="inputClaim" rows="3"></textarea>
+        </div>
+
+        <!-- Run and Stop buttons -->
+        <div class="button-group">
+          <button id="runLiveCheck" class="btn-primary">Run Live Check</button>
+          <button id="stopLiveCheck" class="icon-button" style="display: none;">
+            <div class="spinner-overlay">
+              <svg class="stop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                   xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#ccc" />
+                <rect x="8" y="8" width="8" height="8" fill="#333" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live streaming output panels -->
+      <div id="liveThinkOutput" class="live-stream-output" style="display: none;"></div>
+      <div id="liveStreamOutput" class="live-stream-output" style="display: none;"></div>
+      <div id="liveResults" class="live-results" style="display: none;">
+        <div id="liveClaimList" class="claim-list"></div>
+      </div>
+      <p id="disclaimer">AI-generated, for reference only</p>
+    </section>
+
+    <!-- Report Section -->
+    <section id="reportSection" class="results-section" style="display: none;">
+      <div class="pdf-container">
+        <iframe id="pdfViewer" width="100%" height="800px"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>&copy; 2025 Table Fact-Checking Project</p>
+      <p class="attribution">
+        <a href="https://horstmann.tech" target="_blank">Tim Luka Horstmann</a>,
+        Baptiste Geisenberger,
+        <a href="https://sites.google.com/view/mehwish-alam/home" target="_blank">Mehwish Alam</a>
+      </p>
+      <p class="attribution">This project is based on the <a href="https://github.com/wenhuchen/Table-Fact-Checking" target="_blank">TabFact dataset</a> by Wenhuchen.</p>
+    </div>
+  </footer>
+
+  <!-- External libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.10/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <!-- Main app logic -->
+  <script src="app.js"></script>
+  <!-- Dark mode toggle -->
+  <script>
+    document.getElementById("darkModeToggle").addEventListener("change", function() {
+      document.body.classList.toggle("dark-mode", this.checked);
+    });
+  </script>
+</body>
+</html>
