@@ -14,9 +14,9 @@ def load_model(model_name: str):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=torch.float16,          # Use half-precision to reduce memory usage.
-        low_cpu_mem_usage=True,               # Optimizes CPU memory footprint during load.
-        device_map="auto"                     # Let transformers decide the best placement.
+        torch_dtype=torch.float16, # half precision
+        low_cpu_mem_usage=True,
+        device_map="auto"
     )
 
     generation_pipeline = pipeline(

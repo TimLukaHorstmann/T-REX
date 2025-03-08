@@ -902,17 +902,27 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
     
+    // Retrieve input values.
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
     const model = document.getElementById("liveModelSelect").value;
-    const responseArea = document.getElementById("liveStreamOutput");
+    // Check if the model is DeepSeek.
+    const isDeepSeek = model.toLowerCase().includes("deepseek");
+    
+    // DOM elements for live output.
+    const liveStreamOutputEl = document.getElementById("liveStreamOutput");
+    const liveThinkOutputEl = document.getElementById("liveThinkOutput");
+    
+    // Clear and show both output areas.
+    liveStreamOutputEl.textContent = "";
+    liveThinkOutputEl.textContent = "";
+    liveStreamOutputEl.style.display = "block";
+    liveThinkOutputEl.style.display = "block";
     
     // Build the URL with query parameters.
     const url = `${BACKEND_URL}/inference/stream?table=${encodeURIComponent(tableText)}&claim=${encodeURIComponent(claimText)}&model_name=${encodeURIComponent(model)}`;
     
-    // Clear and show the output area.
-    responseArea.innerHTML = "";
-    responseArea.style.display = "block";
+    let accumulatedText = "";
     
     try {
       const response = await fetch(url);
@@ -922,9 +932,27 @@ function setupLiveCheckEvents() {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value);
-        responseArea.innerHTML += chunk;
-        responseArea.scrollTop = responseArea.scrollHeight;
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedText += chunk;
+        
+        if (isDeepSeek) {
+          // If we haven't yet seen the closing </think> tag, stream into the think box.
+          if (!accumulatedText.includes("</think>")) {
+            liveThinkOutputEl.textContent = accumulatedText;
+          } else {
+            // When </think> is found, split the output.
+            const endThinkIndex = accumulatedText.indexOf("</think>") + 8; // 8 = length of "</think>"
+            liveThinkOutputEl.textContent = accumulatedText.slice(0, endThinkIndex).replace(/<\/think>/g, "");
+            liveStreamOutputEl.textContent = accumulatedText.slice(endThinkIndex);
+          }
+        } else {
+          // For non-deepseek models, simply stream everything to the final answer box.
+          liveStreamOutputEl.textContent = accumulatedText;
+        }
+        
+        // Auto-scroll output
+        liveStreamOutputEl.scrollTop = liveStreamOutputEl.scrollHeight;
+        liveThinkOutputEl.scrollTop = liveThinkOutputEl.scrollHeight;
       }
     } catch (err) {
       console.error("Streaming error:", err);
@@ -934,6 +962,8 @@ function setupLiveCheckEvents() {
       runLiveCheckBtn.style.cursor = "pointer";
     }
   });
+  
+  
   
   
 

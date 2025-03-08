@@ -1,5 +1,5 @@
+# backend/api/inference.py
 from threading import Thread
-import asyncio
 from transformers import TextIteratorStreamer
 from backend.api.schemas import InferenceRequest
 from backend.models.model_loader import load_model
@@ -16,6 +16,14 @@ def get_model(model_name: str):
 def run_inference(request: InferenceRequest):
     # Convert the CSV table to Markdown.
     table_md = format_table_to_markdown(request.table)
+    
+    # If using deepseek, enforce a chain-of-thought block.
+    extra_instruction = ""
+    if "deepseek" in request.model_name.lower():
+        extra_instruction = (
+            "\n<think>"
+        )
+    
     prompt = f"""
 You are tasked with determining whether a claim about the following table (in Markdown format) is TRUE or FALSE.
 Before giving your final answer, explain your reasoning step-by-step.
@@ -29,12 +37,14 @@ Before giving your final answer, explain your reasoning step-by-step.
 Instructions:
 After your explanation, output a final answer in valid JSON format:
 {{"answer": "TRUE" or "FALSE", "relevant_cells": [{{"row_index": int, "column_name": "str"}}]}}
-    """
-    model = get_model(request.model_name)
-    # Create a streamer with a timeout and skip the prompt tokens.
-    streamer = TextIteratorStreamer(model.tokenizer, skip_prompt=False, timeout=10.0)
+{extra_instruction}"""
     
-    # Run generation in a separate thread.
+    model = get_model(request.model_name)
+    streamer = TextIteratorStreamer(model.tokenizer
+                                    , skip_prompt=True
+                                    , skip_special_tokens=True
+                                    , timeout=10.0)
+    
     def generate():
         model(
             prompt,
@@ -45,6 +55,5 @@ After your explanation, output a final answer in valid JSON format:
     thread = Thread(target=generate)
     thread.start()
     
-    # Yield tokens directly as plain text.
     for token in streamer:
         yield token
