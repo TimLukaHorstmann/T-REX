@@ -34,6 +34,8 @@ const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
 const liveThinkOutputEl = document.getElementById("liveThinkOutput");
 const liveStreamOutputEl = document.getElementById("liveStreamOutput");
 
+window.modelLoaded = false;
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     try {
@@ -111,6 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleArrow.textContent = "►";
       }
     });
+    validateLiveCheckInputs();
 
   } catch (error) {
     console.error("Initialization failed:", error);
@@ -781,7 +784,7 @@ function validateLiveCheckInputs() {
   const runLiveCheckBtn = document.getElementById("runLiveCheck");
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
 
-  if (tableInput && claimInput) {
+  if (tableInput && claimInput && window.modelLoaded) {
     runLiveCheckBtn.disabled = false;
     runLiveCheckBtn.style.opacity = "1";
     runLiveCheckBtn.style.cursor = "pointer";
@@ -819,10 +822,27 @@ function setupTabSwitching() {
 }
 
 function setupLiveCheckEvents() {
-  // Enable and handle the load model button
+  // Define a global flag to indicate if the model is loaded.
+  window.modelLoaded = false;
+
   const loadModelBtn = document.getElementById("loadLiveModel");
   loadModelBtn.addEventListener("click", async () => {
     const model = document.getElementById("liveModelSelect").value;
+    
+    // Disable the button and show loading UI
+    loadModelBtn.disabled = true;
+    loadModelBtn.classList.add("loading"); // We'll add CSS for this class
+    const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
+    modelLoadingStatusEl.style.display = "block";
+    modelLoadingStatusEl.innerHTML = `
+      <span id="modelLoadingText">Loading model: ${model}</span><br>
+      <span id="modelLoadingProgress">0%</span>
+      <div id="modelProgressBarContainer" class="progress-bar-container">
+        <div id="modelProgressBar" class="progress-bar"></div>
+      </div>
+    `;
+    
+    // Call your backend endpoint (which in the new version is very basic)
     try {
       const response = await fetch(`${BACKEND_URL}/model/load`, {
         method: "POST",
@@ -831,17 +851,28 @@ function setupLiveCheckEvents() {
       });
       if (response.ok) {
         const data = await response.json();
-        alert(`Model "${data.model_name}" loaded successfully!`);
-        loadModelBtn.disabled = true;
-        loadModelBtn.style.opacity = "0.6";
+        window.modelLoaded = true;
+        // (Optionally: update the progress bar to 100% here)
+        document.getElementById("modelLoadingProgress").textContent = "100%";
+        document.getElementById("modelProgressBar").style.width = "100%";
+        // Keep the UI for a short time and then hide it
+        setTimeout(() => {
+          modelLoadingStatusEl.style.display = "none";
+        }, 1000);
+        // The load button stays disabled now.
       } else {
         alert("Error loading model. Please try again.");
+        loadModelBtn.disabled = false;
+        loadModelBtn.classList.remove("loading");
       }
     } catch (error) {
       console.error("Load model error:", error);
-      alert("Error loading model. Please check the console for details.");
+      alert("Error loading model. Check console for details.");
+      loadModelBtn.disabled = false;
+      loadModelBtn.classList.remove("loading");
     }
   });
+
 
 
   const inputTableEl = document.getElementById("inputTable");
@@ -866,56 +897,45 @@ function setupLiveCheckEvents() {
   });
 
   runLiveCheckBtn.addEventListener("click", async () => {
+    // Disable the button while streaming.
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
     
-    const tableText = inputTableEl.value;
-    const claimText = inputClaimEl.value;
+    const tableText = document.getElementById("inputTable").value;
+    const claimText = document.getElementById("inputClaim").value;
+    const model = document.getElementById("liveModelSelect").value;
     const responseArea = document.getElementById("liveStreamOutput");
-    responseArea.style.display = "block";
-    responseArea.innerHTML = "Processing...<br>";
     
-    globalAbortController = new AbortController();
-    const signal = globalAbortController.signal;
+    // Build the URL with query parameters.
+    const url = `${BACKEND_URL}/inference/stream?table=${encodeURIComponent(tableText)}&claim=${encodeURIComponent(claimText)}&model_name=${encodeURIComponent(model)}`;
+    
+    // Clear and show the output area.
+    responseArea.innerHTML = "";
+    responseArea.style.display = "block";
     
     try {
-      const response = await fetch(`${BACKEND_URL}/inference/stream`, { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: tableText,
-          claim: claimText,
-          model_name: document.getElementById("liveModelSelect").value
-        }),
-        signal
-      });
-      if (!response.ok) {
-        responseArea.innerHTML = "Error: " + response.statusText;
-        runLiveCheckBtn.disabled = false;
-        runLiveCheckBtn.style.opacity = "1";
-        runLiveCheckBtn.style.cursor = "pointer";
-        return;
-      }
+      const response = await fetch(url);
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
-      let done = false;
-      responseArea.innerHTML = "";
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value);
-        responseArea.innerHTML += chunkValue;
+      
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        responseArea.innerHTML += chunk;
         responseArea.scrollTop = responseArea.scrollHeight;
       }
     } catch (err) {
-      responseArea.innerHTML = "Error: " + err;
+      console.error("Streaming error:", err);
     } finally {
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
     }
   });
+  
+  
 
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
@@ -926,7 +946,10 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.disabled = false;
     runLiveCheckBtn.style.opacity = "1";
     runLiveCheckBtn.style.cursor = "pointer";
+    runLiveCheckBtn.classList.remove("loading");
+    runLiveCheckBtn.innerHTML = "Run Live Check";
     stopLiveCheckBtn.style.display = "none";
+    
   });
 }
 

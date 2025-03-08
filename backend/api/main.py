@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from backend.api.schemas import InferenceRequest, InferenceResponse
-from backend.api.inference import get_model, perform_inference, stream_inference
+from backend.api.inference import get_model, run_inference
 
 app = FastAPI()
 
@@ -16,30 +16,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/inference", response_model=InferenceResponse)
-async def inference_endpoint(request: InferenceRequest):
-    """
-    Synchronous endpoint for table fact checking.
-    Returns the final answer with reasoning.
-    """
+@app.get("/inference/stream")
+async def inference_stream_endpoint(table: str, claim: str, model_name: str):
     try:
-        response = perform_inference(request)
-        return response
+        # Build an InferenceRequest from query parameters.
+        request_obj = InferenceRequest(table=table, claim=claim, model_name=model_name)
+        stream_generator = run_inference(request_obj)
+        return StreamingResponse(
+            stream_generator,
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no"
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/inference/stream")
-async def inference_stream_endpoint(request: InferenceRequest):
-    """
-    Streaming endpoint for live table fact checking.
-    Streams the generated tokens (e.g., for live UI updates).
-    """
-    try:
-        generator = stream_inference(request)
-        return StreamingResponse(generator, media_type="text/event-stream")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
 
 @app.post("/model/load")
 async def load_model_endpoint(request: InferenceRequest):

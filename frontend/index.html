@@ -26,13 +26,13 @@
   <main class="container">
     <!-- Mode Tabs -->
     <div class="mode-tabs">
-      <button class="mode-tab active" data-mode="precomputed">Table Fact-Checking Results</button>
-      <button class="mode-tab" data-mode="live">Live Table Fact-Checking</button>
+      <button class="mode-tab active" data-mode="live">Live Table Fact-Checking</button>
+      <button class="mode-tab" data-mode="precomputed">Precomputed Table Fact-Checking Results</button>
       <button class="mode-tab" data-mode="report">Report</button>
     </div>
 
     <!-- Precomputed Results Section -->
-    <section id="resultsSection" class="results-section">
+    <section id="resultsSection" class="results-section" style="display: none;">
       <!-- Controls for precomputed results -->
       <section class="controls">
         <div class="select-group">
@@ -96,9 +96,8 @@
     </section>
 
     <!-- Live Check Section -->
-    <section id="liveCheckSection" class="results-section" style="display: none;">
+    <section id="liveCheckSection" class="results-section">
       <div class="live-input-section">
-        <!-- Although a local model chooser remains for consistency, it is now disabled -->
         <div class="model-chooser">
           <label for="liveModelSelect">Model:</label>
           <select id="liveModelSelect">
