@@ -4,6 +4,9 @@
   padding: 0;
   box-sizing: border-box;
 }
+html {
+  scroll-behavior: smooth;
+}
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: #f4f5f7;
@@ -331,6 +334,23 @@ body.dark-mode .choices__list--dropdown {
 .icon-button:hover svg circle {
   fill: #aaa;
 }
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid transparent;
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .spinner-overlay {
   position: relative;
   display: flex;
@@ -565,12 +585,14 @@ body.dark-mode .choices__list--dropdown {
   background-color: #f7f7f7;
   border-left: 4px solid #1976d2;
   border-radius: 4px;
-  padding: 0rem 1rem 0rem 1rem;
+  padding: 1rem;
   margin-bottom: 1rem;
+  margin-top: 0;
   min-height: 50px;
   font-family: monospace;
   white-space: pre-wrap;
 }
+
 #thinkContent h1, #answerContent h1 {
   font-size: 1.5em;
   border-bottom: 1px solid #ccc;
@@ -639,6 +661,62 @@ body.dark-mode .choices__list--dropdown {
   opacity: 0.5;
   color: #555;
 }
+
+.json-container.small {
+  font-size: 0.85rem;
+  margin: 0.2rem 0;
+  padding: 0.2rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  overflow: auto;
+}
+
+.json-header.small {
+  padding: 0.1rem 0.3rem; 
+  font-size: 0.75rem;
+  background: none;
+  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.copy-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+.copy-btn:hover {
+  color: #145da0;
+}
+.json-content.small {
+  padding: 0.3rem;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.json-content code.hljs {
+  background: none;
+  color: inherit;
+  font-family: "Fira Code", monospace;
+  white-space: pre;
+  word-break: normal;
+}
+
+
 footer {
   margin-top: 5rem;
   padding: 1.5rem 0;

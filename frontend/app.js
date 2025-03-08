@@ -87,6 +87,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       fileUpload.addEventListener("change", function(e) {
         const file = e.target.files[0];
         if (file) {
+          // Validate file size (e.g., 2MB limit)
+          const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+          if (file.size > maxSize) {
+            alert("CSV file is too large. Please upload a file smaller than 2MB.");
+            return;
+          }
           const reader = new FileReader();
           reader.onload = function(e) {
             const fileContent = e.target.result;
@@ -98,6 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           reader.readAsText(file);
         }
       });
+      
     }
 
     const toggleMetricsEl = document.getElementById("performanceMetricsToggle");
@@ -493,8 +500,8 @@ async function renderClaimAndTable(resultObj) {
       const columnName = columns[colIndex];
       const shouldHighlight = resultObj.relevant_cells.some(
         hc => hc.row_index === rowIndex &&
-              hc.column_name.toLowerCase() === columnName.toLowerCase()
-      );
+              hc.column_name.trim().toLowerCase() === columnName.trim().toLowerCase()
+      );      
       if (shouldHighlight) {
         td.classList.add("highlight");
         document.getElementById("full-highlight-legend-precomputed").style.display = "block";
@@ -831,7 +838,7 @@ function setupLiveCheckEvents() {
     
     // Disable the button and show loading UI
     loadModelBtn.disabled = true;
-    loadModelBtn.classList.add("loading"); // We'll add CSS for this class
+    loadModelBtn.classList.add("loading"); // Add a CSS spinner via this class
     const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
     modelLoadingStatusEl.style.display = "block";
     modelLoadingStatusEl.innerHTML = `
@@ -842,7 +849,6 @@ function setupLiveCheckEvents() {
       </div>
     `;
     
-    // Call your backend endpoint (which in the new version is very basic)
     try {
       const response = await fetch(`${BACKEND_URL}/model/load`, {
         method: "POST",
@@ -852,19 +858,17 @@ function setupLiveCheckEvents() {
       if (response.ok) {
         const data = await response.json();
         window.modelLoaded = true;
-        // (Optionally: update the progress bar to 100% here)
         document.getElementById("modelLoadingProgress").textContent = "100%";
         document.getElementById("modelProgressBar").style.width = "100%";
-        // Keep the UI for a short time and then hide it
         setTimeout(() => {
           modelLoadingStatusEl.style.display = "none";
         }, 1000);
-        // The load button stays disabled now.
       } else {
         alert("Error loading model. Please try again.");
         loadModelBtn.disabled = false;
         loadModelBtn.classList.remove("loading");
       }
+      validateLiveCheckInputs();
     } catch (error) {
       console.error("Load model error:", error);
       alert("Error loading model. Check console for details.");
@@ -872,8 +876,6 @@ function setupLiveCheckEvents() {
       loadModelBtn.classList.remove("loading");
     }
   });
-
-
 
   const inputTableEl = document.getElementById("inputTable");
   const inputClaimEl = document.getElementById("inputClaim");
@@ -896,33 +898,69 @@ function setupLiveCheckEvents() {
     }
   });
 
+
+  
+  ////////////////////// MAIN FUNCTIONALITY //////////////////////
+  // Run Live Check button with live streaming --> calls the backend API
+
   runLiveCheckBtn.addEventListener("click", async () => {
-    // Disable the button while streaming.
+    // Disable button and add spinner
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
-    
-    // Retrieve input values.
+    runLiveCheckBtn.innerHTML = `<span class="spinner"></span> Run Live Check`;
+  
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
     const model = document.getElementById("liveModelSelect").value;
-    // Check if the model is DeepSeek.
     const isDeepSeek = model.toLowerCase().includes("deepseek");
-    
-    // DOM elements for live output.
+  
     const liveStreamOutputEl = document.getElementById("liveStreamOutput");
     const liveThinkOutputEl = document.getElementById("liveThinkOutput");
-    
-    // Clear and show both output areas.
+    const liveClaimList = document.getElementById("liveClaimList");
+  
+    // Clear outputs and hide them initially
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
-    liveStreamOutputEl.style.display = "block";
-    liveThinkOutputEl.style.display = "block";
-    
-    // Build the URL with query parameters.
+    liveStreamOutputEl.style.display = "none";
+    liveThinkOutputEl.style.display = "none";
+    liveClaimList.style.display = "none";
+  
     const url = `${BACKEND_URL}/inference/stream?table=${encodeURIComponent(tableText)}&claim=${encodeURIComponent(claimText)}&model_name=${encodeURIComponent(model)}`;
-    
+  
+    // Initialize variables for streaming and output separation:
     let accumulatedText = "";
+    let buffer = "";
+    // If using DeepSeek, assume we are in thinking mode at start
+    let inThinkBlock = isDeepSeek ? true : false;
+    let finalText = "";
+    let thinkText = "";
+    
+    const startTime = performance.now();
+    globalAbortController = new AbortController();
+    const signal = globalAbortController.signal;
+    
+    // For DeepSeek, show the thinking area with toggle controls:
+    if (isDeepSeek) {
+      liveThinkOutputEl.style.display = "block";
+      liveThinkOutputEl.innerHTML = `
+        <div class="thinking-overlay">
+          <span id="thinkingLabel" class="thinking-label">Thinking...</span>
+          <button id="toggleThinkingBtn" class="toggle-thinking">▲</button>
+        </div>
+        <div id="thinkContent"></div>
+      `;
+      document.getElementById("toggleThinkingBtn").addEventListener("click", function() {
+        const thinkContent = document.getElementById("thinkContent");
+        if (thinkContent.style.display === "none") {
+          thinkContent.style.display = "block";
+          this.textContent = "▲";
+        } else {
+          thinkContent.style.display = "none";
+          this.textContent = "▼";
+        }
+      });
+    }
     
     try {
       const response = await fetch(url);
@@ -935,51 +973,118 @@ function setupLiveCheckEvents() {
         const chunk = decoder.decode(value, { stream: true });
         accumulatedText += chunk;
         
-        if (isDeepSeek) {
-          // If we haven't yet seen the closing </think> tag, stream into the think box.
-          if (!accumulatedText.includes("</think>")) {
-            liveThinkOutputEl.textContent = accumulatedText;
+        // Process the chunk character-by-character:
+        for (let char of chunk) {
+          buffer += char;
+          if (inThinkBlock) {
+            const endIdx = buffer.indexOf("</think>");
+            if (endIdx !== -1) {
+              // End of thinking section found:
+              thinkText += buffer.slice(0, endIdx);
+              buffer = buffer.slice(endIdx + 8); // Skip over "</think>"
+              inThinkBlock = false;
+            }
           } else {
-            // When </think> is found, split the output.
-            const endThinkIndex = accumulatedText.indexOf("</think>") + 8; // 8 = length of "</think>"
-            liveThinkOutputEl.textContent = accumulatedText.slice(0, endThinkIndex).replace(/<\/think>/g, "");
-            liveStreamOutputEl.textContent = accumulatedText.slice(endThinkIndex);
+            const startIdx = buffer.indexOf("<think>");
+            if (startIdx !== -1) {
+              finalText += buffer.slice(0, startIdx);
+              buffer = buffer.slice(startIdx + 7); // Skip over "<think>"
+              inThinkBlock = true;
+            }
+          }
+        }
+        // Append any remaining non-tag text:
+        if (!inThinkBlock) {
+          finalText += buffer;
+        } else {
+          thinkText += buffer;
+        }
+        buffer = "";
+        
+        // Auto-scroll the window down so that new text is visible
+        window.scrollTo(0, document.body.scrollHeight);
+        
+        // Update display areas:
+        if (isDeepSeek) {
+          if (inThinkBlock) {
+            // Update thinking output area:
+            const thinkContentDiv = document.getElementById("thinkContent");
+            if (thinkContentDiv) {
+              thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
+            }
+          } else {
+            // Once thinking is done, update final answer area with current finalText
+            liveStreamOutputEl.style.display = "block";
+            liveStreamOutputEl.textContent = finalText;
           }
         } else {
-          // For non-deepseek models, simply stream everything to the final answer box.
-          liveStreamOutputEl.textContent = accumulatedText;
+          liveStreamOutputEl.style.display = "block";
+          liveStreamOutputEl.textContent = finalText;
         }
-        
-        // Auto-scroll output
-        liveStreamOutputEl.scrollTop = liveStreamOutputEl.scrollHeight;
-        liveThinkOutputEl.scrollTop = liveThinkOutputEl.scrollHeight;
       }
+      
+      // Streaming is complete.
+      const endTime = performance.now();
+      if (isDeepSeek) {
+        const thinkingLabel = document.getElementById("thinkingLabel");
+        if (thinkingLabel) {
+          thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
+          thinkingLabel.classList.add("done");
+        }
+        // Now show the final answer overlay
+        liveStreamOutputEl.style.display = "block";
+        liveStreamOutputEl.innerHTML = `
+          <div class="answer-overlay">Answer</div>
+          <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+        `;
+      }
+      
+      // After streaming completes and finalText is ready:
+      const rawResponse = finalText.trim();
+      const parsed = extractJsonFromResponse(rawResponse);
+      const formattedJson = JSON.stringify(parsed, null, 2);
+
+      // Now show only the formatted JSON block in a compact container:
+      liveStreamOutputEl.innerHTML = `
+        <div class="json-container small">
+          <div class="json-header small">
+            <span>JSON</span>
+            <button class="copy-btn" onclick="copyToClipboard(this)">
+              <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
+            </button>
+          </div>
+          <pre class="json-content small"><code class="json hljs">${formattedJson}</code></pre>
+        </div>
+      `;
+      document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
+
+
+      displayLiveResults(tableText, claimText, parsed.answer, parsed.relevant_cells);
+      
     } catch (err) {
       console.error("Streaming error:", err);
     } finally {
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
+      runLiveCheckBtn.innerHTML = "Run Live Check";
     }
   });
   
   
-  
-  
-
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
     if (globalAbortController) {
       globalAbortController.abort();
       console.log("Generation aborted by user.");
     }
+    const runLiveCheckBtn = document.getElementById("runLiveCheck");
     runLiveCheckBtn.disabled = false;
     runLiveCheckBtn.style.opacity = "1";
     runLiveCheckBtn.style.cursor = "pointer";
     runLiveCheckBtn.classList.remove("loading");
     runLiveCheckBtn.innerHTML = "Run Live Check";
     stopLiveCheckBtn.style.display = "none";
-    
   });
 }
 
@@ -1065,6 +1170,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
 function displayLiveResults(csvText, claim, answer, relevantCells) {
   document.getElementById("liveResults").style.display = "block";
   const liveClaimList = document.getElementById("liveClaimList");
+  liveClaimList.style.display = "block";
   liveClaimList.innerHTML = "";
   const claimDiv = document.createElement("div");
   claimDiv.className = "claim-item selected";
@@ -1142,4 +1248,22 @@ function separateThinkFromResponse(rawText) {
     remainder = rawText.replace(thinkRegex, "").trim();
   }
   return { think: thinkContent, noThink: remainder };
+}
+
+function copyToClipboard(btn) {
+  // Find the <code> element in the sibling .json-content container.
+  const codeBlock = btn.parentNode.nextElementSibling.querySelector('code');
+  const codeText = codeBlock.textContent;
+
+  navigator.clipboard.writeText(codeText)
+    .then(() => {
+      btn.innerHTML = `<img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copied!`;
+      setTimeout(() => { 
+        btn.innerHTML = `<img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy`;
+      }, 1500);
+    })
+    .catch(err => {
+      console.error("Failed to copy: ", err);
+      alert("Failed to copy code.");
+    });
 }
