@@ -11,8 +11,8 @@ const R2_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-
 const FULL_CLEANED_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/full_cleaned.json";
 const MANIFEST_JSON_PATH = "results/manifest.json";
 
-// Backend URL – adjust if necessary.
-const BACKEND_URL = "http://0.0.0.0:8080"; // "http://137.194.210.211";
+// point to Ollama’s API server
+const BACKEND_URL = "http://127.0.0.1:11434";
 
 // Global variables for precomputed results
 let allResults = [];               
@@ -34,7 +34,7 @@ const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
 const liveThinkOutputEl = document.getElementById("liveThinkOutput");
 const liveStreamOutputEl = document.getElementById("liveStreamOutput");
 
-window.modelLoaded = false;
+window.modelLoaded = true;
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -104,7 +104,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           reader.readAsText(file);
         }
       });
-      
     }
 
     const toggleMetricsEl = document.getElementById("performanceMetricsToggle");
@@ -829,53 +828,10 @@ function setupTabSwitching() {
 }
 
 function setupLiveCheckEvents() {
-  // Define a global flag to indicate if the model is loaded.
-  window.modelLoaded = false;
-
-  const loadModelBtn = document.getElementById("loadLiveModel");
-  loadModelBtn.addEventListener("click", async () => {
-    const model = document.getElementById("liveModelSelect").value;
-    
-    // Disable the button and show loading UI
-    loadModelBtn.disabled = true;
-    loadModelBtn.classList.add("loading"); // Add a CSS spinner via this class
-    const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
-    modelLoadingStatusEl.style.display = "block";
-    modelLoadingStatusEl.innerHTML = `
-      <span id="modelLoadingText">Loading model: ${model}</span><br>
-      <span id="modelLoadingProgress">0%</span>
-      <div id="modelProgressBarContainer" class="progress-bar-container">
-        <div id="modelProgressBar" class="progress-bar"></div>
-      </div>
-    `;
-    
-    try {
-      const response = await fetch(`${BACKEND_URL}/model/load`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table: "", claim: "", model_name: model })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        window.modelLoaded = true;
-        document.getElementById("modelLoadingProgress").textContent = "100%";
-        document.getElementById("modelProgressBar").style.width = "100%";
-        setTimeout(() => {
-          modelLoadingStatusEl.style.display = "none";
-        }, 1000);
-      } else {
-        alert("Error loading model. Please try again.");
-        loadModelBtn.disabled = false;
-        loadModelBtn.classList.remove("loading");
-      }
-      validateLiveCheckInputs();
-    } catch (error) {
-      console.error("Load model error:", error);
-      alert("Error loading model. Check console for details.");
-      loadModelBtn.disabled = false;
-      loadModelBtn.classList.remove("loading");
-    }
-  });
+  // Mark model as loaded.
+  window.modelLoaded = true;
+  
+  // Remove any UI for model loading (if present).
 
   const inputTableEl = document.getElementById("inputTable");
   const inputClaimEl = document.getElementById("inputClaim");
@@ -898,48 +854,25 @@ function setupLiveCheckEvents() {
     }
   });
 
-
-  
   ////////////////////// MAIN FUNCTIONALITY //////////////////////
-  // Run Live Check button with live streaming --> calls the backend API
-
+  // Run Live Check button: call Ollama's completions endpoint with live streaming.
   runLiveCheckBtn.addEventListener("click", async () => {
-    // Disable button and add spinner
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
     runLiveCheckBtn.innerHTML = `<span class="spinner"></span> Run Live Check`;
-  
+
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
-    const model = document.getElementById("liveModelSelect").value;
-    const isDeepSeek = model.toLowerCase().includes("deepseek");
-  
-    const liveStreamOutputEl = document.getElementById("liveStreamOutput");
-    const liveThinkOutputEl = document.getElementById("liveThinkOutput");
-    const liveClaimList = document.getElementById("liveClaimList");
-  
     // Clear outputs and hide them initially
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
-  
-    const url = `${BACKEND_URL}/inference/stream?table=${encodeURIComponent(tableText)}&claim=${encodeURIComponent(claimText)}&model_name=${encodeURIComponent(model)}`;
-  
-    // Initialize variables for streaming and output separation:
-    let accumulatedText = "";
-    let buffer = "";
-    // If using DeepSeek, assume we are in thinking mode at start
-    let inThinkBlock = isDeepSeek ? true : false;
-    let finalText = "";
-    let thinkText = "";
-    
-    const startTime = performance.now();
-    globalAbortController = new AbortController();
-    const signal = globalAbortController.signal;
-    
+
+    const isDeepSeek = true;
+
     // For DeepSeek, show the thinking area with toggle controls:
     if (isDeepSeek) {
       liveThinkOutputEl.style.display = "block";
@@ -961,69 +894,149 @@ function setupLiveCheckEvents() {
         }
       });
     }
+
+    const tableMarkdown = csvToMarkdown(tableText);
+    const extraInstruction = "\n<think>";
+    const prompt = `
+You are tasked with determining whether a claim about the following table (in Markdown format) is TRUE or FALSE.
+Before giving your final answer, explain your reasoning step-by-step.
+
+#### Table (Markdown):
+${tableMarkdown}
+
+#### Claim:
+"${claimText}"
+
+Instructions:
+After your explanation, output a final answer in valid JSON format:
+{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
+${extraInstruction}
+    `.trim();
     
+    const requestBody = {
+      model: "deepseek-r1:latest",
+      prompt: prompt,
+      max_tokens: 1024,
+      stream: true
+    };
+
+    // Ollama's API endpoint (see https://github.com/ollama/ollama/blob/main/docs/api.md)
+    const url = `${BACKEND_URL}/api/generate`;
+
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestBody)
+      });
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
+      
+      // Variables for accumulating text from JSON tokens
+      let buffer = "";
+      let finalText = "";
+      let thinkText = "";
+      let inThinkBlock = false;
+      
+      const startTime = performance.now();
+      globalAbortController = new AbortController();
       
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        accumulatedText += chunk;
-        
-        // Process the chunk character-by-character:
-        for (let char of chunk) {
-          buffer += char;
-          if (inThinkBlock) {
-            const endIdx = buffer.indexOf("</think>");
-            if (endIdx !== -1) {
-              // End of thinking section found:
-              thinkText += buffer.slice(0, endIdx);
-              buffer = buffer.slice(endIdx + 8); // Skip over "</think>"
-              inThinkBlock = false;
+        buffer += decoder.decode(value, { stream: true });
+        // Split buffer by newline - each line should be a complete JSON token.
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep any incomplete line in buffer
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const token = JSON.parse(line);
+            let tokenText = token.response;
+            // Process tokenText to separate <think> blocks.
+            while (true) {
+              if (inThinkBlock) {
+                const endIdx = tokenText.indexOf("</think>");
+                if (endIdx !== -1) {
+                  thinkText += tokenText.slice(0, endIdx);
+                  tokenText = tokenText.slice(endIdx + 8);
+                  inThinkBlock = false;
+                  // Continue processing remaining tokenText outside think block.
+                  continue;
+                } else {
+                  thinkText += tokenText;
+                  tokenText = "";
+                  break;
+                }
+              } else {
+                const startIdx = tokenText.indexOf("<think>");
+                if (startIdx !== -1) {
+                  finalText += tokenText.slice(0, startIdx);
+                  tokenText = tokenText.slice(startIdx + 7);
+                  inThinkBlock = true;
+                  continue;
+                } else {
+                  finalText += tokenText;
+                  break;
+                }
+              }
             }
-          } else {
-            const startIdx = buffer.indexOf("<think>");
-            if (startIdx !== -1) {
-              finalText += buffer.slice(0, startIdx);
-              buffer = buffer.slice(startIdx + 7); // Skip over "<think>"
-              inThinkBlock = true;
+            // Update UI live:
+            if (isDeepSeek) {
+              const thinkContentDiv = document.getElementById("thinkContent");
+              if (thinkContentDiv) {
+                thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
+              }
+              liveStreamOutputEl.textContent = finalText;
+            } else {
+              liveStreamOutputEl.textContent = finalText;
             }
+          } catch (e) {
+            console.error("Failed to parse JSON token:", e);
           }
         }
-        // Append any remaining non-tag text:
-        if (!inThinkBlock) {
-          finalText += buffer;
-        } else {
-          thinkText += buffer;
-        }
-        buffer = "";
-        
-        // Auto-scroll the window down so that new text is visible
         window.scrollTo(0, document.body.scrollHeight);
-        
-        // Update display areas:
-        if (isDeepSeek) {
-          if (inThinkBlock) {
-            // Update thinking output area:
-            const thinkContentDiv = document.getElementById("thinkContent");
-            if (thinkContentDiv) {
-              thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
+      }
+      
+      // Process any remaining text in the buffer.
+      if (buffer.trim()) {
+        try {
+          const token = JSON.parse(buffer);
+          let tokenText = token.response;
+          while (true) {
+            if (inThinkBlock) {
+              const endIdx = tokenText.indexOf("</think>");
+              if (endIdx !== -1) {
+                thinkText += tokenText.slice(0, endIdx);
+                tokenText = tokenText.slice(endIdx + 8);
+                inThinkBlock = false;
+                continue;
+              } else {
+                thinkText += tokenText;
+                tokenText = "";
+                break;
+              }
+            } else {
+              const startIdx = tokenText.indexOf("<think>");
+              if (startIdx !== -1) {
+                finalText += tokenText.slice(0, startIdx);
+                tokenText = tokenText.slice(startIdx + 7);
+                inThinkBlock = true;
+                continue;
+              } else {
+                finalText += tokenText;
+                break;
+              }
             }
-          } else {
-            // Once thinking is done, update final answer area with current finalText
-            liveStreamOutputEl.style.display = "block";
-            liveStreamOutputEl.textContent = finalText;
           }
-        } else {
-          liveStreamOutputEl.style.display = "block";
-          liveStreamOutputEl.textContent = finalText;
+        } catch (e) {
+          console.error("Error processing final buffer:", e);
         }
       }
       
-      // Streaming is complete.
       const endTime = performance.now();
       if (isDeepSeek) {
         const thinkingLabel = document.getElementById("thinkingLabel");
@@ -1031,20 +1044,16 @@ function setupLiveCheckEvents() {
           thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
           thinkingLabel.classList.add("done");
         }
-        // Now show the final answer overlay
-        liveStreamOutputEl.style.display = "block";
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">Answer</div>
           <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
         `;
       }
       
-      // After streaming completes and finalText is ready:
+      // After streaming, attempt to extract final JSON from the finalText.
       const rawResponse = finalText.trim();
       const parsed = extractJsonFromResponse(rawResponse);
       const formattedJson = JSON.stringify(parsed, null, 2);
-
-      // Now show only the formatted JSON block in a compact container:
       liveStreamOutputEl.innerHTML = `
         <div class="json-container small">
           <div class="json-header small">
@@ -1058,7 +1067,6 @@ function setupLiveCheckEvents() {
       `;
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
 
-
       displayLiveResults(tableText, claimText, parsed.answer, parsed.relevant_cells);
       
     } catch (err) {
@@ -1070,7 +1078,6 @@ function setupLiveCheckEvents() {
       runLiveCheckBtn.innerHTML = "Run Live Check";
     }
   });
-  
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
