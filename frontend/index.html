@@ -9,17 +9,17 @@
   <link rel="icon" href="images/favicon_io/favicon.ico" type="image/x-icon"> 
 </head>
 <body>
+  <!-- Dark Mode Toggle as a switch -->
+  <div class="dark-mode-switch">
+    <input type="checkbox" id="darkModeToggle">
+    <label for="darkModeToggle"></label>
+  </div>
   <header>
     <div class="header-container">
-      <a href="https://www.ip-paris.fr/" target="_blank">
+      <a href="https://www.ip-paris.fr/" target="_blank" class="logo-link">
         <img src="images/ipp.png" alt="IP Paris Logo" class="logo">
       </a>
       <h1>TableTruth</h1>
-      <div class="toggle-switch">
-        <input type="checkbox" id="darkModeToggle" />
-        <label for="darkModeToggle"></label>
-        <p> Mode</p>
-      </div>      
     </div>
   </header>
 
@@ -99,14 +99,12 @@
     <section id="liveCheckSection" class="results-section">
       <div class="live-input-section">
         <div class="model-chooser">
-          <label for="liveModelSelect">Model:</label>
           <select id="liveModelSelect">
             <option value="deepseek-r1:latest">DeepSeek‑R1 (7b)</option>
             <option value="phi3">Phi3 (3.8b)</option>
-            <!-- <option value="phi4:latest">Phi4</option> --> 
             <option value="llama3.2">Llama3.2 (3b)</option>
           </select>
-          <span id="gpuWarning" style="display:none; color:red; font-size:0.8rem; margin-left:10px;"></span>
+          <span id="gpuWarning" style="display:none;"></span>
           <button id="loadLiveModel" class="btn-primary" style="display: none;">Load Model</button>
           <div id="modelLoadingStatus" style="display: none;">
             <span id="modelLoadingText">Loading model:</span>
@@ -117,26 +115,18 @@
             </div>
           </div>
         </div>
-        <p id="loadInfo">Live check uses our backend inference service.</p>
 
-        <!-- CSV input + live preview -->
-        <div class="input-group">
-          <label for="inputTable">Paste Table (CSV format, # delimited):</label>
-          <div class="inline-dropdown">
-            <label for="existingTableSelect">or choose an existing one from the TabFact dataset:</label>
-            <select id="existingTableSelect"></select>
+        <!-- Live Check Section – CSV input + live preview -->
+        <div class="input-group table-input-group">
+          <h3>Enter Table:</h3>
+          <div class="textarea-container">
+            <textarea id="inputTable" rows="6" placeholder="Paste Table (CSV format, # delimited)"></textarea>
+            <button id="tableOptionsBtn" class="btn-icon">+</button>
+            <div id="tableOptionsDropdown" class="options-dropdown" style="display: none;">
+              <button id="selectFromDatasetBtn" class="btn-primary">Choose from TabFact Dataset</button>
+              <button id="uploadCSVBtn" class="btn-primary">Upload CSV File</button>
+            </div>
           </div>
-          <div class="inline-dropdown">
-            <label for="fileUpload">or upload a CSV File from your computer:</label>
-            <input type="file" id="fileUpload" accept=".csv">
-          </div>
-          <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
-            <label for="includeTableNameCheck">
-              <input type="checkbox" id="includeTableNameCheck" />
-              Include table title in prompt
-            </label>
-          </div>
-          <textarea id="inputTable" rows="6"></textarea>
           <div id="liveTableMetaInfo" class="info-panel" style="display:none;"></div>
           <div id="livePreviewTable" class="table-container"></div>
           <div id="legend-live" class="legend">
@@ -149,16 +139,23 @@
           </div>
         </div>
 
+
         <!-- Claim input -->
         <div class="input-group">
-          <label for="inputClaim">Enter Claim:</label>
+          <h3>Enter Claim:</h3>
           <div class="input-group" id="existingClaimsWrapper" style="display:none;">
-            <label for="existingClaimsSelect">or choose an existing one from the TabFact dataset:</label>
+            <label for="existingClaimsSelect">or choose an existing one for this table from the TabFact dataset:</label>
             <select id="existingClaimsSelect">
               <option value="">-- Select a Claim --</option>
             </select>
           </div>
-          <textarea id="inputClaim" rows="3"></textarea>
+          <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
+            <label for="includeTableNameCheck">
+              <input type="checkbox" id="includeTableNameCheck" />
+              Include table title in prompt
+            </label>
+          </div>
+          <textarea id="inputClaim" rows="3" placeholder="Paste Claim"></textarea>
         </div>
 
         <!-- Run and Stop buttons -->
@@ -184,6 +181,7 @@
       </div>
       <div id="abortMessage"></div>
       <p id="disclaimer">AI-generated, for reference only</p>
+      <p id="disclaimer">Live check uses our backend inference service.</p>
     </section>
 
     <!-- Report Section -->
@@ -206,6 +204,19 @@
     </div>
   </footer>
 
+  <!-- Hidden file input for CSV upload -->
+  <input type="file" id="fileUpload" accept=".csv" style="display:none;">
+
+  <!-- Modal for Dataset Overview -->
+  <div id="datasetOverviewModal" class="dataset-modal" style="display:none;">
+    <div class="dataset-modal-content">
+      <h3>Select a Table from TabFact Dataset</h3>
+      <div id="datasetList" class="dataset-list">
+        <!-- Dataset items will be loaded here -->
+      </div>
+    </div>
+  </div>
+
   <!-- External libraries -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.10/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -218,24 +229,19 @@
   <link rel="stylesheet" href="style.css" />
   <!-- Dark mode toggle -->
   <script>
-    const darkModeToggle = document.getElementById("darkModeToggle");
-    darkModeToggle.addEventListener("change", function() {
-      if (this.checked) {
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("darkMode", "true");
-      } else {
-        document.body.classList.remove("dark-mode");
-        localStorage.setItem("darkMode", "false");
-      }
+    const darkModeToggleCheckbox = document.getElementById("darkModeToggle");
+    darkModeToggleCheckbox.addEventListener("change", function () {
+      document.body.classList.toggle("dark-mode", darkModeToggleCheckbox.checked);
+      localStorage.setItem("darkMode", darkModeToggleCheckbox.checked ? "true" : "false");
     });
-  
-    // On page load, apply saved dark mode preference
+
+    // On page load, apply saved dark mode preference and update the checkbox state.
     if (localStorage.getItem("darkMode") === "true") {
       document.body.classList.add("dark-mode");
-      darkModeToggle.checked = true;
+      darkModeToggleCheckbox.checked = true;
     } else {
       document.body.classList.remove("dark-mode");
-      darkModeToggle.checked = false;
+      darkModeToggleCheckbox.checked = false;
     }
   </script>  
 </body>

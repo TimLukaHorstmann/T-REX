@@ -25,6 +25,7 @@ let availableOptions = {
   formatTypes: new Set()
 };
 let tableToPageMap = {};  // csv filename -> [title, link]
+let selectedTableId = null;
 let resultsChartInstance = null;
 let manifestOptions = []; // Array of manifest options for filtering
 
@@ -76,8 +77,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await fetchTotalExamplesClaims();
     await fetchFullCleaned();
-
-    populateExistingTableDropdown();
     addLoadButtonListener();
     setupTabSwitching();
     setupLiveCheckEvents();
@@ -121,11 +120,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     validateLiveCheckInputs();
 
+    document.querySelectorAll("textarea").forEach(textarea => {
+      textarea.addEventListener("input", function() {
+        this.style.height = "auto";
+        this.style.height = this.scrollHeight + "px";
+      });
+    });
+    
+
   } catch (error) {
     console.error("Initialization failed:", error);
     document.getElementById("infoPanel").innerHTML = `<p style="color:red;">Failed to initialize the app: ${error}</p>`;
   }
 });
+
 
 async function fetchTableToPage() {
   const response = await fetch(TABLE_TO_PAGE_JSON_PATH);
@@ -677,40 +685,92 @@ function updateResultsChart(tableId) {
 
 /* LIVE CHECK FUNCTIONS */
 
-async function populateExistingTableDropdown() {
-  const existingTableSelect = document.getElementById("existingTableSelect");
-  existingTableSelect.innerHTML = `<option value="">-- Select a Table --</option>`;
+// + BUTTON OPTIONS
+
+// Toggle the options dropdown when clicking the + button (unchanged)
+document.getElementById("tableOptionsBtn").addEventListener("click", function (e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById("tableOptionsDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+});
+
+// Hide the dropdown when clicking outside the textarea container
+document.addEventListener("click", function (e) {
+  const container = document.querySelector(".textarea-container");
+  const dropdown = document.getElementById("tableOptionsDropdown");
+  if (!container.contains(e.target)) {
+    dropdown.style.display = "none";
+  }
+});
+
+// For the "Choose from TabFact Dataset" button, open a modal with an overview of tables.
+document.getElementById("selectFromDatasetBtn").addEventListener("click", async function () {
+  document.getElementById("tableOptionsDropdown").style.display = "none";
+  openDatasetOverviewModal();
+});
+
+// For the "Upload CSV File" button, trigger a click on the hidden file input.
+document.getElementById("uploadCSVBtn").addEventListener("click", function () {
+  document.getElementById("tableOptionsDropdown").style.display = "none";
+  const fileInput = document.getElementById("fileUpload");
+  if (fileInput) {
+    fileInput.click();
+  } else {
+    alert("File upload is not available.");
+  }
+});
+
+// Function to open the dataset overview modal.
+async function openDatasetOverviewModal() {
+  const modal = document.getElementById("datasetOverviewModal");
+  const datasetList = document.getElementById("datasetList");
+  datasetList.innerHTML = "<p>Loading tables...</p>";
+  modal.style.display = "flex";
+  
   try {
     const response = await fetch("https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv_ids.json");
-    if (!response.ok) throw new Error(`Failed to fetch all_csv_ids.json: ${response.statusText}`);
-    const csvIds = await response.json();
-    if (!csvIds || !Array.isArray(csvIds)) throw new Error("Invalid format for all_csv_ids.json.");
-    csvIds.sort().forEach(csvFile => {
-      const option = document.createElement("option");
-      option.value = csvFile;
-      let meta = tableToPageMap[csvFile];
-      option.textContent = meta ? `${csvFile} - ${meta[0]}` : csvFile;
-      existingTableSelect.appendChild(option);
-    });
-    if (window.existingTableSelectChoices) {
-      window.existingTableSelectChoices.destroy();
+    if (!response.ok) {
+      throw new Error("Failed to load dataset list: " + response.statusText);
     }
-    window.existingTableSelectChoices = new Choices('#existingTableSelect', {
-      searchEnabled: true,
-      itemSelectText: '',
-      shouldSort: false
+    const csvIds = await response.json();
+    if (!Array.isArray(csvIds)) {
+      throw new Error("Dataset list is not an array");
+    }
+    datasetList.innerHTML = ""; 
+    csvIds.sort().forEach(csvId => {
+      selectedTableId = csvId;
+      const item = document.createElement("div");
+      item.classList.add("dataset-item");
+      // Use the same logic as in your previous "existingTableSelect"
+      let title = "No title";
+      let wiki = "";
+      if (tableToPageMap && tableToPageMap[csvId]) {
+        title = tableToPageMap[csvId][0] || title;
+        wiki = tableToPageMap[csvId][1] || "";
+      }
+      title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      item.innerHTML = `<strong>${csvId}</strong> - ${title}` + (wiki ? ` (<a href="${wiki}" target="_blank">Wiki</a>)` : "");
+      item.addEventListener("click", async () => {
+        // When a table is clicked, load its CSV into the textarea and update claims.
+        await fetchAndFillTable(csvId);
+        populateClaimsDropdown(csvId);
+        modal.style.display = "none";
+      });
+      datasetList.appendChild(item);
     });
-    existingTableSelect.addEventListener("change", async () => {
-      const selectedFile = existingTableSelect.value;
-      if (!selectedFile) return;
-      await fetchAndFillTable(selectedFile);
-      populateClaimsDropdown(selectedFile);
-    });
-  } catch (error) {
-    console.error("Error loading CSV list:", error);
-    alert("Failed to fetch available tables. Please try again later.");
+  } catch (err) {
+    datasetList.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    console.error("Error in dataset modal:", err);
   }
 }
+
+
+// Close the dataset modal when clicking outside its content.
+document.getElementById("datasetOverviewModal").addEventListener("click", function(e) {
+  if (e.target === this) {
+    this.style.display = "none";
+  }
+});
 
 async function fetchAndFillTable(tableId) {
   const inputTableEl = document.getElementById("inputTable");
@@ -746,6 +806,7 @@ async function fetchAndFillTable(tableId) {
       }
       includeTableNameOption.style.display = "block";
     }
+    inputTableEl.style.height = "auto";
   } catch (error) {
     console.error("Error loading table CSV:", error);
     alert("Failed to load table from dataset.");
@@ -863,6 +924,8 @@ function setupLiveCheckEvents() {
     document.getElementById("stopLiveCheck").style.display = "inline-block";
     document.getElementById("stopLiveCheck").classList.add("running");
     const liveResultsEl = document.getElementById("liveResults");
+    const liveClaimList = document.getElementById("liveClaimList");
+
 
     // Clear outputs and hide them initially
     liveStreamOutputEl.textContent = "";
@@ -884,9 +947,8 @@ function setupLiveCheckEvents() {
     const includeTitle = document.getElementById("includeTableNameCheck").checked;
     let tableTitleText = "";
     // Check if a table is selected and table metadata exists.
-    const selectedTable = document.getElementById("existingTableSelect").value;
-    if (includeTitle && selectedTable && tableToPageMap[selectedTable]) {
-      tableTitleText = tableToPageMap[selectedTable][0];
+    if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
+      tableTitleText = tableToPageMap[selectedTableId][0];
     }
 
     // Convert CSV to Markdown.
@@ -1146,8 +1208,7 @@ function setupLiveCheckEvents() {
         <div id="answerContent">${finalOutputHtml}</div>
       `;
 
-      // Ensure the final result box is visible (remove any "empty" class if present)
-      liveStreamOutputEl.classList.remove("empty");
+      liveResultsEl.style.display = "block";
 
       // Highlight JSON if any.
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
@@ -1235,9 +1296,10 @@ function renderLivePreviewTable(csvText, relevantCells) {
   });
   tableEl.appendChild(tbody);
 
-  const existingTableSelect = document.getElementById("existingTableSelect");
-  if (existingTableSelect && existingTableSelect.value && tableEntityLinkingMap[existingTableSelect.value]) {
-    const entityStatements = tableEntityLinkingMap[existingTableSelect.value][0];
+  let tableKey = selectedTableId;
+
+  if (tableKey && tableEntityLinkingMap && tableEntityLinkingMap[tableKey]) {
+    const entityStatements = tableEntityLinkingMap[tableKey][0];
     let entityCoords = [];
     const regex = /#([^#]+);(-?\d+),(-?\d+)#/g;
     entityStatements.forEach(statement => {
@@ -1248,7 +1310,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
         entityCoords.push({ row, col });
       }
     });
-    const tbody = tableEl.querySelector("tbody");
     if (tbody) {
       Array.from(tbody.rows).forEach((tr, rowIndex) => {
         Array.from(tr.cells).forEach((td, colIndex) => {
@@ -1258,33 +1319,37 @@ function renderLivePreviewTable(csvText, relevantCells) {
         });
       });
     }
+    // Ensure the entity highlight legend is visible.
+    document.getElementById("full-entity-highlight-legend-live").style.display = "block";
+  } else {
+    document.getElementById("full-entity-highlight-legend-live").style.display = "none";
   }
 
   previewContainer.appendChild(tableEl);
 
   const legendModel = document.getElementById("full-highlight-legend-live");
-  const legendEntity = document.getElementById("full-entity-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
     legendModel.style.display = "block";
   } else {
     legendModel.style.display = "none";
   }
-  if (tableEl.querySelectorAll("td.entity-highlight").length > 0) {
-    legendEntity.style.display = "block";
-  } else {
-    legendEntity.style.display = "none";
-  }
 }
 
+
 function displayLiveResults(csvText, claim, answer, relevantCells) {
-  document.getElementById("liveResults").style.display = "block";
+  const liveResultsEl = document.getElementById("liveResults");
+  if (liveResultsEl) {
+    liveResultsEl.style.display = "block";
+  }
   const liveClaimList = document.getElementById("liveClaimList");
-  liveClaimList.style.display = "block";
-  liveClaimList.innerHTML = "";
-  const claimDiv = document.createElement("div");
-  claimDiv.className = "claim-item selected";
-  claimDiv.textContent = `Claim: "${claim}" => Model says: ${answer}`;
-  liveClaimList.appendChild(claimDiv);
+  if (liveClaimList) {
+    liveClaimList.style.display = "block";
+    liveClaimList.innerHTML = "";
+    const claimDiv = document.createElement("div");
+    claimDiv.className = "claim-item selected";
+    claimDiv.textContent = `Claim: "${claim}" => Model says: ${answer}`;
+    liveClaimList.appendChild(claimDiv);
+  }
   renderLivePreviewTable(csvText, relevantCells);
 }
 
@@ -1314,28 +1379,34 @@ function csvToJson(csvStr) {
 }
 
 function extractJsonFromResponse(rawResponse) {
-  let jsonText = rawResponse.trim();
-  const fencePattern = /```json\s*([\s\S]*?)\s*```/i;
-  const fenceMatch = jsonText.match(fencePattern);
-  if (fenceMatch) {
-    jsonText = fenceMatch[1].trim();
-  } else {
-    const braceMatch = jsonText.match(/{.*}/s);
-    if (braceMatch) {
-      jsonText = braceMatch[0];
-    } else {
-      jsonText = rawResponse.trim();
+  // Find the first '{' character.
+  let start = rawResponse.indexOf("{");
+  if (start === -1) return null;
+  let braceCount = 0;
+  let end = -1;
+  // Scan from the first '{' and count opening and closing braces.
+  for (let i = start; i < rawResponse.length; i++) {
+    if (rawResponse[i] === "{") {
+      braceCount++;
+    } else if (rawResponse[i] === "}") {
+      braceCount--;
+      if (braceCount === 0) {
+        end = i;
+        break;
+      }
     }
   }
-  jsonText = jsonText.replace(/,\s*([\]}])/g, '$1');
+  if (end === -1) return null;
+  const jsonText = rawResponse.substring(start, end + 1);
   try {
     const parsed = JSON.parse(jsonText);
-    if (!parsed.answer || !parsed.relevant_cells) {
-      throw new Error("Missing 'answer' or 'relevant_cells' key");
+    if (!parsed.answer || !("relevant_cells" in parsed)) {
+      throw new Error("Missing required keys");
     }
     return parsed;
   } catch (err) {
     console.warn("JSON parsing error:", err);
+    // Fallback: if response contains "true"/"false", return default object.
     const lowerResponse = rawResponse.toLowerCase();
     if (lowerResponse.includes("true")) {
       return { answer: "TRUE", relevant_cells: [] };
@@ -1346,6 +1417,8 @@ function extractJsonFromResponse(rawResponse) {
     }
   }
 }
+
+
 
 function separateThinkFromResponse(rawText) {
   const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
