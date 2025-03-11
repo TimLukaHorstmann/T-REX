@@ -862,40 +862,67 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.style.cursor = "not-allowed";
     document.getElementById("stopLiveCheck").style.display = "inline-block";
     document.getElementById("stopLiveCheck").classList.add("running");
+    const liveResultsEl = document.getElementById("liveResults");
 
-    const tableText = document.getElementById("inputTable").value;
-    const claimText = document.getElementById("inputClaim").value;
     // Clear outputs and hide them initially
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
-    liveStreamOutputEl.classList.add("empty");
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
+    liveResultsEl.style.display = "none";
+    liveResultsEl.innerHTML = "";
 
     // Added to separate models with different behavior
     let firstThinkTokenReceived = false; 
-    let firstNormalTokenReceived = false; 
+    let firstNormalTokenReceived = false;
 
+    const tableText = document.getElementById("inputTable").value;
+    const claimText = document.getElementById("inputClaim").value;
+
+    // Determine whether to include the table title in the prompt.
+    const includeTitle = document.getElementById("includeTableNameCheck").checked;
+    let tableTitleText = "";
+    // Check if a table is selected and table metadata exists.
+    const selectedTable = document.getElementById("existingTableSelect").value;
+    if (includeTitle && selectedTable && tableToPageMap[selectedTable]) {
+      tableTitleText = tableToPageMap[selectedTable][0];
+    }
+
+    // Convert CSV to Markdown.
     const tableMarkdown = csvToMarkdown(tableText);
-    const extraInstruction = "\n<think>";
-    const prompt = `
-You are tasked with determining whether a claim about the following table (in Markdown format) is TRUE or FALSE.
-Before giving your final answer, explain your reasoning step-by-step.
 
-#### Table (Markdown):
-${tableMarkdown}
+    // Build the prompt.
+    let prompt = `
+    You are tasked with determining whether a claim about the following table is TRUE or FALSE.
+    `;
 
-#### Claim:
-"${claimText}"
+    // If a table title is provided, include it.
+    if (tableTitleText) {
+      prompt += `\nTable Title: "${tableTitleText}"\n`;
+    }
 
-Instructions:
-After your explanation, output a final answer in valid JSON format:
-{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
-${extraInstruction}
-    `.trim();
-    
+    prompt += `
+    #### Table (Markdown):
+    ${tableMarkdown}
+
+    #### Claim:
+    "${claimText}"
+
+    Instructions:
+    After your explanation, output a final answer in valid JSON format:
+    {"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
+    `;
+
+    // Add the <think> token only if the model contains "deepseek".
     const selectedModel = document.getElementById("liveModelSelect").value;
+    let extraInstruction = "";
+    if (selectedModel.toLowerCase().includes("deepseek")) {
+      extraInstruction = "\n<think>";
+    }
+    prompt += extraInstruction;
+    prompt = prompt.trim();
+
     const requestBody = {
       model: selectedModel,
       prompt: prompt,
@@ -1024,7 +1051,10 @@ ${extraInstruction}
             console.error("Failed to parse JSON token:", e);
           }
         }
-        window.scrollTo(0, document.body.scrollHeight);
+        // Only auto-scroll if the user is already near the bottom (within 50px)
+        if ((window.innerHeight + window.pageYOffset) >= (document.body.offsetHeight - 50)) {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
       }
       
       // Process any remaining text in the buffer.
@@ -1080,6 +1110,8 @@ ${extraInstruction}
       
       // After streaming, attempt to extract final JSON from the finalText.
       let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
+
+      // Try to extract a JSON block
       const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
       let finalOutputHtml = "";
       let parsedJson = {};
@@ -1087,29 +1119,37 @@ ${extraInstruction}
         const jsonBlock = jsonMatch[0];
         parsedJson = extractJsonFromResponse(jsonBlock);
         const formattedJson = JSON.stringify(parsedJson, null, 2);
-        const jsonFormattedHtml = `
-          <div class="json-container small">
-            <div class="json-header small">
-              <span>JSON</span>
+        const jsonContainerHtml = `
+          <div class="json-container">
+            <div class="json-header">
+              <span>JSON Output</span>
               <button class="copy-btn" onclick="copyToClipboard(this)">
                 <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
               </button>
             </div>
-            <pre class="json-content small"><code class="json hljs">${formattedJson}</code></pre>
+            <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
           </div>
         `;
-        finalOutputHtml = cleanedResponse.replace(jsonBlock, jsonFormattedHtml);
+        // Remove the JSON block from the cleaned response, then render the remaining Markdown.
+        const markdownPart = cleanedResponse.replace(jsonBlock, "").trim();
+        const markdownHtml = DOMPurify.sanitize(marked.parse(markdownPart));
+        finalOutputHtml = markdownHtml + jsonContainerHtml;
       } else {
-        finalOutputHtml = cleanedResponse;
+        finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse));
       }
+
+      // Finally, update the live stream output element.
       liveStreamOutputEl.innerHTML = `
         <div class="answer-overlay">
           <span class="answer-label">Answer</span>
         </div>
-        ${finalOutputHtml}
+        <div id="answerContent">${finalOutputHtml}</div>
       `;
+
+      // Ensure the final result box is visible (remove any "empty" class if present)
       liveStreamOutputEl.classList.remove("empty");
 
+      // Highlight JSON if any.
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
 
 

@@ -1,4 +1,10 @@
 /* Reset & base styles */
+
+:root {
+  --main-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --code-font: 'Source Code Pro', monospace;
+  --base-font-size: 1rem;
+}
 * {
   margin: 0;
   padding: 0;
@@ -8,7 +14,8 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--main-font);
+  font-size: var(--base-font-size);
   background: #f4f5f7;
   color: #333;
   transition: background 0.3s, color 0.3s;
@@ -45,6 +52,9 @@ body.dark-mode .controls {
 body.dark-mode .info-panel {
   background: #2a2a2a;
   border-left-color: #4caf50;
+  a {
+    color: #4caf50;
+  }
 }
 body.dark-mode .select-group select,
 body.dark-mode .input-group textarea {
@@ -71,21 +81,52 @@ body.dark-mode .btn-primary {
 }
 body.dark-mode .live-stream-output {
   background-color: #1e1e1e;
-  border-left-color: #4caf50;
+  border-color: #444;
   color: #e0e0e0;
 }
-body.dark-mode .json-container.small {
+body.dark-mode .json-container {
   background-color: #2a2a2a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
+  border-color: #444;
+  color: #ccc;
+}
+body.dark-mode .json-header {
+  border-color: #555;
+  color: #ddd;
 }
 body.dark-mode .modelLoadingStatus,
 body.dark-mode .modelLoadingText {
   color: white;
 }
-body.dark-mode .table-container {
+
+/* Dark mode table overrides */
+body.dark-mode .styled-table {
   background-color: #2a2a2a;
-  border: 1px solid #444;
+  box-shadow: none;
+}
+body.dark-mode .styled-table thead,
+body.dark-mode .styled-table thead th {
+  background-color: #444;
+}
+
+body.dark-mode .styled-table thead th,
+body.dark-mode .styled-table tbody td {
+  border-color: #555;
+  color: #e0e0e0;
+}
+body.dark-mode .styled-table tbody tr:nth-of-type(even) {
+  background-color: #333;
+}
+body.dark-mode .styled-table tbody tr:hover {
+  background-color: #444;
+}
+
+
+body.dark-mode .entity-highlight {
+  border: none;
+  text-decoration: underline dashed #4caf50;
+}
+body.dark-mode .entity-highlight-legend {
+  border-bottom: 2px dashed #4caf50;
 }
 
 /* Header */
@@ -244,6 +285,17 @@ body.dark-mode .choices__list--dropdown {
   background-color: #2a2a2a;
   border: 1px solid #444;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode #existingClaimsWrapper select {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+body.dark-mode #liveResults {
+  background-color: #1e1e1e;
+  border: 1px solid #444;
 }
 
 /* Performance Metrics Section */
@@ -451,11 +503,11 @@ body.dark-mode .choices__list--dropdown {
 .styled-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1rem 0;
-  font-size: 0.95rem;
   background-color: #fff;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
 }
 .styled-table thead tr {
   background-color: #f5f5f5;
@@ -463,19 +515,26 @@ body.dark-mode .choices__list--dropdown {
   text-align: left;
   font-weight: bold;
 }
-.styled-table th,
-.styled-table td {
-  padding: 0.75rem 1rem;
-  border: 1px solid #ccc;
+.styled-table thead {
+  background-color: #1976d2;
+  color: #fff;
 }
-.styled-table tbody tr {
-  border-bottom: 1px solid #ccc;
+.styled-table thead th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+.styled-table tbody td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
 }
 .styled-table tbody tr:nth-of-type(even) {
-  background-color: #f9f9f9;
+  background-color: #fafafa;
 }
 .styled-table tbody tr:hover {
   background-color: #f1f1f1;
+  cursor: pointer;
 }
 .highlight {
   background-color: #ffff88;
@@ -595,19 +654,26 @@ body.dark-mode .choices__list--dropdown {
 
 /* Live Stream Output */
 .live-stream-output {
-  background-color: #f7f7f7;
-  border-left: 4px solid #1976d2;
-  border-radius: 4px;
-  padding: 1rem;
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
   margin-bottom: 1rem;
-  margin-top: 0;
-  font-family: monospace;
-  white-space: pre-wrap;
+  font-family: var(--main-font);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-y: auto;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
-#thinkContent, #answerContent {
+#answerContent,
+#thinkContent {
+  text-indent: 0;
   margin: 0;
   padding: 0;
+  padding-top: 0.5rem;
+  line-height: 1.6;
+  font-size: 0.85rem;
 }
 
 #thinkContent h1, #answerContent h1 {
@@ -669,7 +735,6 @@ body.dark-mode .choices__list--dropdown {
   font-style: italic;
   opacity: 0.7;
   color: #777;
-  background: rgba(247,247,247,0.9);
   border-radius: 4px;
   z-index: 10;
 }
@@ -722,46 +787,42 @@ body.dark-mode .choices__list--dropdown {
   margin-bottom: 5px;
 }
 
-.json-container.small {
-  font-size: 0.8rem;
-  max-width: 90%;
-  padding: 0.2rem 0.4rem;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  background-color: #fafafa;
-  overflow: auto;
-  margin: 0.5rem 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.json-container {
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-family: var(--code-font);
+  font-size: 0.9rem;
+  overflow-x: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s, border-color 0.3s;
 }
-
-.json-header.small {
-  padding: 0.1rem 0.4rem;
+.json-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
-  background: transparent;
-  border-bottom: none;
-  margin-bottom: 0.2rem;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-weight: bold;
+  color: #333;
 }
-
-.json-content.small {
-  padding: 0.2rem;
-  font-size: 0.8rem;
-  overflow-x: auto;
-  margin: 0;
-  line-height: 1.2;
-}
-
 .copy-btn {
   background: none;
   border: none;
-  color: #1976d2;
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  color: #1976d2;
+  transition: color 0.2s;
+}
+.copy-btn:hover {
+  color: #145da0;
+}
+.json-content {
+  margin: 0;
+  line-height: 1.6;
 }
 
 .copy-icon {
@@ -769,23 +830,6 @@ body.dark-mode .choices__list--dropdown {
   height: 14px;
 }
 
-.copy-btn:hover {
-  color: #145da0;
-}
-.json-content.small {
-  padding: 0.3rem;
-  font-size: 0.8rem;
-  overflow-x: auto;
-  margin: 0;
-}
-
-.json-content code.hljs {
-  background: none;
-  color: inherit;
-  font-family: "Fira Code", monospace;
-  white-space: pre;
-  word-break: normal;
-}
 
 #liveResults {
   background: #fff;
