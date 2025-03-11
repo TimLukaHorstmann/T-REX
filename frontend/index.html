@@ -102,12 +102,13 @@
         <div class="model-chooser">
           <label for="liveModelSelect">Model:</label>
           <select id="liveModelSelect">
-            <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B">DeepSeek-R1</option>
-            <option value="gpt2">GPT-2</option>
-            <option value="microsoft/Phi-4-mini-instruct">Phi-4-mini-instruct</option>
-            <!-- Add additional backend-supported model options here -->
+            <option value="deepseek-r1:latest">DeepSeek‑R1 (7b)</option>
+            <option value="phi3">Phi3 (3.8b)</option>
+            <!-- <option value="phi4:latest">Phi4</option> --> 
+            <option value="llama3.2">Llama3.2 (3b)</option>
           </select>
-          <button id="loadLiveModel" class="btn-primary">Load Model</button>
+          <span id="gpuWarning" style="display:none; color:red; font-size:0.8rem; margin-left:10px;"></span>
+          <button id="loadLiveModel" class="btn-primary" style="display: none;">Load Model</button>
           <div id="modelLoadingStatus" style="display: none;">
             <span id="modelLoadingText">Loading model:</span>
             <br />
@@ -167,7 +168,7 @@
           <button id="stopLiveCheck" class="icon-button" style="display: none;">
             <div class="spinner-overlay">
               <svg class="stop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none"
-                   xmlns="http://www.w3.org/2000/svg">
+                  xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" fill="#ccc" />
                 <rect x="8" y="8" width="8" height="8" fill="#333" />
               </svg>
@@ -182,6 +183,7 @@
       <div id="liveResults" class="live-results" style="display: none;">
         <div id="liveClaimList" class="claim-list"></div>
       </div>
+      <div id="abortMessage"></div>
       <p id="disclaimer">AI-generated, for reference only</p>
     </section>
 
@@ -210,7 +212,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <!-- Main app logic -->
   <script src="app.js"></script>

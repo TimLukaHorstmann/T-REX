@@ -24,7 +24,6 @@ let availableOptions = {
   nValues: new Set(),
   formatTypes: new Set()
 };
-let globalAbortController = null;
 let tableToPageMap = {};  // csv filename -> [title, link]
 let resultsChartInstance = null;
 let manifestOptions = []; // Array of manifest options for filtering
@@ -35,6 +34,7 @@ const liveThinkOutputEl = document.getElementById("liveThinkOutput");
 const liveStreamOutputEl = document.getElementById("liveStreamOutput");
 
 window.modelLoaded = true;
+let globalReader = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -860,7 +860,8 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
-    runLiveCheckBtn.innerHTML = `<span class="spinner"></span> Run Live Check`;
+    document.getElementById("stopLiveCheck").style.display = "inline-block";
+    document.getElementById("stopLiveCheck").classList.add("running");
 
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
@@ -871,29 +872,9 @@ function setupLiveCheckEvents() {
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
 
-    const isDeepSeek = true;
-
-    // For DeepSeek, show the thinking area with toggle controls:
-    if (isDeepSeek) {
-      liveThinkOutputEl.style.display = "block";
-      liveThinkOutputEl.innerHTML = `
-        <div class="thinking-overlay">
-          <span id="thinkingLabel" class="thinking-label">Thinking...</span>
-          <button id="toggleThinkingBtn" class="toggle-thinking">▲</button>
-        </div>
-        <div id="thinkContent"></div>
-      `;
-      document.getElementById("toggleThinkingBtn").addEventListener("click", function() {
-        const thinkContent = document.getElementById("thinkContent");
-        if (thinkContent.style.display === "none") {
-          thinkContent.style.display = "block";
-          this.textContent = "▲";
-        } else {
-          thinkContent.style.display = "none";
-          this.textContent = "▼";
-        }
-      });
-    }
+    // Added to separate models with different behavior
+    let firstThinkTokenReceived = false; 
+    let firstNormalTokenReceived = false; 
 
     const tableMarkdown = csvToMarkdown(tableText);
     const extraInstruction = "\n<think>";
@@ -913,8 +894,9 @@ After your explanation, output a final answer in valid JSON format:
 ${extraInstruction}
     `.trim();
     
+    const selectedModel = document.getElementById("liveModelSelect").value;
     const requestBody = {
-      model: "deepseek-r1:latest",
+      model: selectedModel,
       prompt: prompt,
       max_tokens: 1024,
       stream: true
@@ -932,7 +914,7 @@ ${extraInstruction}
         body: JSON.stringify(requestBody)
       });
 
-      const reader = response.body.getReader();
+      globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       
       // Variables for accumulating text from JSON tokens
@@ -942,10 +924,9 @@ ${extraInstruction}
       let inThinkBlock = false;
       
       const startTime = performance.now();
-      globalAbortController = new AbortController();
       
       while (true) {
-        const { value, done } = await reader.read();
+        const { value, done } = await globalReader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         // Split buffer by newline - each line should be a complete JSON token.
@@ -969,6 +950,32 @@ ${extraInstruction}
                 } else {
                   thinkText += tokenText;
                   tokenText = "";
+
+                  if (!firstThinkTokenReceived) {
+                    liveThinkOutputEl.style.display = "block";
+                    liveThinkOutputEl.innerHTML = `
+                      <div class="thinking-overlay">
+                        <span id="thinkingLabel" class="thinking-label">Thinking...</span>
+                        <button id="toggleThinkingBtn" class="toggle-thinking">▲</button>
+                      </div>
+                      <div id="thinkContent"></div>
+                    `;
+                    document.getElementById("toggleThinkingBtn").addEventListener("click", function() {
+                      const thinkContent = document.getElementById("thinkContent");
+                      const liveThinkOutput = document.getElementById("liveThinkOutput");
+                      if (thinkContent.style.display === "none") {
+                        thinkContent.style.display = "block";
+                        liveThinkOutput.classList.remove("collapsed");
+                        this.textContent = "▲";
+                      } else {
+                        thinkContent.style.display = "none";
+                        liveThinkOutput.classList.add("collapsed");
+                        this.textContent = "▼";
+                      }
+                    });                    
+                    firstThinkTokenReceived = true;
+                  }
+
                   break;
                 }
               } else {
@@ -980,20 +987,33 @@ ${extraInstruction}
                   continue;
                 } else {
                   finalText += tokenText;
+
+                  if (!firstNormalTokenReceived) {
+                    liveStreamOutputEl.style.display = "block";
+                    liveStreamOutputEl.innerHTML = `
+                      <div class="answer-overlay">
+                        <span class="answer-label">Answer</span>
+                      </div>
+                      <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+                    `;
+                    firstNormalTokenReceived = true;
+                  }
+                  
                   break;
                 }
               }
             }
             // Update UI live:
-            if (isDeepSeek) {
+            if (firstThinkTokenReceived) {
               const thinkContentDiv = document.getElementById("thinkContent");
               if (thinkContentDiv) {
                 thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
               }
-              liveStreamOutputEl.textContent = finalText;
-            } else {
+            }
+            if (firstNormalTokenReceived) {
               liveStreamOutputEl.textContent = finalText;
             }
+  
           } catch (e) {
             console.error("Failed to parse JSON token:", e);
           }
@@ -1038,36 +1058,49 @@ ${extraInstruction}
       }
       
       const endTime = performance.now();
-      if (isDeepSeek) {
+      if (firstThinkTokenReceived) {
         const thinkingLabel = document.getElementById("thinkingLabel");
         if (thinkingLabel) {
           thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
           thinkingLabel.classList.add("done");
         }
         liveStreamOutputEl.innerHTML = `
-          <div class="answer-overlay">Answer</div>
+          <div class="answer-overlay">
+            <span class="answer-label">Answer</span>
+          </div>
           <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
         `;
       }
       
       // After streaming, attempt to extract final JSON from the finalText.
-      const rawResponse = finalText.trim();
-      const parsed = extractJsonFromResponse(rawResponse);
-      const formattedJson = JSON.stringify(parsed, null, 2);
-      liveStreamOutputEl.innerHTML = `
-        <div class="json-container small">
-          <div class="json-header small">
-            <span>JSON</span>
-            <button class="copy-btn" onclick="copyToClipboard(this)">
-              <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
-            </button>
+      let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
+      const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
+      let finalOutputHtml = "";
+      let parsedJson = {};
+      if (jsonMatch) {
+        const jsonBlock = jsonMatch[0];
+        parsedJson = extractJsonFromResponse(jsonBlock);
+        const formattedJson = JSON.stringify(parsedJson, null, 2);
+        const jsonFormattedHtml = `
+          <div class="json-container small">
+            <div class="json-header small">
+              <span>JSON</span>
+              <button class="copy-btn" onclick="copyToClipboard(this)">
+                <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
+              </button>
+            </div>
+            <pre class="json-content small"><code class="json hljs">${formattedJson}</code></pre>
           </div>
-          <pre class="json-content small"><code class="json hljs">${formattedJson}</code></pre>
-        </div>
-      `;
+        `;
+        finalOutputHtml = cleanedResponse.replace(jsonBlock, jsonFormattedHtml);
+      } else {
+        finalOutputHtml = cleanedResponse;
+      }
+      liveStreamOutputEl.innerHTML = finalOutputHtml;
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
 
-      displayLiveResults(tableText, claimText, parsed.answer, parsed.relevant_cells);
+
+      displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
       
     } catch (err) {
       console.error("Streaming error:", err);
@@ -1076,23 +1109,39 @@ ${extraInstruction}
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
       runLiveCheckBtn.innerHTML = "Run Live Check";
+      document.getElementById("stopLiveCheck").style.display = "none";
+      document.getElementById("stopLiveCheck").classList.remove("running");
     }
   });
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
-    if (globalAbortController) {
-      globalAbortController.abort();
+    if (globalReader) {
+      globalReader.cancel("User aborted");
       console.log("Generation aborted by user.");
     }
+    // Hide the results box and clear its content
+    const liveResultsEl = document.getElementById("liveResults");
+    liveResultsEl.style.display = "none";
+    liveResultsEl.innerHTML = "";
+    
+    // Show the abort message
+    const abortMsgEl = document.getElementById("abortMessage");
+    abortMsgEl.style.display = "block";
+    abortMsgEl.textContent = "Live check aborted.";
+    
+    // Reset the run button
     const runLiveCheckBtn = document.getElementById("runLiveCheck");
     runLiveCheckBtn.disabled = false;
     runLiveCheckBtn.style.opacity = "1";
     runLiveCheckBtn.style.cursor = "pointer";
     runLiveCheckBtn.classList.remove("loading");
     runLiveCheckBtn.innerHTML = "Run Live Check";
+    
+    // Hide the stop button
     stopLiveCheckBtn.style.display = "none";
-  });
+    stopLiveCheckBtn.classList.remove("running");
+  });  
 }
 
 function renderLivePreviewTable(csvText, relevantCells) {

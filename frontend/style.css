@@ -371,6 +371,9 @@ body.dark-mode .choices__list--dropdown {
 .icon-button.loading .spinner-overlay::after {
   display: block;
 }
+.icon-button.running .spinner-overlay::after {
+  display: block;
+}
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -588,9 +591,13 @@ body.dark-mode .choices__list--dropdown {
   padding: 1rem;
   margin-bottom: 1rem;
   margin-top: 0;
-  min-height: 50px;
   font-family: monospace;
   white-space: pre-wrap;
+}
+
+#thinkContent, #answerContent {
+  margin: 0;
+  padding: 0;
 }
 
 #thinkContent h1, #answerContent h1 {
@@ -624,13 +631,49 @@ body.dark-mode .choices__list--dropdown {
 #modelLoadingText {
   margin-right: 0.5rem;
 }
+
+#liveThinkOutput,
+#liveStreamOutput {
+  position: relative;
+  padding-top: 30px; /* Ensure space for the headers */
+}
+
+.live-stream-output.collapsed {
+  padding: 2px;
+  height: 0;
+}
+
+.answer-overlay {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+  color: #777;
+  background: rgba(247,247,247,0.9);
+  border-radius: 4px;
+  z-index: 10;
+}
+
 .thinking-overlay {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  opacity: 0.9;
+  padding: 5px 10px;
+  position: absolute;
+  top: 5px;
+  left: 10px;
   font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.7;
+  color: #777;
+  border-radius: 4px;
+  z-index: 10;
 }
+
 .thinking-label {
   font-size: 0.85em;
   font-style: italic;
@@ -641,8 +684,8 @@ body.dark-mode .choices__list--dropdown {
   animation: shimmer 5s linear infinite;
 }
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
 .thinking-label.done {
   animation: none;
@@ -655,31 +698,33 @@ body.dark-mode .choices__list--dropdown {
   font-size: 0.7rem;
   font-style: italic;
 }
-.answer-overlay {
+
+.answer-label {
   font-size: 0.85rem;
   font-style: italic;
-  opacity: 0.5;
-  color: #555;
+  opacity: 0.6;
+  color: #777;
+  margin-bottom: 5px;
 }
 
 .json-container.small {
-  font-size: 0.85rem;
-  margin: 0.2rem 0;
-  padding: 0.2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  font-size: 0.8rem;
+  max-width: 90%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   background-color: #f9f9f9;
   overflow: auto;
 }
 
 .json-header.small {
-  padding: 0.1rem 0.3rem; 
-  font-size: 0.75rem;
-  background: none;
-  border-bottom: none;
+  padding: 0.2rem 0.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom: none;
 }
 
 .copy-btn {
@@ -690,12 +735,12 @@ body.dark-mode .choices__list--dropdown {
   font-size: 0.75rem;
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .copy-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
+  width: 14px;
+  height: 14px;
 }
 
 .copy-btn:hover {
@@ -716,6 +761,39 @@ body.dark-mode .choices__list--dropdown {
   word-break: normal;
 }
 
+#liveResults {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-top: 1rem;
+  display: none;
+}
+
+#liveClaimList .claim-item {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+#liveClaimList .claim-item.selected {
+  background: #1976d2;
+  color: white;
+}
+
+#abortMessage {
+  display: none;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+  background: #fff3f3;
+  padding: 0.5rem;
+  border: 1px solid red;
+  border-radius: 4px;
+}
 
 footer {
   margin-top: 5rem;
