@@ -869,6 +869,7 @@ function setupLiveCheckEvents() {
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
+    liveStreamOutputEl.classList.add("empty");
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
 
@@ -1011,7 +1012,12 @@ ${extraInstruction}
               }
             }
             if (firstNormalTokenReceived) {
-              liveStreamOutputEl.textContent = finalText;
+              liveStreamOutputEl.innerHTML = `
+                <div class="answer-overlay">
+                  <span class="answer-label">Answer</span>
+                </div>
+                <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+              `;
             }
   
           } catch (e) {
@@ -1096,7 +1102,14 @@ ${extraInstruction}
       } else {
         finalOutputHtml = cleanedResponse;
       }
-      liveStreamOutputEl.innerHTML = finalOutputHtml;
+      liveStreamOutputEl.innerHTML = `
+        <div class="answer-overlay">
+          <span class="answer-label">Answer</span>
+        </div>
+        ${finalOutputHtml}
+      `;
+      liveStreamOutputEl.classList.remove("empty");
+
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
 
 
