@@ -28,6 +28,7 @@ body {
 }
 main {
   flex: 1;
+  min-width: 50%;
 }
 
 /* Dark Mode Styles */
@@ -523,6 +524,28 @@ body.dark-mode #liveResults {
   border-radius: 4px;
 }
 
+/* --- Meta Information Box (above the table) --- */
+.meta-info-box {
+  background: #f7f7f7;
+  padding: 10px 15px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.meta-info-box a {
+  text-decoration: none;
+  color: #1976d2;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.meta-info-box a:hover {
+  opacity: 1;
+}
+
 /* Claim List */
 .claim-item {
   background: #fff;
@@ -706,9 +729,8 @@ textarea:focus {
   position: absolute;
   bottom: 10px;
   left: 10px;
-  border: none;
-  background: #1976d2;
-  color: #fff;
+  border: #333 solid 0.2px;
+  color: #333;
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -734,6 +756,8 @@ textarea:focus {
   margin: 5px 0;
   width: 100%;
   font-size: 0.9rem;
+  background-color: #efefef;
+  color: #333;
 }
 
 .live-results {
@@ -785,6 +809,10 @@ textarea:focus {
   width: auto;
   box-sizing: border-box;
 }
+.inline-checkbox label {
+  font-weight: normal !important;
+}
+
 #existingClaimsWrapper {
   display: flex;
   align-items: center;
@@ -984,8 +1012,7 @@ textarea:focus {
 }
 
 #liveClaimList .claim-item.selected {
-  background: #1976d2;
-  color: white;
+  color: black;
 }
 
 #abortMessage {
@@ -1064,6 +1091,13 @@ footer {
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
+.dataset-loading-message {
+  font-size: 0.85rem;
+  text-align: left;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
 .dataset-list {
   display: flex;
   flex-direction: column;
@@ -1072,17 +1106,57 @@ footer {
 }
 
 .dataset-item {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 .dataset-item:hover {
-  background: #f0f0f0;
+  background-color: #f9f9f9;
 }
 
+.dataset-item-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dataset-item-number {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #1976d2;
+}
+
+.dataset-item-title {
+  font-size: 1rem;
+  margin-right: 10px;
+  flex: 1;
+}
+
+.dataset-item-wiki-link {
+  text-decoration: none;
+  font-size: 0.9rem;
+  color: #1976d2;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.dataset-item-wiki-link:hover {
+  opacity: 1;
+}
+
+.wiki-icon {
+  width: 24px;
+  height: 24px;
+  /*surround by a very subtle circle*/
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  padding: 4px;
+}
 
 
 @media (max-width: 600px) {

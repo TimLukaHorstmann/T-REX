@@ -4,6 +4,7 @@
 
 // CONSTANTS for paths
 const CSV_BASE_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv/";
+const ALL_CSV_IDS_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv_ids.json";
 const TABLE_TO_PAGE_JSON_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/table_to_page.json";
 const TOTAL_EXAMPLES_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/total_examples.json";
 const R1_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/collected_data/r1_training_all.json";
@@ -33,6 +34,7 @@ let manifestOptions = []; // Array of manifest options for filtering
 const modelLoadingStatusEl = document.getElementById("modelLoadingStatus");
 const liveThinkOutputEl = document.getElementById("liveThinkOutput");
 const liveStreamOutputEl = document.getElementById("liveStreamOutput");
+const liveClaimListEl = document.getElementById("liveClaimList");
 
 window.modelLoaded = true;
 let globalReader = null;
@@ -126,8 +128,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         this.style.height = this.scrollHeight + "px";
       });
     });
-    
-
   } catch (error) {
     console.error("Initialization failed:", error);
     document.getElementById("infoPanel").innerHTML = `<p style="color:red;">Failed to initialize the app: ${error}</p>`;
@@ -455,7 +455,7 @@ async function renderClaimAndTable(resultObj) {
     const [tableTitle, wikipediaUrl] = meta;
     metaDiv.innerHTML = `
       <p><strong>Table Title:</strong> ${tableTitle}</p>
-      <p><strong>Wikipedia Link:</strong> <a href="${wikipediaUrl}" target="_blank">${wikipediaUrl}</a></p>
+      <p><strong>Wikipedia Link:</strong> <a href="${wikipediaUrl}" data-wikipedia-preview target="_blank">${wikipediaUrl}</a></p>
     `;
   } else {
     metaDiv.innerHTML = `<p><em>No title/link found for this table</em></p>`;
@@ -724,11 +724,12 @@ document.getElementById("uploadCSVBtn").addEventListener("click", function () {
 async function openDatasetOverviewModal() {
   const modal = document.getElementById("datasetOverviewModal");
   const datasetList = document.getElementById("datasetList");
-  datasetList.innerHTML = "<p>Loading tables...</p>";
+  // Show a loading message (will be replaced after fetch)
+  datasetList.innerHTML = `<p class="dataset-loading-message">Loading tables...</p>`;
   modal.style.display = "flex";
   
   try {
-    const response = await fetch("https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv_ids.json");
+    const response = await fetch(ALL_CSV_IDS_PATH);
     if (!response.ok) {
       throw new Error("Failed to load dataset list: " + response.statusText);
     }
@@ -736,28 +737,48 @@ async function openDatasetOverviewModal() {
     if (!Array.isArray(csvIds)) {
       throw new Error("Dataset list is not an array");
     }
-    datasetList.innerHTML = ""; 
-    csvIds.sort().forEach(csvId => {
-      selectedTableId = csvId;
+    // Update loading message to show the number of tables loaded
+    datasetList.innerHTML = `<p class="dataset-loading-message">${csvIds.length} tables loaded.</p>`;
+    
+    csvIds.sort().forEach((csvId, index) => {
       const item = document.createElement("div");
       item.classList.add("dataset-item");
-      // Use the same logic as in your previous "existingTableSelect"
       let title = "No title";
       let wiki = "";
       if (tableToPageMap && tableToPageMap[csvId]) {
         title = tableToPageMap[csvId][0] || title;
         wiki = tableToPageMap[csvId][1] || "";
       }
+      // Capitalize title nicely
       title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-      item.innerHTML = `<strong>${csvId}</strong> - ${title}` + (wiki ? ` (<a href="${wiki}" target="_blank">Wiki</a>)` : "");
-      item.addEventListener("click", async () => {
-        // When a table is clicked, load its CSV into the textarea and update claims.
+      
+      // Build the dataset item HTML with enumeration and a subtle wiki link if available
+      item.innerHTML = `
+        <div class="dataset-item-header">
+          <span class="dataset-item-number">${index + 1}.</span>
+          <span class="dataset-item-title"><strong>${title}</strong> (${csvId})</span>
+          ${wiki ? `<a class="dataset-item-wiki-link" href="${wiki}" target="_blank"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
+        </div>
+      `;
+
+      if (wiki) {
+        item.setAttribute("data-wikipedia-preview", "");
+        item.setAttribute("data-wp-title", title);
+      }
+      
+      // When clicking the item, load the table into the live area.
+      item.addEventListener("click", async function(e) {
         await fetchAndFillTable(csvId);
         populateClaimsDropdown(csvId);
         modal.style.display = "none";
       });
+      
       datasetList.appendChild(item);
     });
+    
+    // Initialize Wikipedia previews on the modal’s new content.
+    wikipediaPreview.init({ root: document.getElementById("datasetOverviewModal") });
+    
   } catch (err) {
     datasetList.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
     console.error("Error in dataset modal:", err);
@@ -800,9 +821,17 @@ async function fetchAndFillTable(tableId) {
       if (liveTableMetaInfo) {
         liveTableMetaInfo.style.display = "block";
         liveTableMetaInfo.innerHTML = `
-          <p><strong>Table Title:</strong> ${tableTitle}</p>
-          <p><strong>Wikipedia Link:</strong> <a href="${wikipediaUrl}" target="_blank">${wikipediaUrl}</a></p>
+          <div class="meta-info-box">
+            <p><strong>Table Title:</strong> ${tableTitle}</p>
+            <p><strong>Wikipedia Link:</strong> 
+              <a href="${wikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" target="_blank">
+                ${wikipediaUrl}
+              </a>
+            </p>
+          </div>
         `;
+        // Initialize Wikipedia preview for the meta info area.
+        wikipediaPreview.init({ root: liveTableMetaInfo });
       }
       includeTableNameOption.style.display = "block";
     }
@@ -812,6 +841,7 @@ async function fetchAndFillTable(tableId) {
     alert("Failed to load table from dataset.");
   }
 }
+
 
 function populateClaimsDropdown(tableId) {
   const claimsWrapperEl = document.getElementById("existingClaimsWrapper");
@@ -934,7 +964,6 @@ function setupLiveCheckEvents() {
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
     liveResultsEl.style.display = "none";
-    liveResultsEl.innerHTML = "";
 
     // Added to separate models with different behavior
     let firstThinkTokenReceived = false; 
@@ -1210,6 +1239,7 @@ function setupLiveCheckEvents() {
 
       liveResultsEl.style.display = "block";
 
+
       // Highlight JSON if any.
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
 
@@ -1237,7 +1267,6 @@ function setupLiveCheckEvents() {
     // Hide the results box and clear its content
     const liveResultsEl = document.getElementById("liveResults");
     liveResultsEl.style.display = "none";
-    liveResultsEl.innerHTML = "";
     
     // Show the abort message
     const abortMsgEl = document.getElementById("abortMessage");
@@ -1348,6 +1377,8 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
     const claimDiv = document.createElement("div");
     claimDiv.className = "claim-item selected";
     claimDiv.textContent = `Claim: "${claim}" => Model says: ${answer}`;
+    // if (answer === "TRUE") -> light green, else light red background
+    claimDiv.style.backgroundColor = answer === "TRUE" ? "#e8f5e9" : "#ffebee";
     liveClaimList.appendChild(claimDiv);
   }
   renderLivePreviewTable(csvText, relevantCells);
