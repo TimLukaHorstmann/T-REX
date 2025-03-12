@@ -40,6 +40,25 @@ window.modelLoaded = true;
 let globalReader = null;
 let globalCSVId = null;
 
+// Disable auto-scroll if the user scrolls up manually.
+let autoScrollEnabled = true;
+let lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+let autoScrollTimeout;
+
+window.addEventListener("scroll", function() {
+  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  // If the user scrolled up more than 20px compared to the last position:
+  if (currentScrollPosition < lastScrollPosition - 20) {
+    autoScrollEnabled = false;
+    clearTimeout(autoScrollTimeout);
+    autoScrollTimeout = setTimeout(() => {
+      autoScrollEnabled = true;
+    }, 5000); // Re-enable auto-scroll after 5 seconds of no upward scrolling.
+  }
+  lastScrollPosition = currentScrollPosition;
+});
+
+
 // Translation dictionary
 const translationDict = {
   en: {
@@ -58,6 +77,8 @@ const translationDict = {
     includeTableTitleInPrompt: "Include table title in prompt",
     runLiveCheckBtn: "Run Live Check",
     answerLabel: "Answer",
+    trueLabel: "True",
+    falseLabel: "False",
     aiDisclaimer: "AI-generated, for reference only",
     liveCheckInfo: "Live check uses our backend inference service."
   },
@@ -77,6 +98,8 @@ const translationDict = {
     includeTableTitleInPrompt: "Inclure le titre du tableau dans la demande",
     runLiveCheckBtn: "Exécuter la vérification en direct",
     answerLabel: "Réponse",
+    trueLabel: "Vrai",
+    falseLabel: "Faux",
     aiDisclaimer: "Généré par l'IA, à titre de référence uniquement",
     liveCheckInfo: "La vérification en direct utilise notre service d'inférence backend."
   },
@@ -96,6 +119,8 @@ const translationDict = {
     includeTableTitleInPrompt: "Tabellentitel in der Eingabe einschließen",
     runLiveCheckBtn: "Live-Check durchführen",
     answerLabel: "Antwort",
+    trueLabel: "Wahr",
+    falseLabel: "Falsch",
     aiDisclaimer: "Von KI generiert, nur zur Orientierung",
     liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst."
   }
@@ -853,15 +878,9 @@ async function openDatasetOverviewModal() {
         <div class="dataset-item-header">
           <span class="dataset-item-number">${index + 1}.</span>
           <span class="dataset-item-title"><strong>${title}</strong> (${csvId})</span>
-          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
+          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank" data-wikipedia-preview data-wp-title="${title}" data-wp-lang="${lang}"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
         </div>
       `;
-
-      if (wiki) {
-        item.setAttribute("data-wikipedia-preview", "");
-        item.setAttribute("data-wp-title", title);
-        item.setAttribute("data-wp-lang", lang);
-      }
       
       // When clicking the item, load the table into the live area.
       item.addEventListener("click", async function(e) {
@@ -1058,73 +1077,66 @@ function setupLiveCheckEvents() {
   ////////////////////// MAIN FUNCTIONALITY //////////////////////
   // Run Live Check button: call Ollama's completions endpoint with live streaming.
   runLiveCheckBtn.addEventListener("click", async () => {
+    // Disable the Run button and show the Stop button.
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
     document.getElementById("stopLiveCheck").style.display = "inline-block";
     document.getElementById("stopLiveCheck").classList.add("running");
+  
     const liveResultsEl = document.getElementById("liveResults");
     const liveClaimList = document.getElementById("liveClaimList");
-
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = translationDict[selectedLanguage] || translationDict["en"];
-
-
-    // Clear outputs and hide them initially
+  
+    // Clear previous outputs
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
     liveResultsEl.style.display = "none";
-
-    // Added to separate models with different behavior
-    let firstThinkTokenReceived = false; 
-    let firstNormalTokenReceived = false;
-
+  
+    let firstThinkTokenReceived = false;
+    let firstAnswerTokenReceived = false;
+    let finalText = "";
+    let thinkText = "";
+    let inThinkBlock = false;
+    let buffer = "";
+  
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
-
-    // Determine whether to include the table title in the prompt.
     const includeTitle = document.getElementById("includeTableNameCheck").checked;
     let tableTitleText = "";
-    // Check if a table is selected and table metadata exists.
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
       tableTitleText = tableToPageMap[selectedTableId][0];
     }
-
-    // Convert CSV to Markdown.
+  
     const tableMarkdown = csvToMarkdown(tableText);
-
-    // Build the prompt.
+  
+    // Build prompt
     let prompt = `
-    You are tasked with determining whether a claim about the following table is TRUE or FALSE.
+      You are tasked with determining whether a claim about the following table is TRUE or FALSE.
     `;
-
-    // If a table title is provided, include it.
     if (tableTitleText) {
       prompt += `\nTable Title: "${tableTitleText}"\n`;
     }
-
     prompt += `
-    #### Table (Markdown):
-    ${tableMarkdown}
-
-    #### Claim:
-    "${claimText}"
-
-    Instructions:
-    After your explanation, output a final answer in valid JSON format:
-    {"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
-
-    Please consider the header of the table as row_index=0.
+      #### Table (Markdown):
+      ${tableMarkdown}
+  
+      #### Claim:
+      "${claimText}"
+  
+      Instructions:
+      After your explanation, output a final answer in valid JSON format:
+      {"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
+  
+      Please consider the header of the table as row_index=0.
     `;
-
     const selectedModel = document.getElementById("liveModelSelect").value;
     let extraInstruction = "";
-
     if (selectedLanguage === "en") {
-      // For English, use default instructions.
       if (selectedModel.toLowerCase().includes("deepseek")) {
         extraInstruction = "\n<think>";
       }
@@ -1133,57 +1145,43 @@ function setupLiveCheckEvents() {
     } else if (selectedLanguage === "de") {
       extraInstruction = "\nPlease provide your response in German.";
     }
-
     prompt += extraInstruction;
     prompt = prompt.trim();
-
-
     prompt += extraInstruction;
     prompt = prompt.trim();
-
+  
     const requestBody = {
       model: selectedModel,
       prompt: prompt,
       max_tokens: 2048,
       stream: true
     };
-
+  
     // Ollama's API endpoint (see https://github.com/ollama/ollama/blob/main/docs/api.md)
     const url = `${BACKEND_URL}/api/generate`; // or without the backend url if using a proxy
 
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
-
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
-      
-      // Variables for accumulating text from JSON tokens
-      let buffer = "";
-      let finalText = "";
-      let thinkText = "";
-      let inThinkBlock = false;
-      
       const startTime = performance.now();
-      
+  
       while (true) {
         const { value, done } = await globalReader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        // Split buffer by newline - each line should be a complete JSON token.
         const lines = buffer.split("\n");
-        buffer = lines.pop(); // keep any incomplete line in buffer
+        buffer = lines.pop(); // retain incomplete line
         for (const line of lines) {
           if (!line.trim()) continue;
           try {
             const token = JSON.parse(line);
             let tokenText = token.response;
-            // Process tokenText to separate <think> blocks.
+            // Process tokenText to separate <think> blocks from answer tokens.
             while (true) {
               if (inThinkBlock) {
                 const endIdx = tokenText.indexOf("</think>");
@@ -1191,37 +1189,32 @@ function setupLiveCheckEvents() {
                   thinkText += tokenText.slice(0, endIdx);
                   tokenText = tokenText.slice(endIdx + 8);
                   inThinkBlock = false;
-                  // Continue processing remaining tokenText outside think block.
                   continue;
                 } else {
                   thinkText += tokenText;
                   tokenText = "";
-
+                  // On first receipt, render thinking block with toggle button.
                   if (!firstThinkTokenReceived) {
                     liveThinkOutputEl.style.display = "block";
                     liveThinkOutputEl.innerHTML = `
                       <div class="thinking-overlay">
                         <span id="thinkingLabel" class="thinking-label">Thinking...</span>
-                        <button id="toggleThinkingBtn" class="toggle-thinking">▲</button>
+                        <button id="toggleThinkingBtn" class="toggle-btn">▲</button>
                       </div>
-                      <div id="thinkContent"></div>
+                      <div id="thinkContent" class="collapsible">${DOMPurify.sanitize(marked.parse(thinkText.trim()))}</div>
                     `;
                     document.getElementById("toggleThinkingBtn").addEventListener("click", function() {
-                      const thinkContent = document.getElementById("thinkContent");
-                      const liveThinkOutput = document.getElementById("liveThinkOutput");
-                      if (thinkContent.style.display === "none") {
-                        thinkContent.style.display = "block";
-                        liveThinkOutput.classList.remove("collapsed");
+                      const content = document.getElementById("thinkContent");
+                      if (content.classList.contains("collapsed")) {
+                        content.classList.remove("collapsed");
                         this.textContent = "▲";
                       } else {
-                        thinkContent.style.display = "none";
-                        liveThinkOutput.classList.add("collapsed");
+                        content.classList.add("collapsed");
                         this.textContent = "▼";
                       }
-                    });                    
+                    });
                     firstThinkTokenReceived = true;
                   }
-
                   break;
                 }
               } else {
@@ -1233,49 +1226,54 @@ function setupLiveCheckEvents() {
                   continue;
                 } else {
                   finalText += tokenText;
-
-                  if (!firstNormalTokenReceived) {
+                  if (!firstAnswerTokenReceived) {
                     liveStreamOutputEl.style.display = "block";
                     liveStreamOutputEl.innerHTML = `
                       <div class="answer-overlay">
                         <span id="answer-label">${translation.answerLabel}</span>
+                        <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
                       </div>
-                      <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+                      <div id="answerContent" class="collapsible">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
                     `;
-                    firstNormalTokenReceived = true;
+                    document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
+                      const content = document.getElementById("answerContent");
+                      if (content.classList.contains("collapsed")) {
+                        content.classList.remove("collapsed");
+                        this.textContent = "▲";
+                      } else {
+                        content.classList.add("collapsed");
+                        this.textContent = "▼";
+                      }
+                    });
+                    firstAnswerTokenReceived = true;
                   }
-                  
                   break;
                 }
               }
             }
-            // Update UI live:
+            // Update thinking block
             if (firstThinkTokenReceived) {
               const thinkContentDiv = document.getElementById("thinkContent");
               if (thinkContentDiv) {
                 thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
               }
             }
-            if (firstNormalTokenReceived) {
-              liveStreamOutputEl.innerHTML = `
-                <div class="answer-overlay">
-                  <span id="answer-label">${translation.answerLabel}</span>
-                </div>
-                <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
-              `;
+            // Update answer block
+            if (firstAnswerTokenReceived) {
+              const answerContentDiv = document.getElementById("answerContent");
+              if (answerContentDiv) {
+                answerContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(finalText.trim()));
+              }
             }
-  
           } catch (e) {
             console.error("Failed to parse JSON token:", e);
           }
         }
-        // Only auto-scroll if the user is already near the bottom (within 50px)
-        if ((window.innerHeight + window.pageYOffset) >= (document.body.offsetHeight - 50)) {
+        if (autoScrollEnabled) {
           window.scrollTo(0, document.body.scrollHeight);
         }
       }
-      
-      // Process any remaining text in the buffer.
+      // Process any remaining buffer
       if (buffer.trim()) {
         try {
           const token = JSON.parse(buffer);
@@ -1310,7 +1308,7 @@ function setupLiveCheckEvents() {
           console.error("Error processing final buffer:", e);
         }
       }
-      
+    
       const endTime = performance.now();
       if (firstThinkTokenReceived) {
         const thinkingLabel = document.getElementById("thinkingLabel");
@@ -1318,18 +1316,30 @@ function setupLiveCheckEvents() {
           thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
           thinkingLabel.classList.add("done");
         }
+        // Final update to the answer block.
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
+            <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
           </div>
-          <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+          <div id="answerContent" class="collapsible">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
         `;
+        // Re-attach the answer toggle listener to the new button.
+        const finalToggleAnswerBtn = document.getElementById("toggleAnswerBtn");
+        finalToggleAnswerBtn.addEventListener("click", function() {
+          const content = document.getElementById("answerContent");
+          if (content.classList.contains("collapsed")) {
+            content.classList.remove("collapsed");
+            this.textContent = "▲";
+          } else {
+            content.classList.add("collapsed");
+            this.textContent = "▼";
+          }
+        });
       }
-      
-      // After streaming, attempt to extract final JSON from the finalText.
+    
+      // Extract final JSON and render it (same as before)
       let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
-
-      // Try to extract a JSON block
       const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
       let finalOutputHtml = "";
       let parsedJson = {};
@@ -1348,31 +1358,53 @@ function setupLiveCheckEvents() {
             <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
           </div>
         `;
-        // Remove the JSON block from the cleaned response, then render the remaining Markdown.
         const markdownPart = cleanedResponse.replace(jsonBlock, "").trim();
         const markdownHtml = DOMPurify.sanitize(marked.parse(markdownPart));
         finalOutputHtml = markdownHtml + jsonContainerHtml;
       } else {
         finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse));
       }
-
-      // Finally, update the live stream output element.
+    
+      // Update answer block with final output (JSON remains as before)
       liveStreamOutputEl.innerHTML = `
         <div class="answer-overlay">
           <span id="answer-label">${translation.answerLabel}</span>
+          <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
         </div>
-        <div id="answerContent">${finalOutputHtml}</div>
+        <div id="answerContent" class="collapsible">${finalOutputHtml}</div>
       `;
-
+      // Attach the answer toggle listener one last time.
+      const finalAnswerToggleBtn = document.getElementById("toggleAnswerBtn");
+      finalAnswerToggleBtn.addEventListener("click", function() {
+        const content = document.getElementById("answerContent");
+        if (content.classList.contains("collapsed")) {
+          content.classList.remove("collapsed");
+          this.textContent = "▲";
+        } else {
+          content.classList.add("collapsed");
+          this.textContent = "▼";
+        }
+      });
       liveResultsEl.style.display = "block";
-
-
-      // Highlight JSON if any.
       document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
-
-
       displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
-      
+    
+      // Automatically collapse both the thinking and answer sections after 2 seconds.
+      setTimeout(() => {
+        const thinkContent = document.getElementById("thinkContent");
+        const answerContent = document.getElementById("answerContent");
+        if (thinkContent && !thinkContent.classList.contains("collapsed")) {
+          thinkContent.classList.add("collapsed");
+          const toggleThinkingBtn = document.getElementById("toggleThinkingBtn");
+          if (toggleThinkingBtn) toggleThinkingBtn.textContent = "▼";
+        }
+        if (answerContent && !answerContent.classList.contains("collapsed")) {
+          answerContent.classList.add("collapsed");
+          const toggleAnswerBtn = document.getElementById("toggleAnswerBtn");
+          if (toggleAnswerBtn) toggleAnswerBtn.textContent = "▼";
+        }
+      }, 0);
+    
     } catch (err) {
       console.error("Streaming error:", err);
     } finally {
@@ -1384,6 +1416,8 @@ function setupLiveCheckEvents() {
       document.getElementById("stopLiveCheck").classList.remove("running");
     }
   });
+  
+  
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
@@ -1501,13 +1535,22 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
   if (liveClaimList) {
     liveClaimList.style.display = "block";
     liveClaimList.innerHTML = "";
-    const claimDiv = document.createElement("div");
-    claimDiv.className = "claim-item selected";
-    claimDiv.textContent = `Claim: "${claim}" => Model says: ${answer}`;
-    // if (answer === "TRUE") -> light green, else light red background
-    claimDiv.style.backgroundColor = answer === "TRUE" ? "#e8f5e9" : "#ffebee";
-    liveClaimList.appendChild(claimDiv);
+    // Display the claim text in quotes without any prefix
+    const claimDisplay = document.createElement("div");
+    claimDisplay.className = "claim-display";
+    claimDisplay.textContent = `"${claim}"`;
+    liveClaimList.appendChild(claimDisplay);
+    // Display final verdict in a styled box
+    const verdictDiv = document.createElement("div");
+    verdictDiv.className = "final-verdict " + (answer === "TRUE" ? "true" : "false");
+
+    const lang = document.getElementById("liveLanguageSelect").value;
+    const translation = translationDict[lang] || translationDict["en"];
+    const verdictText = answer === "TRUE" ? translation.trueLabel : translation.falseLabel;
+    verdictDiv.textContent = verdictText.toUpperCase();
+    liveClaimList.appendChild(verdictDiv);
   }
+
   renderLivePreviewTable(csvText, relevantCells);
 }
 

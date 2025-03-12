@@ -567,11 +567,7 @@ body.dark-mode #liveResults {
   background: #f6f6f6;
   border-color: #aaa;
 }
-.claim-item.selected {
-  background: #e3f2fd;
-  border-color: ##333;
-  font-weight: 600;
-}
+
 .claim-item.correct {
   border-left: 4px solid #4caf50;
 }
@@ -898,15 +894,7 @@ textarea:focus {
 #thinkContent ol, #answerContent ol {
   margin-left: 1.5em;
 }
-.toggle-thinking {
-  background: none;
-  border: none;
-  color: #1976d2;
-  cursor: pointer;
-  font-size: 0.85rem;
-  margin-left: 0px;
-  padding: 0.2rem 0.5rem;
-}
+
 #modelLoadingStatus {
   color: #333;
   font-size: 0.9rem;
@@ -919,11 +907,6 @@ textarea:focus {
 #liveStreamOutput {
   position: relative;
   padding-top: 30px; /* Ensure space for the headers */
-}
-
-.live-stream-output.collapsed {
-  padding: 2px;
-  height: 0;
 }
 
 .answer-overlay {
@@ -989,6 +972,31 @@ textarea:focus {
   margin-bottom: 5px;
 }
 
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-left: 0px;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Collapsible content with smooth transition */
+.collapsible {
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.5s ease;
+}
+
+.collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+
+
 .json-container {
   background-color: #fefefe;
   border: 1px solid #ddd;
@@ -1049,9 +1057,35 @@ textarea:focus {
   font-size: 0.9rem;
 }
 
-#liveClaimList .claim-item.selected {
-  color: black;
+
+/* Final Verdict Styling */
+.final-verdict {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 5px;
+  display: block;
+  margin: 10px auto;
+  text-align: center;
+  min-width: 100px;
 }
+.final-verdict.true {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+.final-verdict.false {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+.claim-display {
+  font-size: 1.2rem;
+  font-style: italic;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
 
 #abortMessage {
   display: none;
