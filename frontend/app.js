@@ -1022,7 +1022,7 @@ function setupLiveCheckEvents() {
     };
 
     // Ollama's API endpoint (see https://github.com/ollama/ollama/blob/main/docs/api.md)
-    const url = `${BACKEND_URL}/api/generate`;
+    const url = `${BACKEND_URL}/api/generate`; // or without the backend url if using a proxy
 
     try {
       const response = await fetch(url, {

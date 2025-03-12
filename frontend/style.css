@@ -564,7 +564,7 @@ body.dark-mode #liveResults {
 }
 .claim-item.selected {
   background: #e3f2fd;
-  border-color: #1976d2;
+  border-color: ##333;
   font-weight: 600;
 }
 .claim-item.correct {
