@@ -38,6 +38,68 @@ const liveClaimListEl = document.getElementById("liveClaimList");
 
 window.modelLoaded = true;
 let globalReader = null;
+let globalCSVId = null;
+
+// Translation dictionary
+const translationDict = {
+  en: {
+    enterTable: "Enter Table:",
+    inputTablePlaceholder: "Paste table (CSV format, # delimited)",
+    selectFromDatasetBtn: "Choose from TabFact Dataset",
+    uploadCSVBtn: "Upload CSV File",
+    datasetModalHeader: "Select a Table from the TabFact Dataset",
+    loading_Message: "Loading tables...",
+    tables_loaded: "tables loaded",
+    table_title: "Table Title",
+    enterClaim: "Enter Claim:",
+    inputClaimPlaceholder: "Paste claim here",
+    selectClaimPlaceholder: "Select a claim",
+    existingClaimsWrapperLabel: "or choose an existing one for this table from the TabFact dataset:",
+    includeTableTitleInPrompt: "Include table title in prompt",
+    runLiveCheckBtn: "Run Live Check",
+    answerLabel: "Answer",
+    aiDisclaimer: "AI-generated, for reference only",
+    liveCheckInfo: "Live check uses our backend inference service."
+  },
+  fr: {
+    enterTable: "Entrez le tableau :",
+    inputTablePlaceholder: "Collez le tableau (format CSV, délimité par #)",
+    selectFromDatasetBtn: "Choisir dans l'ensemble de données TabFact",
+    uploadCSVBtn: "Télécharger un fichier CSV",
+    datasetModalHeader: "Sélectionner un tableau dans l'ensemble de données TabFact",
+    loading_Message: "Chargement des tableaux...",
+    tables_loaded: "tableaux chargés",
+    table_title: "Titre du tableau",
+    enterClaim: "Entrez la réclamation :",
+    inputClaimPlaceholder: "Collez la réclamation ici",
+    selectClaimPlaceholder: "Sélectionnez une réclamation",
+    existingClaimsWrapperLabel: "ou choisissez-en une existante pour ce tableau dans l'ensemble de données TabFact :",
+    includeTableTitleInPrompt: "Inclure le titre du tableau dans la demande",
+    runLiveCheckBtn: "Exécuter la vérification en direct",
+    answerLabel: "Réponse",
+    aiDisclaimer: "Généré par l'IA, à titre de référence uniquement",
+    liveCheckInfo: "La vérification en direct utilise notre service d'inférence backend."
+  },
+  de: {
+    enterTable: "Tabelle eingeben:",
+    inputTablePlaceholder: "Tabelle einfügen (CSV-Format, # getrennt)",
+    selectFromDatasetBtn: "Aus TabFact-Datensatz auswählen",
+    uploadCSVBtn: "CSV-Datei hochladen",
+    datasetModalHeader: "Tabelle aus dem TabFact-Datensatz auswählen",
+    loading_Message: "Lade Tabellen...",
+    tables_loaded: "Tabellen geladen",
+    table_title: "Tabellentitel",
+    enterClaim: "Behauptung eingeben:",
+    inputClaimPlaceholder: "Behauptung hier einfügen",
+    selectClaimPlaceholder: "Wählen Sie eine Behauptung",
+    existingClaimsWrapperLabel: "oder wählen Sie eine vorhandene für diese Tabelle aus dem TabFact-Datensatz:",
+    includeTableTitleInPrompt: "Tabellentitel in der Eingabe einschließen",
+    runLiveCheckBtn: "Live-Check durchführen",
+    answerLabel: "Antwort",
+    aiDisclaimer: "Von KI generiert, nur zur Orientierung",
+    liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst."
+  }
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -121,6 +183,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
     validateLiveCheckInputs();
+
+    // Language selection
+    const languageSelect = document.getElementById("liveLanguageSelect");
+    if (languageSelect) {
+      languageSelect.addEventListener("change", () => {
+        updateModelOptionsBasedOnLanguage();
+        updateTranslations();
+        if (globalCSVId) {
+          populateClaimsDropdown(globalCSVId);
+        }
+        if (document.getElementById("tableTitleLabel")) {
+          document.getElementById("tableTitleLabel").textContent = translationDict[languageSelect.value].table_title;
+        }
+      });
+      // Initial call
+      updateModelOptionsBasedOnLanguage();
+      updateTranslations();
+    }
 
     document.querySelectorAll("textarea").forEach(textarea => {
       textarea.addEventListener("input", function() {
@@ -453,9 +533,17 @@ async function renderClaimAndTable(resultObj) {
   const meta = tableToPageMap[resultObj.table_id];
   if (meta) {
     const [tableTitle, wikipediaUrl] = meta;
+
+    // change first part of wikipedia url to reflect the selected language
+    const lang = document.getElementById("liveLanguageSelect").value;
+    const langCode = lang === "en" ? "" : lang + ".";
+    const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
+
+    tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
+
     metaDiv.innerHTML = `
-      <p><strong>Table Title:</strong> ${tableTitle}</p>
-      <p><strong>Wikipedia Link:</strong> <a href="${wikipediaUrl}" data-wikipedia-preview target="_blank">${wikipediaUrl}</a></p>
+      <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
+      <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview target="_blank">${newWikipediaUrl}</a></p>
     `;
   } else {
     metaDiv.innerHTML = `<p><em>No title/link found for this table</em></p>`;
@@ -725,7 +813,11 @@ async function openDatasetOverviewModal() {
   const modal = document.getElementById("datasetOverviewModal");
   const datasetList = document.getElementById("datasetList");
   // Show a loading message (will be replaced after fetch)
-  datasetList.innerHTML = `<p class="dataset-loading-message">Loading tables...</p>`;
+  // Loading tables...
+  // Choose text from translationDict based on the selected language
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+  datasetList.innerHTML = `<p class="dataset-loading-message">${translation.loading_Message}</p>`;
   modal.style.display = "flex";
   
   try {
@@ -738,7 +830,7 @@ async function openDatasetOverviewModal() {
       throw new Error("Dataset list is not an array");
     }
     // Update loading message to show the number of tables loaded
-    datasetList.innerHTML = `<p class="dataset-loading-message">${csvIds.length} tables loaded.</p>`;
+    datasetList.innerHTML = `<p class="dataset-loading-message">${csvIds.length} ${translation.tables_loaded}.</p>`;
     
     csvIds.sort().forEach((csvId, index) => {
       const item = document.createElement("div");
@@ -751,19 +843,24 @@ async function openDatasetOverviewModal() {
       }
       // Capitalize title nicely
       title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+      // change first part of wikipedia url to reflect the selected language
+      const langCode = lang === "en" ? "" : lang + ".";
+      const newWikipediaUrl = wiki.replace(/https:\/\/en\./, `https://${langCode}`);
       
       // Build the dataset item HTML with enumeration and a subtle wiki link if available
       item.innerHTML = `
         <div class="dataset-item-header">
           <span class="dataset-item-number">${index + 1}.</span>
           <span class="dataset-item-title"><strong>${title}</strong> (${csvId})</span>
-          ${wiki ? `<a class="dataset-item-wiki-link" href="${wiki}" target="_blank"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
+          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
         </div>
       `;
 
       if (wiki) {
         item.setAttribute("data-wikipedia-preview", "");
         item.setAttribute("data-wp-title", title);
+        item.setAttribute("data-wp-lang", lang);
       }
       
       // When clicking the item, load the table into the live area.
@@ -771,6 +868,7 @@ async function openDatasetOverviewModal() {
         await fetchAndFillTable(csvId);
         populateClaimsDropdown(csvId);
         modal.style.display = "none";
+        globalCSVId = csvId;
       });
       
       datasetList.appendChild(item);
@@ -818,14 +916,22 @@ async function fetchAndFillTable(tableId) {
     const meta = tableToPageMap[tableId];
     if (meta) {
       const [tableTitle, wikipediaUrl] = meta;
+
+      // change first part of wikipedia url to reflect the selected language
+      const lang = document.getElementById("liveLanguageSelect").value;
+      const langCode = lang === "en" ? "" : lang + ".";
+      const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
+
+      tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
+
       if (liveTableMetaInfo) {
         liveTableMetaInfo.style.display = "block";
         liveTableMetaInfo.innerHTML = `
           <div class="meta-info-box">
-            <p><strong>Table Title:</strong> ${tableTitle}</p>
+            <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
             <p><strong>Wikipedia Link:</strong> 
-              <a href="${wikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" target="_blank">
-                ${wikipediaUrl}
+              <a href="${newWikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" data-wp-lang="${lang}" target="_blank">
+                ${newWikipediaUrl}
               </a>
             </p>
           </div>
@@ -846,7 +952,13 @@ async function fetchAndFillTable(tableId) {
 function populateClaimsDropdown(tableId) {
   const claimsWrapperEl = document.getElementById("existingClaimsWrapper");
   const claimsSelectEl = document.getElementById("existingClaimsSelect");
-  claimsSelectEl.innerHTML = `<option value="">-- Select a Claim --</option>`;
+
+  // first option according to language (e.g. Select a Claim in English)
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+  const selectClaimPlaceholder = translation.selectClaimPlaceholder;
+
+  claimsSelectEl.innerHTML = `<option value="">-- ${selectClaimPlaceholder}  --</option>`;
   if (!tableIdToClaimsMap[tableId]) {
     claimsWrapperEl.style.display = "none";
     return;
@@ -921,8 +1033,6 @@ function setupTabSwitching() {
 function setupLiveCheckEvents() {
   // Mark model as loaded.
   window.modelLoaded = true;
-  
-  // Remove any UI for model loading (if present).
 
   const inputTableEl = document.getElementById("inputTable");
   const inputClaimEl = document.getElementById("inputClaim");
@@ -955,6 +1065,9 @@ function setupLiveCheckEvents() {
     document.getElementById("stopLiveCheck").classList.add("running");
     const liveResultsEl = document.getElementById("liveResults");
     const liveClaimList = document.getElementById("liveClaimList");
+
+    const selectedLanguage = document.getElementById("liveLanguageSelect").value;
+    const translation = translationDict[selectedLanguage] || translationDict["en"];
 
 
     // Clear outputs and hide them initially
@@ -1003,21 +1116,35 @@ function setupLiveCheckEvents() {
     Instructions:
     After your explanation, output a final answer in valid JSON format:
     {"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
+
+    Please consider the header of the table as row_index=0.
     `;
 
-    // Add the <think> token only if the model contains "deepseek".
     const selectedModel = document.getElementById("liveModelSelect").value;
     let extraInstruction = "";
-    if (selectedModel.toLowerCase().includes("deepseek")) {
-      extraInstruction = "\n<think>";
+
+    if (selectedLanguage === "en") {
+      // For English, use default instructions.
+      if (selectedModel.toLowerCase().includes("deepseek")) {
+        extraInstruction = "\n<think>";
+      }
+    } else if (selectedLanguage === "fr") {
+      extraInstruction = "\nPlease provide your response in French.";
+    } else if (selectedLanguage === "de") {
+      extraInstruction = "\nPlease provide your response in German.";
     }
+
+    prompt += extraInstruction;
+    prompt = prompt.trim();
+
+
     prompt += extraInstruction;
     prompt = prompt.trim();
 
     const requestBody = {
       model: selectedModel,
       prompt: prompt,
-      max_tokens: 1024,
+      max_tokens: 2048,
       stream: true
     };
 
@@ -1111,7 +1238,7 @@ function setupLiveCheckEvents() {
                     liveStreamOutputEl.style.display = "block";
                     liveStreamOutputEl.innerHTML = `
                       <div class="answer-overlay">
-                        <span class="answer-label">Answer</span>
+                        <span id="answer-label">${translation.answerLabel}</span>
                       </div>
                       <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
                     `;
@@ -1132,7 +1259,7 @@ function setupLiveCheckEvents() {
             if (firstNormalTokenReceived) {
               liveStreamOutputEl.innerHTML = `
                 <div class="answer-overlay">
-                  <span class="answer-label">Answer</span>
+                  <span id="answer-label">${translation.answerLabel}</span>
                 </div>
                 <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
               `;
@@ -1193,7 +1320,7 @@ function setupLiveCheckEvents() {
         }
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
-            <span class="answer-label">Answer</span>
+            <span id="answer-label">${translation.answerLabel}</span>
           </div>
           <div id="answerContent">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
         `;
@@ -1213,7 +1340,7 @@ function setupLiveCheckEvents() {
         const jsonContainerHtml = `
           <div class="json-container">
             <div class="json-header">
-              <span>JSON Output</span>
+              <span>JSON</span>
               <button class="copy-btn" onclick="copyToClipboard(this)">
                 <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
               </button>
@@ -1232,7 +1359,7 @@ function setupLiveCheckEvents() {
       // Finally, update the live stream output element.
       liveStreamOutputEl.innerHTML = `
         <div class="answer-overlay">
-          <span class="answer-label">Answer</span>
+          <span id="answer-label">${translation.answerLabel}</span>
         </div>
         <div id="answerContent">${finalOutputHtml}</div>
       `;
@@ -1252,7 +1379,7 @@ function setupLiveCheckEvents() {
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
-      runLiveCheckBtn.innerHTML = "Run Live Check";
+      runLiveCheckBtn.innerHTML = translation.runLiveCheckBtn;
       document.getElementById("stopLiveCheck").style.display = "none";
       document.getElementById("stopLiveCheck").classList.remove("running");
     }
@@ -1279,7 +1406,7 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.style.opacity = "1";
     runLiveCheckBtn.style.cursor = "pointer";
     runLiveCheckBtn.classList.remove("loading");
-    runLiveCheckBtn.innerHTML = "Run Live Check";
+    runLiveCheckBtn.innerHTML = translation.runLiveCheckBtn;
     
     // Hide the stop button
     stopLiveCheckBtn.style.display = "none";
@@ -1479,4 +1606,80 @@ function copyToClipboard(btn) {
       console.error("Failed to copy: ", err);
       alert("Failed to copy code.");
     });
+}
+
+function updateModelOptionsBasedOnLanguage() {
+  const languageSelect = document.getElementById("liveLanguageSelect");
+  const selectedLanguage = languageSelect.value;
+  const modelSelect = document.getElementById("liveModelSelect");
+  const allowedModels = ["llama3.2", "gemma3"];
+
+  // Loop over model options and disable ones that are not allowed in non-English mode.
+  for (const option of modelSelect.options) {
+    if (selectedLanguage !== "en") {
+      option.disabled = !allowedModels.includes(option.value);
+    } else {
+      option.disabled = false;
+    }
+  }
+  // If the current selected model is now disabled, switch to the first allowed one.
+  if (modelSelect.selectedOptions.length > 0) {
+    const selectedOption = modelSelect.selectedOptions[0];
+    if (selectedOption.disabled) {
+      for (const option of modelSelect.options) {
+        if (!option.disabled) {
+          modelSelect.value = option.value;
+          break;
+        }
+      }
+    }
+  }
+}
+
+
+
+function updateTranslations() {
+  const lang = document.getElementById("liveLanguageSelect").value;
+  
+  // Table Section
+  const tableHeading = document.querySelector(".table-input-group h3");
+  if (tableHeading) tableHeading.textContent = translationDict[lang].enterTable;
+
+  const inputTablePlaceholder = document.getElementById("inputTable");
+  if (inputTablePlaceholder) inputTablePlaceholder.placeholder = translationDict[lang].inputTablePlaceholder;
+
+  const selectFromDatasetBtn = document.getElementById("selectFromDatasetBtn");
+  if (selectFromDatasetBtn) selectFromDatasetBtn.textContent = translationDict[lang].selectFromDatasetBtn;
+
+  const uploadCSVBtn = document.getElementById("uploadCSVBtn");
+  if (uploadCSVBtn) uploadCSVBtn.textContent = translationDict[lang].uploadCSVBtn;
+
+  const datasetModalHeader = document.querySelector(".dataset-modal-content h3");
+  if (datasetModalHeader) datasetModalHeader.textContent = translationDict[lang].datasetModalHeader;
+
+
+  // Claim Section
+  const claimHeading = document.querySelector(".claim-input-group h3");
+  if (claimHeading) claimHeading.textContent = translationDict[lang].enterClaim;
+
+  const inputClaimPlaceholder = document.getElementById("inputClaim");
+  if (inputClaimPlaceholder) inputClaimPlaceholder.placeholder = translationDict[lang].inputClaimPlaceholder;
+
+  const existingClaimsWrapperLabel = document.querySelector("#existingClaimsWrapper label");
+  if (existingClaimsWrapperLabel) existingClaimsWrapperLabel.textContent = translationDict[lang].existingClaimsWrapperLabel;
+
+  const includeTableTitleInPrompt = document.getElementById("includeTableTitleInPrompt");
+  if (includeTableTitleInPrompt) includeTableTitleInPrompt.textContent = translationDict[lang].includeTableTitleInPrompt;
+
+  // Live Check Section
+  const runLiveCheckBtn = document.getElementById("runLiveCheck");
+  if (runLiveCheckBtn) runLiveCheckBtn.textContent = translationDict[lang].runLiveCheckBtn;
+
+  // Disclaimer
+  const aiDisclaimer = document.querySelector("#aiDisclaimer");
+  if (aiDisclaimer) aiDisclaimer.textContent = translationDict[lang].aiDisclaimer;
+  const liveCheckInfo = document.querySelector("#liveCheckInfo");
+  if (liveCheckInfo) liveCheckInfo.textContent = translationDict[lang].liveCheckInfo;
+
+  // You can add more element updates as needed.
 }

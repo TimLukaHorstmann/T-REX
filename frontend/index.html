@@ -105,23 +105,13 @@
             <option value="llama3.2">Llama3.2 (3b)</option>
             <option value="gemma3">Gemma3 (4b)</option>
           </select>
-          <span id="gpuWarning" style="display:none;"></span>
-          <button id="loadLiveModel" class="btn-primary" style="display: none;">Load Model</button>
-          <div id="modelLoadingStatus" style="display: none;">
-            <span id="modelLoadingText">Loading model:</span>
-            <br />
-            <span id="modelLoadingProgress">0%</span>
-            <div id="modelProgressBarContainer" class="progress-bar-container" style="display: none;">
-              <div id="modelProgressBar" class="progress-bar"></div>
-            </div>
-          </div>
         </div>
 
         <!-- Live Check Section – CSV input + live preview -->
         <div class="input-group table-input-group">
           <h3>Enter Table:</h3>
           <div class="textarea-container">
-            <textarea id="inputTable" rows="6" placeholder="Paste Table (CSV format, # delimited)"></textarea>
+            <textarea id="inputTable" rows="6" placeholder="Paste table (CSV format, # delimited)"></textarea>
             <button id="tableOptionsBtn" class="btn-icon">+</button>
             <div id="tableOptionsDropdown" class="options-dropdown" style="display: none;">
               <button id="selectFromDatasetBtn" class="btn-primary">Choose from TabFact Dataset</button>
@@ -142,21 +132,19 @@
 
 
         <!-- Claim input -->
-        <div class="input-group">
+        <div class="input-group claim-input-group">
           <h3>Enter Claim:</h3>
           <div class="input-group" id="existingClaimsWrapper" style="display:none;">
             <label for="existingClaimsSelect">or choose an existing one for this table from the TabFact dataset:</label>
             <select id="existingClaimsSelect">
-              <option value="">-- Select a Claim --</option>
+              <option value="">-- Select a Claisdfm --</option>
             </select>
           </div>
           <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
-            <label for="includeTableNameCheck">
-              <input type="checkbox" id="includeTableNameCheck" />
-              Include table title in prompt
-            </label>
-          </div>
-          <textarea id="inputClaim" rows="3" placeholder="Paste Claim"></textarea>
+            <input type="checkbox" id="includeTableNameCheck" />
+            <span id="includeTableTitleInPrompt" >Include table title in prompt</span>
+          </div>          
+          <textarea id="inputClaim" rows="3" placeholder="Paste claim here"></textarea>
         </div>
 
         <!-- Run and Stop buttons -->
@@ -172,6 +160,14 @@
             </div>
           </button>
         </div>
+        <!-- Floating language chooser -->
+        <div id="languageChooserFloating">
+          <select id="liveLanguageSelect">
+            <option value="en" selected>English</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+          </select>
+        </div>
       </div>
 
       <!-- Live streaming output panels -->
@@ -181,8 +177,9 @@
         <div id="liveClaimList"></div>
       </div>
       <div id="abortMessage"></div>
-      <p id="disclaimer">AI-generated, for reference only</p>
-      <p id="disclaimer">Live check uses our backend inference service.</p>
+      <p id="aiDisclaimer" class="disclaimer">AI-generated, for reference only</p>
+      <p id="liveCheckInfo" class="disclaimer">Live check uses our backend inference service.</p>
+
     </section>
 
     <!-- Report Section -->
@@ -211,7 +208,7 @@
   <!-- Modal for Dataset Overview -->
   <div id="datasetOverviewModal" class="dataset-modal" style="display:none;">
     <div class="dataset-modal-content">
-      <h3>Select a Table from TabFact Dataset</h3>
+      <h3>Select a Table from the TabFact Dataset</h3>
       <div id="datasetList" class="dataset-list">
         <!-- Dataset items will be loaded here -->
       </div>
