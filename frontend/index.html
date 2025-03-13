@@ -14,12 +14,21 @@
     <input type="checkbox" id="darkModeToggle">
     <label for="darkModeToggle"></label>
   </div>
+
   <header>
     <div class="header-container">
+      <!-- IP Paris logo -->
       <a href="https://www.ip-paris.fr/" target="_blank" class="logo-link">
         <img src="images/ipp.png" alt="IP Paris Logo" class="logo">
       </a>
-      <h1>TableTruth</h1>
+      <!-- Container for the text (centered) and the T-Rex logo -->
+      <div class="tool-text-container">
+        <div class="tool-text">
+          <h1>T-Rex</h1>
+          <p>Table Refute or Entail eXplainer</p>
+        </div>
+        <img src="images/t-rex.png" alt="TableTruth Logo" id="toolLogo">
+      </div>
     </div>
   </header>
 
@@ -223,6 +232,7 @@
   <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <!-- Main app logic -->
+  <script src="translations.js"></script>
   <script src="app.js"></script>
   <script src="wikipedia-preview.umd.js"></script>
   <link rel="stylesheet" href="style.css" />

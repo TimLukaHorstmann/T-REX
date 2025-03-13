@@ -192,11 +192,9 @@ header {
   padding: 1.2rem;
   text-align: center;
 }
+
 .header-container {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  gap: 2rem;
+  text-align: center;
   position: relative;
 }
 
@@ -207,6 +205,25 @@ header {
 .logo-link {
   position: absolute;
   left: 10px;
+}
+
+.tool-text-container {
+  display: inline-block;
+  position: relative;
+}
+
+.tool-text {
+  text-align: center;
+}
+
+#toolLogo {
+  position: absolute;
+  top: 50%;
+  left: 100%;  /* Place immediately after the text container */
+  transform: translateY(-50%);
+  margin-left: 1rem;
+  max-height: 80px;
+  width: auto;
 }
 
 .toggle-switch {
@@ -1086,6 +1103,21 @@ textarea:focus {
   text-align: center;
 }
 
+.status-message {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #1976d2;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: #333;
+  border-radius: 4px;
+  transition: opacity 0.3s ease;
+}
+.status-message button.btn-primary {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  margin-left: 1rem;
+}
 
 #abortMessage {
   display: none;

@@ -59,73 +59,6 @@ window.addEventListener("scroll", function() {
 });
 
 
-// Translation dictionary
-const translationDict = {
-  en: {
-    enterTable: "Enter Table:",
-    inputTablePlaceholder: "Paste table (CSV format, # delimited)",
-    selectFromDatasetBtn: "Choose from TabFact Dataset",
-    uploadCSVBtn: "Upload CSV File",
-    datasetModalHeader: "Select a Table from the TabFact Dataset",
-    loading_Message: "Loading tables...",
-    tables_loaded: "tables loaded",
-    table_title: "Table Title",
-    enterClaim: "Enter Claim:",
-    inputClaimPlaceholder: "Paste claim here",
-    selectClaimPlaceholder: "Select a claim",
-    existingClaimsWrapperLabel: "or choose an existing one for this table from the TabFact dataset:",
-    includeTableTitleInPrompt: "Include table title in prompt",
-    runLiveCheckBtn: "Run Live Check",
-    answerLabel: "Answer",
-    trueLabel: "True",
-    falseLabel: "False",
-    aiDisclaimer: "AI-generated, for reference only",
-    liveCheckInfo: "Live check uses our backend inference service."
-  },
-  fr: {
-    enterTable: "Entrez le tableau :",
-    inputTablePlaceholder: "Collez le tableau (format CSV, délimité par #)",
-    selectFromDatasetBtn: "Choisir dans l'ensemble de données TabFact",
-    uploadCSVBtn: "Télécharger un fichier CSV",
-    datasetModalHeader: "Sélectionner un tableau dans l'ensemble de données TabFact",
-    loading_Message: "Chargement des tableaux...",
-    tables_loaded: "tableaux chargés",
-    table_title: "Titre du tableau",
-    enterClaim: "Entrez la réclamation :",
-    inputClaimPlaceholder: "Collez la réclamation ici",
-    selectClaimPlaceholder: "Sélectionnez une réclamation",
-    existingClaimsWrapperLabel: "ou choisissez-en une existante pour ce tableau dans l'ensemble de données TabFact :",
-    includeTableTitleInPrompt: "Inclure le titre du tableau dans la demande",
-    runLiveCheckBtn: "Exécuter la vérification en direct",
-    answerLabel: "Réponse",
-    trueLabel: "Vrai",
-    falseLabel: "Faux",
-    aiDisclaimer: "Généré par l'IA, à titre de référence uniquement",
-    liveCheckInfo: "La vérification en direct utilise notre service d'inférence backend."
-  },
-  de: {
-    enterTable: "Tabelle eingeben:",
-    inputTablePlaceholder: "Tabelle einfügen (CSV-Format, # getrennt)",
-    selectFromDatasetBtn: "Aus TabFact-Datensatz auswählen",
-    uploadCSVBtn: "CSV-Datei hochladen",
-    datasetModalHeader: "Tabelle aus dem TabFact-Datensatz auswählen",
-    loading_Message: "Lade Tabellen...",
-    tables_loaded: "Tabellen geladen",
-    table_title: "Tabellentitel",
-    enterClaim: "Behauptung eingeben:",
-    inputClaimPlaceholder: "Behauptung hier einfügen",
-    selectClaimPlaceholder: "Wählen Sie eine Behauptung",
-    existingClaimsWrapperLabel: "oder wählen Sie eine vorhandene für diese Tabelle aus dem TabFact-Datensatz:",
-    includeTableTitleInPrompt: "Tabellentitel in der Eingabe einschließen",
-    runLiveCheckBtn: "Live-Check durchführen",
-    answerLabel: "Antwort",
-    trueLabel: "Wahr",
-    falseLabel: "Falsch",
-    aiDisclaimer: "Von KI generiert, nur zur Orientierung",
-    liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst."
-  }
-};
-
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     try {
@@ -1083,11 +1016,24 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.style.cursor = "not-allowed";
     document.getElementById("stopLiveCheck").style.display = "inline-block";
     document.getElementById("stopLiveCheck").classList.add("running");
+    document.getElementById("abortMessage").style.display = "none";
+
+    const selectedLanguage = document.getElementById("liveLanguageSelect").value;
+    const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
+    let requestStatus = document.getElementById("requestStatus");
+    if (!requestStatus) {
+      requestStatus = document.createElement("p");
+      requestStatus.id = "requestStatus";
+      requestStatus.className = "status-message";
+      document.getElementById("liveCheckSection").insertBefore(requestStatus, document.getElementById("liveResults"));
+    }
+    let queuedTimer = setTimeout(() => {
+      requestStatus.style.display = "block";
+      requestStatus.textContent = translation.queuedMessage;
+    }, 2000);
   
     const liveResultsEl = document.getElementById("liveResults");
     const liveClaimList = document.getElementById("liveClaimList");
-    const selectedLanguage = document.getElementById("liveLanguageSelect").value;
-    const translation = translationDict[selectedLanguage] || translationDict["en"];
   
     // Clear previous outputs
     liveStreamOutputEl.textContent = "";
@@ -1181,6 +1127,13 @@ function setupLiveCheckEvents() {
           try {
             const token = JSON.parse(line);
             let tokenText = token.response;
+
+            if (queuedTimer) {
+              clearTimeout(queuedTimer);
+              queuedTimer = null;
+              requestStatus.style.display = "none";
+            }
+
             // Process tokenText to separate <think> blocks from answer tokens.
             while (true) {
               if (inThinkBlock) {
@@ -1407,7 +1360,18 @@ function setupLiveCheckEvents() {
     
     } catch (err) {
       console.error("Streaming error:", err);
+      if (requestStatus) {
+        requestStatus.innerHTML = `<span>${translation.networkError} ${err.message}</span> <button id="retryBtn" class="btn-primary">${translation.retryBtn}</button>`;
+        document.getElementById("retryBtn").addEventListener("click", () => {
+          requestStatus.style.display = "none";
+          // Trigger the run live check event again
+          runLiveCheckBtn.click();
+        });
+      }
     } finally {
+      if (requestStatus) {
+        requestStatus.style.display = "none";
+      }
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
@@ -1421,6 +1385,10 @@ function setupLiveCheckEvents() {
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
+
+    const lang = document.getElementById("liveLanguageSelect").value;
+    const translation = window.translationDict[lang] || window.translationDict["en"];
+
     if (globalReader) {
       globalReader.cancel("User aborted");
       console.log("Generation aborted by user.");
@@ -1432,7 +1400,7 @@ function setupLiveCheckEvents() {
     // Show the abort message
     const abortMsgEl = document.getElementById("abortMessage");
     abortMsgEl.style.display = "block";
-    abortMsgEl.textContent = "Live check aborted.";
+    abortMsgEl.textContent = translation.abortMessage;
     
     // Reset the run button
     const runLiveCheckBtn = document.getElementById("runLiveCheck");
