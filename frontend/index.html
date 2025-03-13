@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TableTruth</title>
+  <title>T-REx: Table - Refute or Entail Explainer</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
   <link rel="icon" href="images/favicon_io/favicon.ico" type="image/x-icon"> 
@@ -24,10 +24,10 @@
       <!-- Container for the text (centered) and the T-Rex logo -->
       <div class="tool-text-container">
         <div class="tool-text">
-          <h1>T-Rex</h1>
-          <p>Table Refute or Entail eXplainer</p>
+          <h1>T-REx</h1>
+          <p>Table - Refute or Entail Explainer</p>
         </div>
-        <img src="images/t-rex.png" alt="TableTruth Logo" id="toolLogo">
+        <img src="images/t-rex.png" alt="T-REx Logo" id="toolLogo">
       </div>
     </div>
   </header>
@@ -121,10 +121,21 @@
           <h3>Enter Table:</h3>
           <div class="textarea-container">
             <textarea id="inputTable" rows="6" placeholder="Paste table (CSV format, # delimited)"></textarea>
+            <div id="imagePreview" class="image-preview" style="display: none;">
+              <span class="close-preview">&times;</span>
+            </div>            
             <button id="tableOptionsBtn" class="btn-icon">+</button>
             <div id="tableOptionsDropdown" class="options-dropdown" style="display: none;">
               <button id="selectFromDatasetBtn" class="btn-primary">Choose from TabFact Dataset</button>
               <button id="uploadCSVBtn" class="btn-primary">Upload CSV File</button>
+              <button id="uploadImageBtn" class="btn-primary">Upload Table Image</button>
+              <div class="ocr-selector">
+                <select id="ocrEngineSelect">
+                  <option value="tesseract" selected>Client-side OCR (default)</option>
+                  <option value="ollama">Server-side OCR</option>
+                </select>
+              </div>
+              <input type="file" id="imageUpload" accept="image/*" style="display:none;">
             </div>
           </div>
           <div id="liveTableMetaInfo" class="info-panel" style="display:none;"></div>
@@ -201,7 +212,7 @@
 
   <footer>
     <div class="footer-content">
-      <p>&copy; 2025 TableTruth</p>
+      <p>&copy; 2025 T-REx: Table - Refute or Entail Explainer</p>
       <p class="attribution">
         <a href="https://horstmann.tech" target="_blank">Tim Luka Horstmann</a>,
         Baptiste Geisenberger,
@@ -224,6 +235,15 @@
     </div>
   </div>
 
+  <div id="loadingModal" class="loading-modal" style="display: none;">
+    <div class="loading-content">
+      <div id="imageSpinner" class="spinner"></div>
+      <p>Processing image, please wait...</p>
+      <p style="font-size: small;">This may take a few seconds depending on the table size and OCR engine you selected.</p>
+    </div>
+  </div>
+  
+
   <!-- External libraries -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.10/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -231,6 +251,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
   <!-- Main app logic -->
   <script src="translations.js"></script>
   <script src="app.js"></script>

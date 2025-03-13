@@ -73,7 +73,7 @@ window.translationDict = {
       falseLabel: "Falsch",
       aiDisclaimer: "Von KI generiert, nur zur Orientierung",
       liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst.",
-      queuedMessage: "Ihre Anfrage steht in der Warteschlange, bitte warten...",
+      queuedMessage: "Ihre Anfrage befindet sich in der Warteschlange, bitte warten...",
       networkError: "Netzwerkfehler:",
       retryBtn: "Erneut versuchen"
     }

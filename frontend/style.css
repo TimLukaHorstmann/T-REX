@@ -522,6 +522,10 @@ body.dark-mode #liveResults {
   to { transform: rotate(360deg); }
 }
 
+#imageSpinner{
+  border-top: 3px solid #1976d2;
+}
+
 /* Progress Bar */
 .progress-bar-container {
   width: 100%;
@@ -749,6 +753,42 @@ textarea:focus {
   padding-bottom: 50px; /* Reserve space for the + button */
 }
 
+/* image preview */
+.image-preview {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #fff;
+  z-index: 10;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-preview .close-preview {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 20;
+}
+
+
 .input-group textarea {
   width: 100%;
   padding: 10px;
@@ -799,6 +839,7 @@ textarea:focus {
   z-index: 10;
 }
 
+
 /* Style buttons inside the dropdown */
 .options-dropdown .btn-primary {
   margin: 5px 0;
@@ -807,6 +848,22 @@ textarea:focus {
   background-color: #efefef;
   color: #333;
 }
+#uploadImageBtn {
+  margin-bottom: 0;
+}
+
+.ocr-selector {
+  margin-top: 0px;
+  font-size: 0.6rem;
+  color: #666;
+  display: inline-block;
+}
+.ocr-selector select {
+  padding: 2px 4px;
+  font-size: 0.6rem;
+  border: none;
+}
+
 
 .live-results {
   background: #fff;
@@ -1262,6 +1319,27 @@ footer {
   padding: 4px;
 }
 
+
+/* --- Loading Modal --- */
+.loading-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
 
 @media (max-width: 600px) {
   header {

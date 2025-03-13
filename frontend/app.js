@@ -160,6 +160,54 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateTranslations();
     }
 
+    // Handle paste events in the table textarea to detect images.
+    const inputTableEl = document.getElementById("inputTable");
+    inputTableEl.addEventListener("paste", function (e) {
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+          // Show loading spinner/modal.
+          const loadingModal = document.getElementById("loadingModal");
+          loadingModal.style.display = "flex";
+          // Show image preview
+          const imagePreview = document.getElementById("imagePreview");
+          const url = URL.createObjectURL(file);
+          imagePreview.innerHTML = `<span class="close-preview">&times;</span><img src="${url}" alt="Pasted Image Preview">`;
+          imagePreview.style.display = "block";
+          
+          processImageOCR(file)
+            .then(csvText => {
+              loadingModal.style.display = "none";
+              inputTableEl.value = csvText;
+              renderLivePreviewTable(csvText, []);
+              validateLiveCheckInputs();
+            })
+            .catch(err => {
+              loadingModal.style.display = "none";
+              console.error("OCR processing error on paste:", err);
+              alert("Failed to process the pasted image. Please try again.");
+            });
+          // Prevent the default paste action.
+          e.preventDefault();
+          return;
+        }
+        else if (items[i].type === "text/plain") {
+          return;
+        }
+      }
+    });
+    // remove image preview when clicking the close button.
+    const imagePreviewEl = document.getElementById("imagePreview");
+    imagePreviewEl.addEventListener("click", function (e) {
+      if (e.target.classList.contains("close-preview")) {
+        imagePreviewEl.style.display = "none";
+        imagePreviewEl.querySelectorAll("img").forEach(img => img.remove());
+      }
+    });
+
+
+
     document.querySelectorAll("textarea").forEach(textarea => {
       textarea.addEventListener("input", function() {
         this.style.height = "auto";
@@ -740,11 +788,10 @@ document.getElementById("tableOptionsBtn").addEventListener("click", function (e
   dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
 });
 
-// Hide the dropdown when clicking outside the textarea container
+// Hide the dropdown when clicking outside the dropdown
 document.addEventListener("click", function (e) {
-  const container = document.querySelector(".textarea-container");
   const dropdown = document.getElementById("tableOptionsDropdown");
-  if (!container.contains(e.target)) {
+  if (!dropdown.contains(e.target)) {
     dropdown.style.display = "none";
   }
 });
@@ -1010,13 +1057,11 @@ function setupLiveCheckEvents() {
   ////////////////////// MAIN FUNCTIONALITY //////////////////////
   // Run Live Check button: call Ollama's completions endpoint with live streaming.
   runLiveCheckBtn.addEventListener("click", async () => {
-    // Disable the Run button and show the Stop button.
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
-    document.getElementById("stopLiveCheck").style.display = "inline-block";
-    document.getElementById("stopLiveCheck").classList.add("running");
     document.getElementById("abortMessage").style.display = "none";
+    window.streamAborted = false;
 
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
@@ -1100,7 +1145,8 @@ function setupLiveCheckEvents() {
       model: selectedModel,
       prompt: prompt,
       max_tokens: 2048,
-      stream: true
+      stream: true,
+      keep_alive: 0 // unload models immediately to free up GPU, might need to adjust this value
     };
   
     // Ollama's API endpoint (see https://github.com/ollama/ollama/blob/main/docs/api.md)
@@ -1112,6 +1158,9 @@ function setupLiveCheckEvents() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
+      document.getElementById("stopLiveCheck").style.display = "inline-block";
+      document.getElementById("stopLiveCheck").classList.add("running");
+
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
@@ -1290,6 +1339,11 @@ function setupLiveCheckEvents() {
           }
         });
       }
+
+      if (window.streamAborted) {
+        // Abort was triggered so do not update results.
+        return;
+      }
     
       // Extract final JSON and render it (same as before)
       let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
@@ -1385,10 +1439,8 @@ function setupLiveCheckEvents() {
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
-
-    const lang = document.getElementById("liveLanguageSelect").value;
-    const translation = window.translationDict[lang] || window.translationDict["en"];
-
+    // Set abort flag
+    window.streamAborted = true;
     if (globalReader) {
       globalReader.cancel("User aborted");
       console.log("Generation aborted by user.");
@@ -1400,6 +1452,8 @@ function setupLiveCheckEvents() {
     // Show the abort message
     const abortMsgEl = document.getElementById("abortMessage");
     abortMsgEl.style.display = "block";
+    const lang = document.getElementById("liveLanguageSelect").value;
+    const translation = window.translationDict[lang] || window.translationDict["en"];
     abortMsgEl.textContent = translation.abortMessage;
     
     // Reset the run button
@@ -1442,14 +1496,19 @@ function renderLivePreviewTable(csvText, relevantCells) {
     rowVals.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
+    
+      // Use optional chaining to avoid errors
       const colName = columns[colIndex];
+      const colNameLower = colName?.toLowerCase();
+    
       const shouldHighlight = relevantCells.some(
         hc => hc.row_index === rowIndex &&
-              hc.column_name?.toLowerCase() === colName.toLowerCase()
+              hc.column_name?.toLowerCase() === colNameLower
       );
       if (shouldHighlight) td.classList.add("highlight");
+    
       tr.appendChild(td);
-    });
+    });    
     tbody.appendChild(tr);
   });
   tableEl.appendChild(tbody);
@@ -1649,6 +1708,210 @@ function updateModelOptionsBasedOnLanguage() {
 
 
 
+// Event listener for image upload button
+document.getElementById("uploadImageBtn").addEventListener("click", function() {
+  document.getElementById("imageUpload").click();
+});
+
+// When an image is selected, process it using the chosen OCR engine
+document.getElementById("imageUpload").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const loadingModal = document.getElementById("loadingModal");
+    loadingModal.style.display = "flex"; // Show modal
+
+    // Show image preview for the uploaded image
+    const imagePreview = document.getElementById("imagePreview");
+    const url = URL.createObjectURL(file);
+    imagePreview.innerHTML = `<span class="close-preview">&times;</span><img src="${url}" alt="Image Preview">`;
+    imagePreview.style.display = "block";
+
+    processImageOCR(file)
+      .then(csvText => {
+        loadingModal.style.display = "none"; // Hide modal when done
+        const inputTableEl = document.getElementById("inputTable");
+        inputTableEl.value = csvText;
+        renderLivePreviewTable(csvText, []);
+        validateLiveCheckInputs();
+      })
+      .catch(err => {
+        loadingModal.style.display = "none";
+        console.error("OCR processing error:", err);
+        alert("Failed to process the image. Please try again.");
+      })
+      .finally(() => {
+        e.target.value = "";
+      });
+  }
+});
+
+
+
+
+// Main function to select the OCR engine based on user selection
+function processImageOCR(file) {
+  const engine = document.getElementById('ocrEngineSelect').value;
+  if (engine === 'tesseract') {
+    return processImageWithTesseract(file);
+  } else if (engine === 'ollama') {
+    return processImageWithOllama(file);
+  } else {
+    return Promise.reject(new Error("Unknown OCR engine selected."));
+  }
+}
+
+// Option 1: Client-side OCR using Tesseract.js
+function processImageWithTesseract(file) {
+  return Tesseract.recognize(file, 'eng', { logger: m => console.log(m) })
+    .then(({ data: { text } }) => {
+      // Convert the OCR text to CSV format with '#' as delimiter.
+      return processOCRTextToCSV(text);
+    });
+}
+
+// Option 2: Server-side OCR using Ollama granite3.2-vision
+function processImageWithOllama(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result; // e.g. "data:image/png;base64,ABC..."
+      // Remove the prefix so only the base64 string remains.
+      const base64String = dataUrl.split(",")[1];
+      
+      const payload = {
+        model: "granite3.2-vision", 
+        prompt: "Return only the table extracted from the image as #-separated values! Do not include row numbers or any additional text. Preserve any commas that appear in numbers. DO NOT USE A COMMA AS A DELIMITER.",
+        images: [base64String],
+        stream: false,
+        keep_alive: 0
+      };
+      fetch(BACKEND_URL + '/api/generate', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Ollama OCR failed: " + response.statusText);
+        }
+        return response.json(); // Expect a JSON response.
+      })
+      .then(data => {
+        if (data && data.response) {
+          // Process the CSV: remove row numbers, quotes, and convert delimiter from comma to "#"
+          let csvText = processOllamaCSV(data.response);
+          resolve(csvText);
+        } else {
+          reject(new Error("Ollama OCR returned unexpected response format."));
+        }
+      })
+      .catch(err => {
+        reject(err);
+      });
+    };
+    reader.onerror = function(err) {
+      reject(err);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
+// Improved helper function to convert raw OCR text to CSV format using '#' as delimiter.
+// It merges a split header (if the second line is very short) and then merges lines that have too few tokens.
+function processOCRTextToCSV(ocrText) {
+  let lines = ocrText.split(/\r?\n/).filter(line => line.trim().length > 0);
+  
+  // Replace multiple spaces or tabs with '#' in each line.
+  lines = lines.map(line => line.trim().replace(/[\s\t]+/g, "#"));
+
+  // If the first line (header) is followed by a very short line, merge it.
+  if (lines.length > 1) {
+    const headerTokens = lines[0].split("#");
+    const secondTokens = lines[1].split("#");
+    if (secondTokens.length < 3) { // heuristic: if second line is very short
+      headerTokens[headerTokens.length - 1] = headerTokens[headerTokens.length - 1] + " " + secondTokens.join(" ");
+      lines[0] = headerTokens.join("#");
+      lines.splice(1, 1);
+    }
+  }
+
+  if (lines.length === 0) {
+    return "";
+  }
+  
+  // Determine expected column count from header.
+  const expectedColumns = lines[0].split("#").length;
+  let processedLines = [lines[0]];
+  let buffer = "";
+
+  // Process remaining lines. If a line has fewer tokens than expected, merge it with the buffer.
+  for (let i = 1; i < lines.length; i++) {
+    let currentLine = lines[i];
+    const cols = currentLine.split("#");
+    if (cols.length < expectedColumns) {
+      buffer += (buffer ? " " : "") + currentLine;
+      if (buffer.split("#").length >= expectedColumns) {
+        processedLines.push(buffer);
+        buffer = "";
+      }
+    } else {
+      if (buffer) {
+        currentLine = buffer + " " + currentLine;
+        buffer = "";
+      }
+      processedLines.push(currentLine);
+    }
+  }
+  if (buffer) {
+    processedLines.push(buffer);
+  }
+  return processedLines.join("\n");
+}
+
+function processOllamaCSV(csvText) {
+  // Remove any extraneous quotes.
+  csvText = csvText.replace(/"/g, '');
+
+  // Define a placeholder for thousand-separator commas.
+  const placeholder = 'THOUSANDSSEP';
+
+  // Helper: protect commas used as thousand separators.
+  function protectThousandSeparators(text) {
+    let newText = text;
+    const regex = /(\d),(\d{3})(?!\d)/g;
+    // Loop in case there are multiple commas (e.g., "1,234,567")
+    while (regex.test(newText)) {
+      newText = newText.replace(regex, '$1' + placeholder + '$2');
+    }
+    return newText;
+  }
+  csvText = protectThousandSeparators(csvText);
+
+  // Split the text into lines.
+  const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+
+  // Process each line.
+  const processedLines = lines.map(line => {
+    let cells = line.split(',').map(cell => cell.trim());
+    // Remove an empty first cell if it exists.
+    if (cells[0] === '') {
+      cells.shift();
+    }
+    return cells.join('#');
+  });
+
+  let result = processedLines.join('\n');
+
+  // Restore thousand separators.
+  result = result.replace(new RegExp(placeholder, 'g'), ',');
+
+  return result;
+}
+
+
+
+
 function updateTranslations() {
   const lang = document.getElementById("liveLanguageSelect").value;
   
@@ -1691,6 +1954,4 @@ function updateTranslations() {
   if (aiDisclaimer) aiDisclaimer.textContent = translationDict[lang].aiDisclaimer;
   const liveCheckInfo = document.querySelector("#liveCheckInfo");
   if (liveCheckInfo) liveCheckInfo.textContent = translationDict[lang].liveCheckInfo;
-
-  // You can add more element updates as needed.
 }
