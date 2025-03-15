@@ -830,14 +830,12 @@ document.getElementById("uploadCSVBtn").addEventListener("click", function () {
 async function openDatasetOverviewModal() {
   const modal = document.getElementById("datasetOverviewModal");
   const datasetList = document.getElementById("datasetList");
-  // Show a loading message (will be replaced after fetch)
-  // Loading tables...
   // Choose text from translationDict based on the selected language
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
   datasetList.innerHTML = `<p class="dataset-loading-message">${translation.loading_Message}</p>`;
   modal.style.display = "flex";
-  
+
   try {
     const response = await fetch(ALL_CSV_IDS_PATH);
     if (!response.ok) {
@@ -850,6 +848,8 @@ async function openDatasetOverviewModal() {
     // Update loading message to show the number of tables loaded
     datasetList.innerHTML = `<p class="dataset-loading-message">${csvIds.length} ${translation.tables_loaded}.</p>`;
     
+    // Use a DocumentFragment to build the list items efficiently
+    const fragment = document.createDocumentFragment();
     csvIds.sort().forEach((csvId, index) => {
       const item = document.createElement("div");
       item.classList.add("dataset-item");
@@ -862,30 +862,31 @@ async function openDatasetOverviewModal() {
       // Capitalize title nicely
       title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-      // change first part of wikipedia url to reflect the selected language
+      // Change the first part of wikipedia URL to reflect the selected language
       const langCode = lang === "en" ? "" : lang + ".";
-      const newWikipediaUrl = wiki.replace(/https:\/\/en\./, `https://${langCode}`);
+      const newWikipediaUrl = wiki ? wiki.replace(/https:\/\/en\./, `https://${langCode}`) : "";
       
-      // Build the dataset item HTML with enumeration and a subtle wiki link if available
+      // Build the HTML for each dataset item (with lazy-loading for the image)
       item.innerHTML = `
         <div class="dataset-item-header">
           <span class="dataset-item-number">${index + 1}.</span>
           <span class="dataset-item-title"><strong>${title}</strong> (${csvId})</span>
-          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank" data-wikipedia-preview data-wp-title="${title}" data-wp-lang="${lang}"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon"></a>` : ''}
+          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank" data-wikipedia-preview data-wp-title="${title}" data-wp-lang="${lang}"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon" loading="lazy"></a>` : ''}
         </div>
       `;
-      
-      // When clicking the item, load the table into the live area.
       item.addEventListener("click", async function(e) {
         await fetchAndFillTable(csvId);
         populateClaimsDropdown(csvId);
         modal.style.display = "none";
+        // *** FIX: Update the global selectedTableId when an item is chosen ***
+        selectedTableId = csvId;
         globalCSVId = csvId;
       });
-      
-      datasetList.appendChild(item);
+      fragment.appendChild(item);
     });
-    
+    datasetList.innerHTML = "";
+    datasetList.appendChild(fragment);
+
     // Initialize Wikipedia previews on the modal’s new content.
     wikipediaPreview.init({ root: document.getElementById("datasetOverviewModal") });
     
@@ -894,6 +895,7 @@ async function openDatasetOverviewModal() {
     console.error("Error in dataset modal:", err);
   }
 }
+
 
 
 // Close the dataset modal when clicking outside its content.
