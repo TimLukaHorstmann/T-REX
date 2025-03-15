@@ -222,7 +222,7 @@ header {
   left: 100%;  /* Place immediately after the text container */
   transform: translateY(-50%);
   margin-left: 1rem;
-  max-height: 80px;
+  max-height: 90px;
   width: auto;
 }
 
@@ -1058,7 +1058,7 @@ textarea:focus {
 
 /* Collapsible content with smooth transition */
 .collapsible {
-  max-height: 1000px;
+  max-height: 2000px;
   overflow: hidden;
   transition: max-height 0.5s ease, padding 0.5s ease;
 }

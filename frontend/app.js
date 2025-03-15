@@ -12,8 +12,8 @@ const R2_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-
 const FULL_CLEANED_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/full_cleaned.json";
 const MANIFEST_JSON_PATH = "results/manifest.json";
 
-// point to Ollama’s API server
-const BACKEND_URL = "http://127.0.0.1:11434";
+// point to Ollama’s API
+const BACKEND_URL = `http://127.0.0.1:11434/api/generate`;
 
 // Global variables for precomputed results
 let allResults = [];               
@@ -1065,14 +1065,16 @@ function setupLiveCheckEvents() {
 
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
+    
     let requestStatus = document.getElementById("requestStatus");
-    if (!requestStatus) {
-      requestStatus = document.createElement("p");
-      requestStatus.id = "requestStatus";
-      requestStatus.className = "status-message";
-      document.getElementById("liveCheckSection").insertBefore(requestStatus, document.getElementById("liveResults"));
-    }
+
     let queuedTimer = setTimeout(() => {
+      if (!requestStatus) {
+        requestStatus = document.createElement("p");
+        requestStatus.id = "requestStatus";
+        requestStatus.className = "status-message";
+        document.getElementById("liveCheckSection").insertBefore(requestStatus, document.getElementById("liveResults"));
+      }
       requestStatus.style.display = "block";
       requestStatus.textContent = translation.queuedMessage;
     }, 2000);
@@ -1148,12 +1150,9 @@ function setupLiveCheckEvents() {
       stream: true,
       keep_alive: 0 // unload models immediately to free up GPU, might need to adjust this value
     };
-  
-    // Ollama's API endpoint (see https://github.com/ollama/ollama/blob/main/docs/api.md)
-    const url = `${BACKEND_URL}/api/generate`; // or without the backend url if using a proxy
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
@@ -1785,7 +1784,7 @@ function processImageWithOllama(file) {
         stream: false,
         keep_alive: 0
       };
-      fetch(BACKEND_URL + '/api/generate', {
+      fetch(BACKEND_URL, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
