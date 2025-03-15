@@ -1,14 +1,10 @@
 <h1 align="left">
-  <img src="frontend/images/t-rex.png" alt="T-REX Logo" style="height: 50px; vertical-align: bottom;">
+  <img src="frontend/images/t-rex.png" alt="T-REX Logo" style="height: 80px; vertical-align: bottom;">
   T-REX: Table - Refute or Entail eXplainer
 </h1>
 
-<table>
-  <tr>
-    <td style="vertical-align: bottom;"><h1>T-REX: Table - Refute or Entail eXplainer</h1></td>
-    <td style="vertical-align: bottom;"><img src="frontend/images/t-rex.png" alt="T-REX Logo" width="60"></td>
-  </tr>
-</table>
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/naptha/tesseract.js/graphs/commit-activity)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging advanced Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant table cells.
 

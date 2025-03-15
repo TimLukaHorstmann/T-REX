@@ -39,6 +39,7 @@ const liveClaimListEl = document.getElementById("liveClaimList");
 window.modelLoaded = true;
 let globalReader = null;
 let globalCSVId = null;
+let ocrAbortController = null;
 
 // Disable auto-scroll if the user scrolls up manually.
 let autoScrollEnabled = true;
@@ -206,6 +207,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
+    // Close the loading modal when clicking the close button.
+    document.querySelector("#loadingModal .close-modal").addEventListener("click", function() {
+      // Hide the loading modal.
+      document.getElementById("loadingModal").style.display = "none";
+      // Abort the server-side OCR if running.
+      if (ocrAbortController) {
+        ocrAbortController.abort();
+        ocrAbortController = null;
+      }
+    });
+    
+    
 
 
     document.querySelectorAll("textarea").forEach(textarea => {
@@ -1722,12 +1735,37 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
     // Show image preview for the uploaded image
     const imagePreview = document.getElementById("imagePreview");
     const url = URL.createObjectURL(file);
-    imagePreview.innerHTML = `<span class="close-preview">&times;</span><img src="${url}" alt="Image Preview">`;
+
+    // Wrap the image in a container (no anchor here)
+    imagePreview.innerHTML = `
+      <span class="close-preview">&times;</span>
+      <img src="${url}" alt="Pasted Image Preview" style="cursor: pointer;">
+    `;
     imagePreview.style.display = "block";
+
+    // Attach a click event to the preview image to open the modal
+    const previewImg = imagePreview.querySelector("img");
+    if (previewImg) {
+      previewImg.addEventListener("click", function() {
+        // Create a new modal using Tingle.js
+        var modal = new tingle.modal({
+          footer: false,
+          stickyFooter: false,
+          closeMethods: ['overlay', 'escape'],
+          closeLabel: "Close",
+          cssClass: ['custom-modal']
+        });
+        
+        // Set modal content to display the full-size image
+        modal.setContent('<img src="' + url + '" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">');
+        modal.open();
+      });
+    }
+
 
     processImageOCR(file)
       .then(csvText => {
-        loadingModal.style.display = "none"; // Hide modal when done
+        loadingModal.style.display = "none";
         const inputTableEl = document.getElementById("inputTable");
         inputTableEl.value = csvText;
         renderLivePreviewTable(csvText, []);
@@ -1735,8 +1773,11 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
       })
       .catch(err => {
         loadingModal.style.display = "none";
-        console.error("OCR processing error:", err);
-        alert("Failed to process the image. Please try again.");
+        console.error("OCR processing error on paste:", err);
+        // Only alert if the error is not due to an intentional abort.
+        if (!err.message.toLowerCase().includes("aborted")) {
+          alert("Failed to process the pasted image. Please try again or change the OCR engine.\n" + err);
+        }
       })
       .finally(() => {
         e.target.value = "";
@@ -1762,14 +1803,15 @@ function processImageOCR(file) {
 // Option 1: Client-side OCR using Tesseract.js
 function processImageWithTesseract(file) {
   return Tesseract.recognize(file, 'eng', { logger: m => console.log(m) })
-    .then(({ data: { text } }) => {
-      // Convert the OCR text to CSV format with '#' as delimiter.
-      return processOCRTextToCSV(text);
-    });
+    .then(({ data: { text } }) => processOCRTextToCSV(text));
 }
+
+
+
 
 // Option 2: Server-side OCR using Ollama granite3.2-vision
 function processImageWithOllama(file) {
+  ocrAbortController = new AbortController();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1787,13 +1829,14 @@ function processImageWithOllama(file) {
       fetch(BACKEND_URL, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: ocrAbortController.signal
       })
       .then(response => {
         if (!response.ok) {
           throw new Error("Ollama OCR failed: " + response.statusText);
         }
-        return response.json(); // Expect a JSON response.
+        return response.json();
       })
       .then(data => {
         if (data && data.response) {
@@ -1805,7 +1848,11 @@ function processImageWithOllama(file) {
         }
       })
       .catch(err => {
-        reject(err);
+        if (err.name === "AbortError") {
+          reject(new Error("OCR process aborted by user."));
+        } else {
+          reject(err);
+        }
       });
     };
     reader.onerror = function(err) {
@@ -1929,6 +1976,15 @@ function updateTranslations() {
 
   const datasetModalHeader = document.querySelector(".dataset-modal-content h3");
   if (datasetModalHeader) datasetModalHeader.textContent = translationDict[lang].datasetModalHeader;
+
+  const uploadImageBtn = document.getElementById("uploadImageBtn");
+  if (uploadImageBtn) uploadImageBtn.textContent = translationDict[lang].uploadImageBtn;
+
+  const processingImage = document.getElementById("processingImage");
+  if (processingImage) processingImage.textContent = translationDict[lang].processingImage;
+
+  const mayTakeSeconds = document.getElementById("mayTakeSeconds");
+  if (mayTakeSeconds) mayTakeSeconds.textContent = translationDict[lang].mayTakeSeconds;
 
 
   // Claim Section

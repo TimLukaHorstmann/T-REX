@@ -17,11 +17,9 @@
 
   <header>
     <div class="header-container">
-      <!-- IP Paris logo -->
       <a href="https://www.ip-paris.fr/" target="_blank" class="logo-link">
         <img src="images/ipp.png" alt="IP Paris Logo" class="logo">
       </a>
-      <!-- Container for the text (centered) and the T-Rex logo -->
       <div class="tool-text-container">
         <div class="tool-text">
           <h1>T-REX</h1>
@@ -42,7 +40,6 @@
 
     <!-- Precomputed Results Section -->
     <section id="resultsSection" class="results-section" style="display: none;">
-      <!-- Controls for precomputed results -->
       <section class="controls">
         <div class="select-group">
           <label for="modelSelect">Model:</label>
@@ -237,9 +234,10 @@
 
   <div id="loadingModal" class="loading-modal" style="display: none;">
     <div class="loading-content">
+      <span class="close-modal">&times;</span>
       <div id="imageSpinner" class="spinner"></div>
-      <p>Processing image, please wait...</p>
-      <p style="font-size: small;">This may take a few seconds depending on the table size and OCR engine you selected.</p>
+      <p id="processingImage">Processing image, please wait...</p>
+      <p id="mayTakeSeconds" style="font-size: small;">This may take a few seconds depending on the table size and OCR engine you selected.</p>
     </div>
   </div>
   
@@ -251,7 +249,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js/dist/tesseract.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.js"></script>
+
   <!-- Main app logic -->
   <script src="translations.js"></script>
   <script src="app.js"></script>
