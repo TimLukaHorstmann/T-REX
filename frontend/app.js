@@ -1148,6 +1148,16 @@ function setupLiveCheckEvents() {
       }
     } else if (selectedLanguage === "fr") {
       extraInstruction = "\nPlease provide your response in French.";
+    } else if (selectedLanguage === "es") {
+      extraInstruction = "\nPlease provide your response in Spanish.";
+    } else if (selectedLanguage === "pt") {
+      extraInstruction = "\nPlease provide your response in Portuguese.";
+    } else if (selectedLanguage === "zh") {
+      extraInstruction = "\nPlease provide your response in Chinese.";
+    } else if (selectedLanguage === "ar") {
+      extraInstruction = "\nPlease provide your response in Arabic.";
+    } else if (selectedLanguage === "ru") {
+      extraInstruction = "\nPlease provide your response in Russian.";
     } else if (selectedLanguage === "de") {
       extraInstruction = "\nPlease provide your response in German.";
     }
@@ -1515,7 +1525,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
     
       const shouldHighlight = relevantCells.some(
         hc => hc.row_index === rowIndex &&
-              hc.column_name?.toLowerCase() === colNameLower
+          hc.column_name?.toLowerCase().replace(/\s+/g, '') === colNameLower?.replace(/\s+/g, '')
       );
       if (shouldHighlight) td.classList.add("highlight");
     
@@ -1979,6 +1989,12 @@ function updateTranslations() {
 
   const uploadImageBtn = document.getElementById("uploadImageBtn");
   if (uploadImageBtn) uploadImageBtn.textContent = translationDict[lang].uploadImageBtn;
+
+  const clientEngine = document.getElementById("clientEngine");
+  if (clientEngine) clientEngine.textContent = translationDict[lang].clientEngine;
+
+  const serverEngine = document.getElementById("serverEngine");
+  if (serverEngine) serverEngine.textContent = translationDict[lang].serverEngine;
 
   const processingImage = document.getElementById("processingImage");
   if (processingImage) processingImage.textContent = translationDict[lang].processingImage;

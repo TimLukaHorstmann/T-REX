@@ -128,8 +128,8 @@
               <button id="uploadImageBtn" class="btn-primary">Upload Table Image</button>
               <div class="ocr-selector">
                 <select id="ocrEngineSelect">
-                  <option value="tesseract" selected>Client-side OCR (default)</option>
-                  <option value="ollama">Server-side OCR</option>
+                  <option id="clientEngine" value="tesseract" selected>Client-side OCR (default)</option>
+                  <option id="serverEngine" value="ollama">Server-side OCR</option>
                 </select>
               </div>
               <input type="file" id="imageUpload" accept="image/*" style="display:none;">
@@ -182,7 +182,12 @@
           <select id="liveLanguageSelect">
             <option value="en" selected>English</option>
             <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
             <option value="de">Deutsch</option>
+            <option value="ru">Русский</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
           </select>
         </div>
       </div>
