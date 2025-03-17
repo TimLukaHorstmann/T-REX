@@ -13,7 +13,7 @@ const FULL_CLEANED_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fac
 const MANIFEST_JSON_PATH = "results/manifest.json";
 
 // point to Ollama’s API
-const BACKEND_URL = `http://127.0.0.1:11434/api/generate`;
+const BACKEND_URL = `/api/generate`;
 
 // Global variables for precomputed results
 let allResults = [];               

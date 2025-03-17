@@ -131,6 +131,17 @@ body.dark-mode .mode-tab.active {
   background: #4caf50;
   border-color: #4caf50;
 }
+body.dark-mode .loading-content {
+  background: #333;
+  color: #e0e0e0;
+}
+body.dark-mode .dataset-modal-content {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+body.dark-mode .wiki-icon {
+  filter: brightness(0) invert(1);
+}
 body.dark-mode .btn-primary {
   background-color: #4caf50;
   color: #121212;
@@ -194,8 +205,10 @@ header {
 }
 
 .header-container {
-  text-align: center;
-  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: 0 1rem;
 }
 
 .logo {
@@ -203,13 +216,15 @@ header {
   width: auto;
 }
 .logo-link {
-  position: absolute;
-  left: 10px;
+  justify-self: start;
 }
 
-.tool-text-container {
-  display: inline-block;
-  position: relative;
+.header-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; /* small gap between the text and the T‑REX logo */
+  margin: 0 auto;
 }
 
 .tool-text {
@@ -217,11 +232,7 @@ header {
 }
 
 #toolLogo {
-  position: absolute;
-  top: 50%;
-  left: 100%;  /* Place immediately after the text container */
-  transform: translateY(-50%);
-  margin-left: 1rem;
+  position: static;
   max-height: 90px;
   width: auto;
 }
@@ -1363,17 +1374,19 @@ footer {
 
 @media (max-width: 600px) {
   header {
-      padding: 1rem;
-      text-align: center;
+    padding: 0.8rem;
   }
   .header-container {
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
+    flex-direction: column;
   }
   .logo {
-      max-height: 40px;
-      width: auto;
+    max-height: 40px;
+  }
+  .tool-text h1 {
+    font-size: 1.5rem;
+  }
+  .tool-text p {
+    font-size: 0.9rem;
   }
   header h1 {
       font-size: 1.5rem;
