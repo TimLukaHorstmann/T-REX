@@ -1,59 +1,48 @@
-# backend/api/inference.py
-from threading import Thread
-from transformers import TextIteratorStreamer
-from backend.api.schemas import InferenceRequest
-from backend.models.model_loader import load_model
-from backend.api.utils import format_table_to_markdown
+import json
+import httpx
+from fastapi import HTTPException
+from schemas import GenerateRequest
+from utils import csv_to_markdown
 
-# In-memory model cache to avoid reloading on every request.
-model_cache = {}
+def build_prompt(req: GenerateRequest) -> str:
+    prompt = "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
+    if req.includeTitle and req.tableTitle:
+        prompt += f'Table Title: "{req.tableTitle}"\n'
+    table_md = csv_to_markdown(req.tableText)
+    prompt += f"#### Table (Markdown):\n{table_md}\n\n"
+    prompt += f"#### Claim:\n\"{req.claimText}\"\n\n"
+    prompt += "Instructions:\nAfter your explanation, output a final answer in valid JSON format:\n"
+    prompt += '{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}\n'
+    prompt += "Please consider the header of the table as row_index=0.\n"
+    if req.language != "en":
+        prompt += f"Please provide your response in {req.language}.\n"
+    elif req.language == "en" and "deepseek" in req.model.lower():
+        prompt += "\n<think>"
+    return prompt.strip()
 
-def get_model(model_name: str):
-    if model_name not in model_cache:
-        model_cache[model_name] = load_model(model_name)
-    return model_cache[model_name]
-
-def run_inference(request: InferenceRequest):
-    # Convert the CSV table to Markdown.
-    table_md = format_table_to_markdown(request.table)
-    
-    # If using deepseek, enforce a chain-of-thought block.
-    extra_instruction = ""
-    if "deepseek" in request.model_name.lower():
-        extra_instruction = (
-            "\n<think>"
-        )
-    
-    prompt = f"""
-You are tasked with determining whether a claim about the following table (in Markdown format) is TRUE or FALSE.
-Before giving your final answer, explain your reasoning step-by-step.
-
-#### Table (Markdown):
-{table_md}
-
-#### Claim:
-"{request.claim}"
-
-Instructions:
-After your explanation, output a final answer in valid JSON format:
-{{"answer": "TRUE" or "FALSE", "relevant_cells": [{{"row_index": int, "column_name": "str"}}]}}
-{extra_instruction}"""
-    
-    model = get_model(request.model_name)
-    streamer = TextIteratorStreamer(model.tokenizer
-                                    , skip_prompt=True
-                                    , skip_special_tokens=True
-                                    , timeout=10.0)
-    
-    def generate():
-        model(
-            prompt,
-            max_new_tokens=1024,
-            do_sample=True,
-            streamer=streamer
-        )
-    thread = Thread(target=generate)
-    thread.start()
-    
-    for token in streamer:
-        yield token
+async def stream_inference(prompt: str, req: GenerateRequest, OLLAMA_API_URL: str):
+    payload = {
+        "model": req.model,
+        "prompt": prompt,
+        "max_tokens": req.max_tokens,
+        "stream": req.stream,
+        "keep_alive": req.keep_alive
+    }
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:  # Add explicit timeout
+        try:
+            async with client.stream("POST", OLLAMA_API_URL, json=payload) as response:
+                response.raise_for_status()
+                async for chunk in response.aiter_lines():
+                    if chunk:
+                        yield chunk + "\n"
+                        try:
+                            data = json.loads(chunk)
+                            if data.get("done", False):
+                                break
+                        except json.JSONDecodeError:
+                            continue  # Skip malformed lines
+                yield ""  # Signal end of stream
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Ollama API error: {str(e)}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=f"Ollama returned: {e.response.text}")

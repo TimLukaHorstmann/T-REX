@@ -1,48 +1,30 @@
 # backend/api/main.py
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from backend.api.schemas import InferenceRequest, InferenceResponse
-from backend.api.inference import get_model, run_inference
+from schemas import GenerateRequest
+from inference import build_prompt, stream_inference
 
 app = FastAPI()
 
-# Configure CORS – adjust allowed origins in production.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# These are the allowed models.
+ALLOWED_MODELS = ["deepseek-r1:latest", "gemma3", "phi3", "llama3.2"]
+# For non-English languages, only allow a subset (adjust as needed).
+NON_ENGLISH_ALLOWED = ["gemma3", "llama3.2"]
 
-@app.get("/inference/stream")
-async def inference_stream_endpoint(table: str, claim: str, model_name: str):
-    try:
-        # Build an InferenceRequest from query parameters.
-        request_obj = InferenceRequest(table=table, claim=claim, model_name=model_name)
-        stream_generator = run_inference(request_obj)
-        return StreamingResponse(
-            stream_generator,
-            media_type="text/plain",
-            headers={
-                "Cache-Control": "no-cache",
-                "X-Accel-Buffering": "no"
-            }
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# URL for your underlying inference engine (Ollama).
+# Adjust the port and path according to your setup.
+OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
-
-@app.post("/model/load")
-async def load_model_endpoint(request: InferenceRequest):
-    """
-    Endpoint to preload a model.
-    The request only needs the 'model_name'; table and claim can be empty.
-    """
-    try:
-        _ = get_model(request.model_name)
-        return {"status": "loaded", "model_name": request.model_name}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+# --- API Endpoint ---
+@app.post("/api/generate")
+async def generate(req: GenerateRequest):
+    # Validate model choice.
+    if req.language != "en" and req.model not in NON_ENGLISH_ALLOWED:
+        raise HTTPException(status_code=400, detail="Selected model not allowed for non-English language.")
+    if req.model not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail="Invalid model selection.")
+    # Build the prompt on the backend.
+    prompt = build_prompt(req)
+    # (Optional) Log the prompt or save to a file in backend/logs if needed.
+    # Stream the response back to the client.
+    return StreamingResponse(stream_inference(prompt, req, OLLAMA_API_URL), media_type="application/json")

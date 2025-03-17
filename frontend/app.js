@@ -1070,7 +1070,6 @@ function setupLiveCheckEvents() {
   });
 
   ////////////////////// MAIN FUNCTIONALITY //////////////////////
-  // Run Live Check button: call Ollama's completions endpoint with live streaming.
   runLiveCheckBtn.addEventListener("click", async () => {
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
@@ -1112,68 +1111,28 @@ function setupLiveCheckEvents() {
     let inThinkBlock = false;
     let buffer = "";
   
+    // --- Gather Inputs ---
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
+    const language = selectedLanguage;
+    const model = document.getElementById("liveModelSelect").value;
     const includeTitle = document.getElementById("includeTableNameCheck").checked;
-    let tableTitleText = "";
+    let tableTitle = "";
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
-      tableTitleText = tableToPageMap[selectedTableId][0];
+      tableTitle = tableToPageMap[selectedTableId][0];
     }
-  
-    const tableMarkdown = csvToMarkdown(tableText);
-  
-    // Build prompt
-    let prompt = `
-      You are tasked with determining whether a claim about the following table is TRUE or FALSE.
-    `;
-    if (tableTitleText) {
-      prompt += `\nTable Title: "${tableTitleText}"\n`;
-    }
-    prompt += `
-      #### Table (Markdown):
-      ${tableMarkdown}
-  
-      #### Claim:
-      "${claimText}"
-  
-      Instructions:
-      After your explanation, output a final answer in valid JSON format:
-      {"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}
-  
-      Please consider the header of the table as row_index=0.
-    `;
-    const selectedModel = document.getElementById("liveModelSelect").value;
-    let extraInstruction = "";
-    if (selectedLanguage === "en") {
-      if (selectedModel.toLowerCase().includes("deepseek")) {
-        extraInstruction = "\n<think>";
-      }
-    } else if (selectedLanguage === "fr") {
-      extraInstruction = "\nPlease provide your response in French.";
-    } else if (selectedLanguage === "es") {
-      extraInstruction = "\nPlease provide your response in Spanish.";
-    } else if (selectedLanguage === "pt") {
-      extraInstruction = "\nPlease provide your response in Portuguese.";
-    } else if (selectedLanguage === "zh") {
-      extraInstruction = "\nPlease provide your response in Chinese.";
-    } else if (selectedLanguage === "ar") {
-      extraInstruction = "\nPlease provide your response in Arabic.";
-    } else if (selectedLanguage === "ru") {
-      extraInstruction = "\nPlease provide your response in Russian.";
-    } else if (selectedLanguage === "de") {
-      extraInstruction = "\nPlease provide your response in German.";
-    }
-    prompt += extraInstruction;
-    prompt = prompt.trim();
-    prompt += extraInstruction;
-    prompt = prompt.trim();
-  
+
+    // Build the request payload – note that the prompt is now built in the backend.
     const requestBody = {
-      model: selectedModel,
-      prompt: prompt,
+      tableText: tableText,
+      claimText: claimText,
+      language: language,
+      model: model,
+      includeTitle: includeTitle,
+      tableTitle: tableTitle,
       max_tokens: 2048,
-      stream: true,
-      keep_alive: 0 // unload models immediately to free up GPU, might need to adjust this value
+      keep_alive: 0,
+      stream: true
     };
 
     try {
@@ -1188,13 +1147,13 @@ function setupLiveCheckEvents() {
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
-  
+
       while (true) {
         const { value, done } = await globalReader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = lines.pop(); // retain incomplete line
+        buffer = lines.pop();
         for (const line of lines) {
           if (!line.trim()) continue;
           try {
@@ -1219,7 +1178,6 @@ function setupLiveCheckEvents() {
                 } else {
                   thinkText += tokenText;
                   tokenText = "";
-                  // On first receipt, render thinking block with toggle button.
                   if (!firstThinkTokenReceived) {
                     liveThinkOutputEl.style.display = "block";
                     liveThinkOutputEl.innerHTML = `
@@ -1369,7 +1327,7 @@ function setupLiveCheckEvents() {
         return;
       }
     
-      // Extract final JSON and render it (same as before)
+      // Extract final JSON and render it
       let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
       const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
       let finalOutputHtml = "";
@@ -1459,8 +1417,6 @@ function setupLiveCheckEvents() {
     }
   });
   
-  
-  
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
     // Set abort flag
@@ -1491,7 +1447,7 @@ function setupLiveCheckEvents() {
     // Hide the stop button
     stopLiveCheckBtn.style.display = "none";
     stopLiveCheckBtn.classList.remove("running");
-  });  
+  }); 
 }
 
 function renderLivePreviewTable(csvText, relevantCells) {
