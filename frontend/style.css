@@ -139,6 +139,14 @@ body.dark-mode .dataset-modal-content {
   background: #2a2a2a;
   color: #e0e0e0;
 }
+body.dark-mode .dataset-item {
+  border-bottom: 1px solid #444;
+}
+
+body.dark-mode .dataset-item:hover {
+  background-color: #333;
+}
+
 body.dark-mode .wiki-icon {
   filter: brightness(0) invert(1);
 }
@@ -159,6 +167,19 @@ body.dark-mode .json-container {
 body.dark-mode .json-header {
   border-color: #555;
   color: #ddd;
+}
+body.dark-mode .loading-modal {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .loading-content {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .btn-icon {
+  border: 0.2px solid #e0e0e0;
+  color: #e0e0e0;
 }
 body.dark-mode .modelLoadingStatus,
 body.dark-mode .modelLoadingText {
@@ -200,15 +221,15 @@ body.dark-mode .entity-highlight-legend {
 header {
   background-color: #2c3e50;
   color: #fff;
-  padding: 1.2rem;
+  padding: 1rem;
   text-align: center;
 }
 
 .header-container {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto; 
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
 }
 
 .logo {
@@ -220,7 +241,7 @@ header {
 }
 
 .header-center {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem; /* small gap between the text and the T‑REX logo */
@@ -1377,6 +1398,9 @@ footer {
     padding: 0.8rem;
   }
   .header-container {
+    flex-direction: column;
+  }
+  .header-center{
     flex-direction: column;
   }
   .logo {

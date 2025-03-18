@@ -12,7 +12,6 @@ const R2_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-
 const FULL_CLEANED_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/full_cleaned.json";
 const MANIFEST_JSON_PATH = "results/manifest.json";
 
-// point to Ollama’s API
 const BACKEND_URL = `/api/generate`;
 
 // Global variables for precomputed results
@@ -162,24 +161,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Handle paste events in the table textarea to detect images.
-    const inputTableEl = document.getElementById("inputTable");
-    inputTableEl.addEventListener("paste", function (e) {
+    document.getElementById("inputTable").addEventListener("paste", function (e) {
       const items = e.clipboardData.items;
       for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf("image") !== -1) {
           const file = items[i].getAsFile();
-          // Show loading spinner/modal.
           const loadingModal = document.getElementById("loadingModal");
           loadingModal.style.display = "flex";
-          // Show image preview
           const imagePreview = document.getElementById("imagePreview");
           const url = URL.createObjectURL(file);
-          imagePreview.innerHTML = `<span class="close-preview">&times;</span><img src="${url}" alt="Pasted Image Preview">`;
+          imagePreview.innerHTML = `<span class="close-preview">×</span><img src="${url}" alt="Pasted Image Preview">`;
           imagePreview.style.display = "block";
           
-          processImageOCR(file)
+          processImageViaBackend(file)
             .then(csvText => {
               loadingModal.style.display = "none";
+              const inputTableEl = document.getElementById("inputTable");
               inputTableEl.value = csvText;
               renderLivePreviewTable(csvText, []);
               validateLiveCheckInputs();
@@ -187,13 +184,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             .catch(err => {
               loadingModal.style.display = "none";
               console.error("OCR processing error on paste:", err);
-              alert("Failed to process the pasted image. Please try again.");
+              alert("Failed to process the pasted image: " + err.message);
             });
-          // Prevent the default paste action.
           e.preventDefault();
-          return;
-        }
-        else if (items[i].type === "text/plain") {
           return;
         }
       }
@@ -209,9 +202,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Close the loading modal when clicking the close button.
     document.querySelector("#loadingModal .close-modal").addEventListener("click", function() {
-      // Hide the loading modal.
       document.getElementById("loadingModal").style.display = "none";
-      // Abort the server-side OCR if running.
       if (ocrAbortController) {
         ocrAbortController.abort();
         ocrAbortController = null;
@@ -219,8 +210,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     
     
-
-
     document.querySelectorAll("textarea").forEach(textarea => {
       textarea.addEventListener("input", function() {
         this.style.height = "auto";
@@ -1074,14 +1063,15 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
-    document.getElementById("abortMessage").style.display = "none";
+    
+    const statusMessageEl = document.getElementById("statusMessage");
+    statusMessageEl.style.display = "none"; // Hide initially
     window.streamAborted = false;
-
+  
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
     
     let requestStatus = document.getElementById("requestStatus");
-
     let queuedTimer = setTimeout(() => {
       if (!requestStatus) {
         requestStatus = document.createElement("p");
@@ -1121,8 +1111,7 @@ function setupLiveCheckEvents() {
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
       tableTitle = tableToPageMap[selectedTableId][0];
     }
-
-    // Build the request payload – note that the prompt is now built in the backend.
+  
     const requestBody = {
       tableText: tableText,
       claimText: claimText,
@@ -1134,23 +1123,30 @@ function setupLiveCheckEvents() {
       keep_alive: 0,
       stream: true
     };
-
+  
     try {
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
+  
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+  
       document.getElementById("stopLiveCheck").style.display = "inline-block";
       document.getElementById("stopLiveCheck").classList.add("running");
-
+  
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
-
+  
       while (true) {
         const { value, done } = await globalReader.read();
         if (done) break;
+        if (window.streamAborted) break; // Early exit if aborted
+  
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop();
@@ -1159,15 +1155,15 @@ function setupLiveCheckEvents() {
           try {
             const token = JSON.parse(line);
             let tokenText = token.response;
-
+  
             if (queuedTimer) {
               clearTimeout(queuedTimer);
               queuedTimer = null;
               requestStatus.style.display = "none";
             }
-
-            // Process tokenText to separate <think> blocks from answer tokens.
-            while (true) {
+  
+            // Process tokenText to separate <think> blocks from answer tokens
+            while (tokenText.length > 0) {
               if (inThinkBlock) {
                 const endIdx = tokenText.indexOf("</think>");
                 if (endIdx !== -1) {
@@ -1235,14 +1231,14 @@ function setupLiveCheckEvents() {
                 }
               }
             }
-            // Update thinking block
+  
+            // Update thinking and answer blocks
             if (firstThinkTokenReceived) {
               const thinkContentDiv = document.getElementById("thinkContent");
               if (thinkContentDiv) {
                 thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
               }
             }
-            // Update answer block
             if (firstAnswerTokenReceived) {
               const answerContentDiv = document.getElementById("answerContent");
               if (answerContentDiv) {
@@ -1250,19 +1246,21 @@ function setupLiveCheckEvents() {
               }
             }
           } catch (e) {
-            console.error("Failed to parse JSON token:", e);
+            console.warn("Failed to parse JSON token:", e);
+            // Optionally accumulate malformed tokens if desired
           }
         }
         if (autoScrollEnabled) {
           window.scrollTo(0, document.body.scrollHeight);
         }
       }
-      // Process any remaining buffer
-      if (buffer.trim()) {
+  
+      // Process remaining buffer
+      if (buffer.trim() && !window.streamAborted) {
         try {
           const token = JSON.parse(buffer);
           let tokenText = token.response;
-          while (true) {
+          while (tokenText.length > 0) {
             if (inThinkBlock) {
               const endIdx = tokenText.indexOf("</think>");
               if (endIdx !== -1) {
@@ -1289,28 +1287,55 @@ function setupLiveCheckEvents() {
             }
           }
         } catch (e) {
-          console.error("Error processing final buffer:", e);
+          console.warn("Error processing final buffer:", e);
         }
       }
-    
+  
       const endTime = performance.now();
-      if (firstThinkTokenReceived) {
-        const thinkingLabel = document.getElementById("thinkingLabel");
-        if (thinkingLabel) {
-          thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
-          thinkingLabel.classList.add("done");
+      if (!window.streamAborted) {
+        if (firstThinkTokenReceived) {
+          const thinkingLabel = document.getElementById("thinkingLabel");
+          if (thinkingLabel) {
+            thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
+            thinkingLabel.classList.add("done");
+          }
         }
-        // Final update to the answer block.
+  
+        // Process final output
+        let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
+        const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
+        let finalOutputHtml = "";
+        let parsedJson = {};
+        if (jsonMatch) {
+          const jsonBlock = jsonMatch[0];
+          parsedJson = extractJsonFromResponse(jsonBlock);
+          const formattedJson = JSON.stringify(parsedJson, null, 2);
+          const jsonContainerHtml = `
+            <div class="json-container">
+              <div class="json-header">
+                <span>JSON</span>
+                <button class="copy-btn" onclick="copyToClipboard(this)">
+                  <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
+                </button>
+              </div>
+              <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
+            </div>
+          `;
+          const markdownPart = cleanedResponse.replace(jsonBlock, "").trim();
+          const markdownHtml = DOMPurify.sanitize(marked.parse(markdownPart));
+          finalOutputHtml = markdownHtml + jsonContainerHtml;
+        } else {
+          finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse));
+        }
+  
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
             <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
           </div>
-          <div id="answerContent" class="collapsible">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+          <div id="answerContent" class="collapsible">${finalOutputHtml}</div>
         `;
-        // Re-attach the answer toggle listener to the new button.
-        const finalToggleAnswerBtn = document.getElementById("toggleAnswerBtn");
-        finalToggleAnswerBtn.addEventListener("click", function() {
+        document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
           const content = document.getElementById("answerContent");
           if (content.classList.contains("collapsed")) {
             content.classList.remove("collapsed");
@@ -1320,93 +1345,41 @@ function setupLiveCheckEvents() {
             this.textContent = "▼";
           }
         });
+  
+        liveResultsEl.style.display = "block";
+        document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
+        displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
+  
+        setTimeout(() => {
+          const thinkContent = document.getElementById("thinkContent");
+          const answerContent = document.getElementById("answerContent");
+          if (thinkContent && !thinkContent.classList.contains("collapsed")) {
+            thinkContent.classList.add("collapsed");
+            document.getElementById("toggleThinkingBtn").textContent = "▼";
+          }
+          if (answerContent && !answerContent.classList.contains("collapsed")) {
+            answerContent.classList.add("collapsed");
+            document.getElementById("toggleAnswerBtn").textContent = "▼";
+          }
+        }, 0);
       }
-
-      if (window.streamAborted) {
-        // Abort was triggered so do not update results.
-        return;
-      }
-    
-      // Extract final JSON and render it
-      let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
-      const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
-      let finalOutputHtml = "";
-      let parsedJson = {};
-      if (jsonMatch) {
-        const jsonBlock = jsonMatch[0];
-        parsedJson = extractJsonFromResponse(jsonBlock);
-        const formattedJson = JSON.stringify(parsedJson, null, 2);
-        const jsonContainerHtml = `
-          <div class="json-container">
-            <div class="json-header">
-              <span>JSON</span>
-              <button class="copy-btn" onclick="copyToClipboard(this)">
-                <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
-              </button>
-            </div>
-            <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
-          </div>
-        `;
-        const markdownPart = cleanedResponse.replace(jsonBlock, "").trim();
-        const markdownHtml = DOMPurify.sanitize(marked.parse(markdownPart));
-        finalOutputHtml = markdownHtml + jsonContainerHtml;
-      } else {
-        finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse));
-      }
-    
-      // Update answer block with final output (JSON remains as before)
-      liveStreamOutputEl.innerHTML = `
-        <div class="answer-overlay">
-          <span id="answer-label">${translation.answerLabel}</span>
-          <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
-        </div>
-        <div id="answerContent" class="collapsible">${finalOutputHtml}</div>
-      `;
-      // Attach the answer toggle listener one last time.
-      const finalAnswerToggleBtn = document.getElementById("toggleAnswerBtn");
-      finalAnswerToggleBtn.addEventListener("click", function() {
-        const content = document.getElementById("answerContent");
-        if (content.classList.contains("collapsed")) {
-          content.classList.remove("collapsed");
-          this.textContent = "▲";
-        } else {
-          content.classList.add("collapsed");
-          this.textContent = "▼";
-        }
-      });
-      liveResultsEl.style.display = "block";
-      document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
-      displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
-    
-      // Automatically collapse both the thinking and answer sections after 2 seconds.
-      setTimeout(() => {
-        const thinkContent = document.getElementById("thinkContent");
-        const answerContent = document.getElementById("answerContent");
-        if (thinkContent && !thinkContent.classList.contains("collapsed")) {
-          thinkContent.classList.add("collapsed");
-          const toggleThinkingBtn = document.getElementById("toggleThinkingBtn");
-          if (toggleThinkingBtn) toggleThinkingBtn.textContent = "▼";
-        }
-        if (answerContent && !answerContent.classList.contains("collapsed")) {
-          answerContent.classList.add("collapsed");
-          const toggleAnswerBtn = document.getElementById("toggleAnswerBtn");
-          if (toggleAnswerBtn) toggleAnswerBtn.textContent = "▼";
-        }
-      }, 0);
-    
+  
     } catch (err) {
-      console.error("Streaming error:", err);
-      if (requestStatus) {
-        requestStatus.innerHTML = `<span>${translation.networkError} ${err.message}</span> <button id="retryBtn" class="btn-primary">${translation.retryBtn}</button>`;
-        document.getElementById("retryBtn").addEventListener("click", () => {
-          requestStatus.style.display = "none";
-          // Trigger the run live check event again
-          runLiveCheckBtn.click();
-        });
-      }
+      console.error("Live Check Error:", err);
+      liveResultsEl.style.display = "none"; // Ensure results are hidden
+      statusMessageEl.style.display = "block";
+      statusMessageEl.innerHTML = `
+        ${translation.errorMessage}: ${err.message}
+        <button id="retryBtn" class="btn-primary">[${translation.retryBtn}]</button>
+      `;
+      document.getElementById("retryBtn").addEventListener("click", () => {
+        statusMessageEl.style.display = "none";
+        runLiveCheckBtn.click(); // Retry the live check
+      });
     } finally {
-      if (requestStatus) {
-        requestStatus.style.display = "none";
+      if (queuedTimer) {
+        clearTimeout(queuedTimer);
+        if (requestStatus) requestStatus.style.display = "none";
       }
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
@@ -1414,6 +1387,10 @@ function setupLiveCheckEvents() {
       runLiveCheckBtn.innerHTML = translation.runLiveCheckBtn;
       document.getElementById("stopLiveCheck").style.display = "none";
       document.getElementById("stopLiveCheck").classList.remove("running");
+      if (globalReader) {
+        globalReader.cancel().catch(() => {}); // Clean up reader
+        globalReader = null;
+      }
     }
   });
   
@@ -1429,12 +1406,12 @@ function setupLiveCheckEvents() {
     const liveResultsEl = document.getElementById("liveResults");
     liveResultsEl.style.display = "none";
     
-    // Show the abort message
-    const abortMsgEl = document.getElementById("abortMessage");
+    // Show the status message
+    const abortMsgEl = document.getElementById("statusMessage");
     abortMsgEl.style.display = "block";
     const lang = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[lang] || window.translationDict["en"];
-    abortMsgEl.textContent = translation.abortMessage;
+    abortMsgEl.textContent = translation.statusMessage;
     
     // Reset the run button
     const runLiveCheckBtn = document.getElementById("runLiveCheck");
@@ -1687,6 +1664,38 @@ function updateModelOptionsBasedOnLanguage() {
 }
 
 
+async function processImageViaBackend(file) {
+  const engine = document.getElementById("ocrEngineSelect").value;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("engine", engine);
+  formData.append("model", "granite3.2-vision");
+
+
+  ocrAbortController = new AbortController();
+  try {
+    const response = await fetch("/api/ocr", {
+      method: "POST",
+      body: formData,
+      signal: ocrAbortController.signal
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OCR API response error:", response.status, errorText);
+      throw new Error(`OCR failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.csv_text) {
+      throw new Error("No csv_text returned from OCR API");
+    }
+    return data.csv_text;
+  } catch (error) {
+    console.error("Error in processImageViaBackend:", error);
+    throw error; // Re-throw to be handled by the caller
+  }
+}
 
 // Event listener for image upload button
 document.getElementById("uploadImageBtn").addEventListener("click", function() {
@@ -1698,24 +1707,18 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (file) {
     const loadingModal = document.getElementById("loadingModal");
-    loadingModal.style.display = "flex"; // Show modal
-
-    // Show image preview for the uploaded image
+    loadingModal.style.display = "flex";
     const imagePreview = document.getElementById("imagePreview");
     const url = URL.createObjectURL(file);
-
-    // Wrap the image in a container (no anchor here)
     imagePreview.innerHTML = `
-      <span class="close-preview">&times;</span>
-      <img src="${url}" alt="Pasted Image Preview" style="cursor: pointer;">
+      <span class="close-preview">×</span>
+      <img src="${url}" alt="Uploaded Image Preview" style="cursor: pointer;">
     `;
     imagePreview.style.display = "block";
-
-    // Attach a click event to the preview image to open the modal
+    
     const previewImg = imagePreview.querySelector("img");
     if (previewImg) {
       previewImg.addEventListener("click", function() {
-        // Create a new modal using Tingle.js
         var modal = new tingle.modal({
           footer: false,
           stickyFooter: false,
@@ -1723,15 +1726,12 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
           closeLabel: "Close",
           cssClass: ['custom-modal']
         });
-        
-        // Set modal content to display the full-size image
         modal.setContent('<img src="' + url + '" style="max-width: 100%; height: auto; display: block; margin: 0 auto;">');
         modal.open();
       });
     }
-
-
-    processImageOCR(file)
+    
+    processImageViaBackend(file)
       .then(csvText => {
         loadingModal.style.display = "none";
         const inputTableEl = document.getElementById("inputTable");
@@ -1741,10 +1741,9 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
       })
       .catch(err => {
         loadingModal.style.display = "none";
-        console.error("OCR processing error on paste:", err);
-        // Only alert if the error is not due to an intentional abort.
+        console.error("OCR processing error:", err);
         if (!err.message.toLowerCase().includes("aborted")) {
-          alert("Failed to process the pasted image. Please try again or change the OCR engine.\n" + err);
+          alert("Failed to process the uploaded image: " + err.message);
         }
       })
       .finally(() => {
@@ -1752,178 +1751,6 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
       });
   }
 });
-
-
-
-
-// Main function to select the OCR engine based on user selection
-function processImageOCR(file) {
-  const engine = document.getElementById('ocrEngineSelect').value;
-  if (engine === 'tesseract') {
-    return processImageWithTesseract(file);
-  } else if (engine === 'ollama') {
-    return processImageWithOllama(file);
-  } else {
-    return Promise.reject(new Error("Unknown OCR engine selected."));
-  }
-}
-
-// Option 1: Client-side OCR using Tesseract.js
-function processImageWithTesseract(file) {
-  return Tesseract.recognize(file, 'eng', { logger: m => console.log(m) })
-    .then(({ data: { text } }) => processOCRTextToCSV(text));
-}
-
-
-
-
-// Option 2: Server-side OCR using Ollama granite3.2-vision
-function processImageWithOllama(file) {
-  ocrAbortController = new AbortController();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const dataUrl = e.target.result; // e.g. "data:image/png;base64,ABC..."
-      // Remove the prefix so only the base64 string remains.
-      const base64String = dataUrl.split(",")[1];
-      
-      const payload = {
-        model: "granite3.2-vision", 
-        prompt: "Return only the table extracted from the image as #-separated values! Do not include row numbers or any additional text. Preserve any commas that appear in numbers. DO NOT USE A COMMA AS A DELIMITER.",
-        images: [base64String],
-        stream: false,
-        keep_alive: 0
-      };
-      fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: ocrAbortController.signal
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Ollama OCR failed: " + response.statusText);
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (data && data.response) {
-          // Process the CSV: remove row numbers, quotes, and convert delimiter from comma to "#"
-          let csvText = processOllamaCSV(data.response);
-          resolve(csvText);
-        } else {
-          reject(new Error("Ollama OCR returned unexpected response format."));
-        }
-      })
-      .catch(err => {
-        if (err.name === "AbortError") {
-          reject(new Error("OCR process aborted by user."));
-        } else {
-          reject(err);
-        }
-      });
-    };
-    reader.onerror = function(err) {
-      reject(err);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-
-// Improved helper function to convert raw OCR text to CSV format using '#' as delimiter.
-// It merges a split header (if the second line is very short) and then merges lines that have too few tokens.
-function processOCRTextToCSV(ocrText) {
-  let lines = ocrText.split(/\r?\n/).filter(line => line.trim().length > 0);
-  
-  // Replace multiple spaces or tabs with '#' in each line.
-  lines = lines.map(line => line.trim().replace(/[\s\t]+/g, "#"));
-
-  // If the first line (header) is followed by a very short line, merge it.
-  if (lines.length > 1) {
-    const headerTokens = lines[0].split("#");
-    const secondTokens = lines[1].split("#");
-    if (secondTokens.length < 3) { // heuristic: if second line is very short
-      headerTokens[headerTokens.length - 1] = headerTokens[headerTokens.length - 1] + " " + secondTokens.join(" ");
-      lines[0] = headerTokens.join("#");
-      lines.splice(1, 1);
-    }
-  }
-
-  if (lines.length === 0) {
-    return "";
-  }
-  
-  // Determine expected column count from header.
-  const expectedColumns = lines[0].split("#").length;
-  let processedLines = [lines[0]];
-  let buffer = "";
-
-  // Process remaining lines. If a line has fewer tokens than expected, merge it with the buffer.
-  for (let i = 1; i < lines.length; i++) {
-    let currentLine = lines[i];
-    const cols = currentLine.split("#");
-    if (cols.length < expectedColumns) {
-      buffer += (buffer ? " " : "") + currentLine;
-      if (buffer.split("#").length >= expectedColumns) {
-        processedLines.push(buffer);
-        buffer = "";
-      }
-    } else {
-      if (buffer) {
-        currentLine = buffer + " " + currentLine;
-        buffer = "";
-      }
-      processedLines.push(currentLine);
-    }
-  }
-  if (buffer) {
-    processedLines.push(buffer);
-  }
-  return processedLines.join("\n");
-}
-
-function processOllamaCSV(csvText) {
-  // Remove any extraneous quotes.
-  csvText = csvText.replace(/"/g, '');
-
-  // Define a placeholder for thousand-separator commas.
-  const placeholder = 'THOUSANDSSEP';
-
-  // Helper: protect commas used as thousand separators.
-  function protectThousandSeparators(text) {
-    let newText = text;
-    const regex = /(\d),(\d{3})(?!\d)/g;
-    // Loop in case there are multiple commas (e.g., "1,234,567")
-    while (regex.test(newText)) {
-      newText = newText.replace(regex, '$1' + placeholder + '$2');
-    }
-    return newText;
-  }
-  csvText = protectThousandSeparators(csvText);
-
-  // Split the text into lines.
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
-
-  // Process each line.
-  const processedLines = lines.map(line => {
-    let cells = line.split(',').map(cell => cell.trim());
-    // Remove an empty first cell if it exists.
-    if (cells[0] === '') {
-      cells.shift();
-    }
-    return cells.join('#');
-  });
-
-  let result = processedLines.join('\n');
-
-  // Restore thousand separators.
-  result = result.replace(new RegExp(placeholder, 'g'), ',');
-
-  return result;
-}
-
-
 
 
 function updateTranslations() {
@@ -1948,11 +1775,11 @@ function updateTranslations() {
   const uploadImageBtn = document.getElementById("uploadImageBtn");
   if (uploadImageBtn) uploadImageBtn.textContent = translationDict[lang].uploadImageBtn;
 
-  const clientEngine = document.getElementById("clientEngine");
-  if (clientEngine) clientEngine.textContent = translationDict[lang].clientEngine;
+  const tesseractEngine = document.getElementById("tesseractEngine");
+  if (tesseractEngine) tesseractEngine.textContent = translationDict[lang].tesseractEngine;
 
-  const serverEngine = document.getElementById("serverEngine");
-  if (serverEngine) serverEngine.textContent = translationDict[lang].serverEngine;
+  const ollamaEngine = document.getElementById("ollamaEngine");
+  if (ollamaEngine) ollamaEngine.textContent = translationDict[lang].ollamaEngine;
 
   const processingImage = document.getElementById("processingImage");
   if (processingImage) processingImage.textContent = translationDict[lang].processingImage;
