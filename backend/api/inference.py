@@ -8,12 +8,25 @@ def build_prompt(req: GenerateRequest) -> str:
     prompt = "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
     if req.includeTitle and req.tableTitle:
         prompt += f'Table Title: "{req.tableTitle}"\n'
-    table_md = csv_to_markdown(req.tableText)
+    
+    # Parse CSV and add row_index column
+    lines = req.tableText.strip().split("\n")
+    if not lines:
+        raise HTTPException(status_code=400, detail="Table text is empty.")
+    table_data = [line.split("#") for line in lines if line.strip()]
+    headers = ["row_index"] + table_data[0]  # Add row_index as first column
+    indexed_rows = [headers] + [[str(i)] + row for i, row in enumerate(table_data[1:])]
+    indexed_csv = "\n".join("#".join(row) for row in indexed_rows)
+    table_md = csv_to_markdown(indexed_csv)
+    
     prompt += f"#### Table (Markdown):\n{table_md}\n\n"
     prompt += f"#### Claim:\n\"{req.claimText}\"\n\n"
-    prompt += "Instructions:\nAfter your explanation, output a final answer in valid JSON format:\n"
+    prompt += "Instructions:\n"
+    prompt += "- Use the 'row_index' column (starting at 0 for the first data row, excluding header) to identify rows.\n"
+    prompt += "- Match column names exactly as they appear in the table, including case and spacing.\n"
+    prompt += "- After your explanation, output a final answer in valid JSON format:\n"
     prompt += '{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}\n'
-    prompt += "Please consider the header of the table as row_index=0.\n"
+    prompt += "- Ensure row_index corresponds to the 'row_index' column value, not the physical row number in the table.\n"
     if req.language != "en":
         prompt += f"Please provide your response in {req.language}.\n"
     elif req.language == "en" and "deepseek" in req.model.lower():

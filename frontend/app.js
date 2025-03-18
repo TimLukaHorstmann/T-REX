@@ -1434,44 +1434,66 @@ function renderLivePreviewTable(csvText, relevantCells) {
   if (!lines.length) return;
   const tableData = lines.map(line => line.split("#"));
   if (!tableData.length) return;
+
   const columns = tableData[0];
   const dataRows = tableData.slice(1);
+  const hasRowIndex = columns[0].toLowerCase() === "row_index";
+  const displayColumns = hasRowIndex ? columns.slice(1) : columns; // Hide row_index
+
+  console.log("Columns:", columns);
+  console.log("Display Columns:", displayColumns);
+  console.log("Data Rows:", dataRows);
+  console.log("Relevant Cells:", relevantCells);
+
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
+
+  // Header
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
-  columns.forEach(col => {
+  displayColumns.forEach(col => {
     const th = document.createElement("th");
     th.textContent = col;
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
   tableEl.appendChild(thead);
+
+  // Body
   const tbody = document.createElement("tbody");
   dataRows.forEach((rowVals, rowIndex) => {
     const tr = document.createElement("tr");
-    rowVals.forEach((cellVal, colIndex) => {
+    const displayRow = hasRowIndex ? rowVals.slice(1) : rowVals;
+    const rowIdxValue = hasRowIndex ? parseInt(rowVals[0]) : rowIndex;
+
+    console.log(`Row ${rowIndex}: rowIdxValue = ${rowIdxValue}, Values =`, rowVals);
+
+    displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
-    
-      // Use optional chaining to avoid errors
-      const colName = columns[colIndex];
-      const colNameLower = colName?.toLowerCase();
-    
-      const shouldHighlight = relevantCells.some(
-        hc => hc.row_index === rowIndex &&
-          hc.column_name?.toLowerCase().replace(/\s+/g, '') === colNameLower?.replace(/\s+/g, '')
-      );
-      if (shouldHighlight) td.classList.add("highlight");
-    
+      const colName = displayColumns[colIndex];
+      const colNameLower = colName.toLowerCase().replace(/\s+/g, '');
+
+      const shouldHighlight = relevantCells.some(hc => {
+        const hcRowIndex = hc.row_index;
+        const hcColNameLower = hc.column_name.toLowerCase().replace(/\s+/g, '');
+        const isMatch = hcRowIndex === rowIdxValue && fuzzyMatch(hcColNameLower, colNameLower);
+        console.log(`Checking: row=${hcRowIndex} vs ${rowIdxValue}, col='${hc.column_name}' vs '${colName}' -> ${isMatch}`);
+        return isMatch;
+      });
+
+      if (shouldHighlight) {
+        td.classList.add("highlight");
+        console.log(`Highlighting cell at rowIdxValue=${rowIdxValue}, col='${colName}'`);
+      }
       tr.appendChild(td);
-    });    
+    });
     tbody.appendChild(tr);
   });
   tableEl.appendChild(tbody);
 
+  // Entity highlighting (unchanged)
   let tableKey = selectedTableId;
-
   if (tableKey && tableEntityLinkingMap && tableEntityLinkingMap[tableKey]) {
     const entityStatements = tableEntityLinkingMap[tableKey][0];
     let entityCoords = [];
@@ -1493,7 +1515,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
         });
       });
     }
-    // Ensure the entity highlight legend is visible.
     document.getElementById("full-entity-highlight-legend-live").style.display = "block";
   } else {
     document.getElementById("full-entity-highlight-legend-live").style.display = "none";
@@ -1504,9 +1525,37 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const legendModel = document.getElementById("full-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
     legendModel.style.display = "block";
+    console.log("Highlighted cells found:", tableEl.querySelectorAll("td.highlight"));
   } else {
     legendModel.style.display = "none";
+    console.log("No highlighted cells found.");
   }
+}
+
+// Ensure fuzzyMatch and levenshteinDistance are included (unchanged from previous)
+function levenshteinDistance(a, b) {
+  const matrix = Array(b.length + 1).fill(null).map(() =>
+    Array(a.length + 1).fill(null)
+  );
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + indicator
+      );
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+function fuzzyMatch(str1, str2, threshold = 2) {
+  if (!str1 || !str2) return false;
+  const distance = levenshteinDistance(str1, str2);
+  return distance <= threshold || str1.includes(str2) || str2.includes(str1);
 }
 
 
@@ -1564,16 +1613,13 @@ function csvToJson(csvStr) {
 }
 
 function extractJsonFromResponse(rawResponse) {
-  // Find the first '{' character.
   let start = rawResponse.indexOf("{");
   if (start === -1) return null;
   let braceCount = 0;
   let end = -1;
-  // Scan from the first '{' and count opening and closing braces.
   for (let i = start; i < rawResponse.length; i++) {
-    if (rawResponse[i] === "{") {
-      braceCount++;
-    } else if (rawResponse[i] === "}") {
+    if (rawResponse[i] === "{") braceCount++;
+    else if (rawResponse[i] === "}") {
       braceCount--;
       if (braceCount === 0) {
         end = i;
@@ -1588,10 +1634,48 @@ function extractJsonFromResponse(rawResponse) {
     if (!parsed.answer || !("relevant_cells" in parsed)) {
       throw new Error("Missing required keys");
     }
+    // Validate and correct relevant_cells
+    const csvText = document.getElementById("inputTable").value;
+    const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
+    const tableData = lines.map(line => line.split("#"));
+    const columns = tableData[0];
+    const dataRows = tableData.slice(1);
+    const hasRowIndex = columns[0].toLowerCase() === "row_index";
+    const displayColumns = hasRowIndex ? columns.slice(1) : columns;
+
+    parsed.relevant_cells = parsed.relevant_cells.map(cell => {
+      let { row_index, column_name } = cell;
+      // Validate row_index
+      if (typeof row_index !== "number" || row_index < 0 || row_index >= dataRows.length) {
+        console.warn(`Invalid row_index ${row_index}; clamping to valid range`);
+        row_index = Math.max(0, Math.min(dataRows.length - 1, row_index));
+      }
+      // Fuzzy match column_name
+      const normalizedInput = column_name.toLowerCase().replace(/\s+/g, '');
+      let bestMatch = displayColumns.find(col =>
+        col.toLowerCase().replace(/\s+/g, '') === normalizedInput
+      );
+      if (!bestMatch) {
+        const distances = displayColumns.map(col => ({
+          col,
+          distance: levenshteinDistance(normalizedInput, col.toLowerCase().replace(/\s+/g, ''))
+        }));
+        const closest = distances.reduce((min, curr) =>
+          curr.distance < min.distance ? curr : min
+        );
+        if (closest.distance <= 2) {
+          bestMatch = closest.col;
+          console.warn(`Fuzzy matched '${column_name}' to '${bestMatch}'`);
+        } else {
+          console.warn(`No close match for column '${column_name}'; defaulting to first column`);
+          bestMatch = displayColumns[0];
+        }
+      }
+      return { row_index, column_name: bestMatch };
+    });
     return parsed;
   } catch (err) {
     console.warn("JSON parsing error:", err);
-    // Fallback: if response contains "true"/"false", return default object.
     const lowerResponse = rawResponse.toLowerCase();
     if (lowerResponse.includes("true")) {
       return { answer: "TRUE", relevant_cells: [] };

@@ -13,7 +13,6 @@
 html {
   scroll-behavior: smooth;
   height: 100%;
-  margin: 0;
 }
 body {
   font-family: var(--main-font);
@@ -24,7 +23,6 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  margin: 0;
 }
 main {
   flex: 1;
@@ -223,6 +221,7 @@ header {
   color: #fff;
   padding: 1rem;
   text-align: center;
+  position: relative;
 }
 
 .header-container {
@@ -238,14 +237,14 @@ header {
 }
 .logo-link {
   justify-self: start;
+  position: relative;
 }
 
 .header-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem; /* small gap between the text and the T‑REX logo */
-  margin: 0 auto;
+  gap: 0.5rem;
 }
 
 .tool-text {
@@ -253,53 +252,61 @@ header {
 }
 
 #toolLogo {
-  position: static;
   max-height: 90px;
   width: auto;
 }
 
-.toggle-switch {
-  position: relative;
-  width: 50px;
-  display: inline-block;
-  vertical-align: middle;
-}
-.toggle-switch p {
-  font-size: 0.6rem;
-  margin-top: 4px;
-}
-.toggle-switch input {
+.mobile-logo {
   display: none;
 }
-.toggle-switch label {
-  display: block;
-  overflow: hidden;
+
+/* Hamburger Menu */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
   cursor: pointer;
-  border: 2px solid #1976d2;
-  border-radius: 20px;
-  margin: 0;
-  height: 20px;
-  background-color: #fff;
-  transition: background-color 0.3s;
+  padding: 0.5rem;
 }
-.toggle-switch label:after {
-  content: "";
-  display: block;
-  width: 17px;
-  height: 17px;
-  background: #1976d2;
+
+.hamburger-menu {
+  display: none;
+  background: #2c3e50;
   position: absolute;
-  top: 1px;
-  left: 1px;
-  border-radius: 50%;
-  transition: all 0.3s;
+  top: 100%;
+  right: 0;
+  width: 200px;
+  padding: 1rem;
+  z-index: 1000;
 }
-.toggle-switch input:checked + label {
-  background-color: #1976d2;
+.hamburger-menu .mode-tabs {
+  flex-direction: column;
+  margin-bottom: 1rem;
 }
-.toggle-switch input:checked + label:after {
-  left: 30px;
-  background: #fff;
+.hamburger-menu .mode-tab {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.hamburger-menu .dark-mode-switch {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hamburger-menu .dark-mode-switch label {
+  width: 70px;
+  height: 21px;
+}
+.hamburger-menu .dark-mode-switch label:after {
+  width: 21px;
+  height: 21px;
+}
+
+.hamburger-menu .dark-mode-switch input:checked + label:after {
+  left: 47px;
 }
 
 /* Main Container */
@@ -671,8 +678,13 @@ body.dark-mode #liveResults {
   background-color: #f1f1f1;
   cursor: pointer;
 }
+.styled-table td.highlight {
+  background-color: #ffff99;
+  border: 2px solid #ffcc00;
+}
 .highlight {
-  background-color: #ffff88;
+  background-color: #ffff99;
+  border: 2px solid #ffcc00;
 }
 .entity-highlight {
   background-color: transparent;
@@ -1398,26 +1410,102 @@ footer {
     padding: 0.8rem;
   }
   .header-container {
-    flex-direction: column;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
   }
-  .header-center{
-    flex-direction: column;
+  .desktop-logo {
+    display: none;
   }
-  .logo {
+  .mobile-logo {
+    display: block;
     max-height: 40px;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    filter: invert(1);
+  }
+  .header-center {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0.5rem;
   }
   .tool-text h1 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
   }
   .tool-text p {
+    font-size: 0.8rem;
+  }
+  #toolLogo {
+    max-height: 60px;
+  }
+  .hamburger {
+    display: block;
+    justify-self: end;
+  }
+  .mode-tabs:not(.hamburger-menu .mode-tabs) {
+    display: none;
+  }
+  .mode-tabs {
+    display: none;
+  }
+  .hamburger-menu .mode-tabs {
+    display: flex;
+    flex-direction: column;
+  }
+  .hamburger-menu .dark-mode-switch label {
+    width: 50px;
+    height: 25px;
+  }
+  .hamburger-menu .dark-mode-switch label:after {
+    width: 21px;
+    height: 21px;
+  }
+
+  .container {
+    padding: 0.5rem;
+  }
+  .results-section {
+    padding: 0.5rem;
+  }
+  .input-group h3 {
+    font-size: 1rem;
+    margin: 10px 0 5px;
+  }
+  textarea {
+    min-height: 100px;
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+  .btn-primary {
+    padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
   }
-  header h1 {
-      font-size: 1.5rem;
-      margin: 0.5rem 0;
+  .select-group {
+    min-width: 100%;
   }
-  .toggle-switch {
-      margin-top: 0.5rem;
+  .choices__inner {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+  .styled-table th,
+  .styled-table td {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .live-input-section {
+    padding-top: 20px;
+  }
+  .model-chooser select,
+  #languageChooserFloating select {
+    font-size: 0.8rem;
+  }
+  .options-dropdown {
+    width: 180px;
+    bottom: 40px;
+    font-size: 0.8rem;
+  }
+  .options-dropdown .btn-primary {
+    font-size: 0.8rem;
   }
   .choices {
       width: 100%;
@@ -1439,10 +1527,20 @@ footer {
   .mode-tabs {
       flex-direction: column;
   }
+  
   .button-group {
       flex-direction: column;
   }
   #runLiveCheck {
       width: 100%;
+  }
+  .hamburger-menu {
+    display: none;
+  }
+}
+
+@media (min-width: 601px) {
+  .hamburger-menu {
+    display: none !important;
   }
 }
