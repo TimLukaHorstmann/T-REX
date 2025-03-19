@@ -820,7 +820,7 @@ document.getElementById("uploadCSVBtn").addEventListener("click", function () {
 
 
 // Function to open the dataset overview modal.
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 1000;
 let loadedItems = 0;
 let totalDatasetItems = 0;
 

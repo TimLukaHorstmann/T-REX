@@ -1268,16 +1268,23 @@ footer {
   max-width: 1000px;
   margin: auto;
 }
-.attribution {
+.copyright{
+  margin-bottom: 0.5rem;
+}
+.attribution, .issues {
   font-size: 0.8rem;
   color: #ddd;
 }
-.attribution a {
+.attribution a, .issues a {
   color: #90caf9;
   text-decoration: none;
 }
-.attribution a:hover {
+.attribution a:hover, .issues a:hover {
   text-decoration: underline;
+}
+.issues {
+  font-style: italic;
+  margin-top: 0.5rem;
 }
 .disclaimer {
   font-size: 0.6rem;
