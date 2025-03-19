@@ -3,16 +3,16 @@
 //
 
 // CONSTANTS for paths
-const CSV_BASE_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv/";
-const ALL_CSV_IDS_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/all_csv_ids.json";
-const TABLE_TO_PAGE_JSON_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/data/table_to_page.json";
-const TOTAL_EXAMPLES_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/total_examples.json";
-const R1_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/collected_data/r1_training_all.json";
-const R2_TRAINING_ALL_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/collected_data/r2_training_all.json";
-const FULL_CLEANED_PATH = "https://raw.githubusercontent.com/wenhuchen/Table-Fact-Checking/refs/heads/master/tokenized_data/full_cleaned.json";
-const MANIFEST_JSON_PATH = "results/manifest.json";
+const CSV_BASE_PATH = "/static/data/all_csv/";
+const ALL_CSV_IDS_PATH = "/static/data/all_csv_ids.json";
+const TABLE_TO_PAGE_JSON_PATH = "/static/data/table_to_page.json";
+const TOTAL_EXAMPLES_PATH = "/static/data/total_examples.json";
+const R1_TRAINING_ALL_PATH = "/static/data/r1_training_all.json";
+const R2_TRAINING_ALL_PATH = "/static/data/r2_training_all.json";
+const FULL_CLEANED_PATH = "/static/data/full_cleaned.json";
 
-const BACKEND_URL = `/api/generate`;
+const resultsFolder = "/static/data/results";
+const MANIFEST_JSON_PATH = "/static/data/results/manifest.json";
 
 // Global variables for precomputed results
 let allResults = [];               
@@ -39,6 +39,8 @@ window.modelLoaded = true;
 let globalReader = null;
 let globalCSVId = null;
 let ocrAbortController = null;
+
+let cachedCsvIds = null;
 
 // Disable auto-scroll if the user scrolls up manually.
 let autoScrollEnabled = true;
@@ -416,7 +418,7 @@ async function loadResults() {
   const learningType = document.getElementById("learningTypeSelect").value;
   const nValue = document.getElementById("nValueSelect").value;
   const formatType = document.getElementById("formatTypeSelect").value;
-  const resultsFileName = `results/results_with_cells_${modelName}_${datasetName}_${nValue}_${learningType}_${formatType}.json`;
+  const resultsFileName = `${resultsFolder}/results_with_cells_${modelName}_${datasetName}_${nValue}_${learningType}_${formatType}.json`;
   
   const infoPanel = document.getElementById("infoPanel");
   infoPanel.innerHTML = `<p>Loading results ...</p>`;
@@ -815,73 +817,149 @@ document.getElementById("uploadCSVBtn").addEventListener("click", function () {
   }
 });
 
+
+
 // Function to open the dataset overview modal.
+const BATCH_SIZE = 100;
+let loadedItems = 0;
+let totalDatasetItems = 0;
+
+async function fetchDatasetPage(offset, limit) {
+  const url = `/api/dataset_ids?offset=${offset}&limit=${limit}`;
+  // console.log(`Fetching dataset page: ${url}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dataset IDs: ${response.status} ${response.statusText}`);
+  }
+  const data = await response.json();
+  //console.log(`Fetched batch: offset=${offset}, limit=${limit}, ids.length=${data.ids.length}, total=${data.total}`);
+  return data;
+}
+
 async function openDatasetOverviewModal() {
   const modal = document.getElementById("datasetOverviewModal");
   const datasetList = document.getElementById("datasetList");
-  // Choose text from translationDict based on the selected language
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
+
+  // Reset state
+  loadedItems = 0;
   datasetList.innerHTML = `<p class="dataset-loading-message">${translation.loading_Message}</p>`;
   modal.style.display = "flex";
 
   try {
-    const response = await fetch(ALL_CSV_IDS_PATH);
-    if (!response.ok) {
-      throw new Error("Failed to load dataset list: " + response.statusText);
+    const data = await fetchDatasetPage(loadedItems, BATCH_SIZE);
+    totalDatasetItems = data.total;
+    datasetList.innerHTML = `<p class="dataset-loading-message">${totalDatasetItems} ${translation.tables_loaded}.</p>`;
+    await loadNextBatch(datasetList, lang); // Initial load
+
+    // Setup Intersection Observer for lazy loading
+    const observer = new IntersectionObserver(
+      async (entries, observer) => {
+        if (entries[0].isIntersecting && loadedItems < totalDatasetItems) {
+          //console.log(`Observer triggered: loadedItems=${loadedItems}, total=${totalDatasetItems}`);
+          await loadNextBatch(datasetList, lang);
+        }
+      },
+      { root: datasetList, rootMargin: "0px", threshold: 0.1 }
+    );
+
+    // Ensure sentinel exists and is observable
+    let sentinel = document.getElementById("sentinel");
+    if (!sentinel) {
+      sentinel = document.createElement("div");
+      sentinel.id = "sentinel";
+      sentinel.innerHTML = `
+        <div class="loading-spinner" style="text-align: center; padding: 20px;">
+          <div class="spinner"></div>
+          <p>${translation.loading_Message}</p>
+        </div>`;
+      datasetList.appendChild(sentinel);
     }
-    const csvIds = await response.json();
-    if (!Array.isArray(csvIds)) {
-      throw new Error("Dataset list is not an array");
+    observer.observe(sentinel);
+
+    // Cleanup observer when modal closes
+    modal.addEventListener("click", function cleanup(e) {
+      if (e.target === modal) {
+        observer.disconnect();
+        modal.removeEventListener("click", cleanup);
+      }
+    });
+  } catch (err) {
+    datasetList.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    console.error("Error in dataset modal:", err);
+  }
+}
+
+async function loadNextBatch(datasetList, lang) {
+  try {
+    const translation = translationDict[lang] || translationDict["en"];
+    const data = await fetchDatasetPage(loadedItems, BATCH_SIZE);
+    const ids = data.ids;
+    //console.log(`Loading batch: offset=${loadedItems}, ids.length=${ids.length}`);
+
+    if (ids.length === 0) {
+      //console.log("No more items to load in this batch.");
+      const sentinel = document.getElementById("sentinel");
+      if (sentinel) sentinel.style.display = "none";
+      return;
     }
-    // Update loading message to show the number of tables loaded
-    datasetList.innerHTML = `<p class="dataset-loading-message">${csvIds.length} ${translation.tables_loaded}.</p>`;
-    
-    // Use a DocumentFragment to build the list items efficiently
+
     const fragment = document.createDocumentFragment();
-    csvIds.sort().forEach((csvId, index) => {
+    ids.forEach((csvId, index) => {
       const item = document.createElement("div");
       item.classList.add("dataset-item");
+
       let title = "No title";
       let wiki = "";
       if (tableToPageMap && tableToPageMap[csvId]) {
         title = tableToPageMap[csvId][0] || title;
         wiki = tableToPageMap[csvId][1] || "";
       }
-      // Capitalize title nicely
       title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-
-      // Change the first part of wikipedia URL to reflect the selected language
       const langCode = lang === "en" ? "" : lang + ".";
       const newWikipediaUrl = wiki ? wiki.replace(/https:\/\/en\./, `https://${langCode}`) : "";
-      
-      // Build the HTML for each dataset item (with lazy-loading for the image)
+
       item.innerHTML = `
         <div class="dataset-item-header">
-          <span class="dataset-item-number">${index + 1}.</span>
+          <span class="dataset-item-number">${loadedItems + index + 1}.</span>
           <span class="dataset-item-title"><strong>${title}</strong> (${csvId})</span>
-          ${wiki ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank" data-wikipedia-preview data-wp-title="${title}" data-wp-lang="${lang}"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon" loading="lazy"></a>` : ''}
+          ${
+            wiki
+              ? `<a class="dataset-item-wiki-link" href="${newWikipediaUrl}" target="_blank" data-wikipedia-preview data-wp-title="${title}" data-wp-lang="${lang}"><img src="images/wiki.svg" alt="Wikipedia" class="wiki-icon" loading="lazy"></a>`
+              : ""
+          }
         </div>
       `;
-      item.addEventListener("click", async function(e) {
+      item.addEventListener("click", async function () {
         await fetchAndFillTable(csvId);
         populateClaimsDropdown(csvId);
-        modal.style.display = "none";
-        // *** FIX: Update the global selectedTableId when an item is chosen ***
+        document.getElementById("datasetOverviewModal").style.display = "none";
         selectedTableId = csvId;
         globalCSVId = csvId;
       });
       fragment.appendChild(item);
     });
-    datasetList.innerHTML = "";
-    datasetList.appendChild(fragment);
 
-    // Initialize Wikipedia previews on the modal’s new content.
-    wikipediaPreview.init({ root: document.getElementById("datasetOverviewModal") });
-    
+    loadedItems += ids.length;
+    datasetList.insertBefore(fragment, document.getElementById("sentinel"));
+    //console.log(`Loaded ${loadedItems} of ${totalDatasetItems} items`);
+
+    // Initialize Wikipedia preview for new items
+    wikipediaPreview.init({ root: datasetList });
+
+    // Hide sentinel if all items are loaded
+    if (loadedItems >= totalDatasetItems) {
+      const sentinel = document.getElementById("sentinel");
+      if (sentinel) sentinel.style.display = "none";
+      //console.log("All items loaded; hiding sentinel.");
+    }
   } catch (err) {
-    datasetList.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-    console.error("Error in dataset modal:", err);
+    console.error("Error loading batch:", err);
+    const sentinel = document.getElementById("sentinel");
+    if (sentinel) {
+      sentinel.innerHTML = `<p style="color:red; text-align:center;">Error loading more items: ${err.message}</p>`;
+    }
   }
 }
 
@@ -1125,7 +1203,7 @@ function setupLiveCheckEvents() {
     };
   
     try {
-      const response = await fetch(BACKEND_URL, {
+      const response = await fetch(`/api/inference`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
@@ -1440,10 +1518,10 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const hasRowIndex = columns[0].toLowerCase() === "row_index";
   const displayColumns = hasRowIndex ? columns.slice(1) : columns; // Hide row_index
 
-  console.log("Columns:", columns);
-  console.log("Display Columns:", displayColumns);
-  console.log("Data Rows:", dataRows);
-  console.log("Relevant Cells:", relevantCells);
+  // console.log("Columns:", columns);
+  // console.log("Display Columns:", displayColumns);
+  // console.log("Data Rows:", dataRows);
+  // console.log("Relevant Cells:", relevantCells);
 
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
@@ -1466,7 +1544,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
     const displayRow = hasRowIndex ? rowVals.slice(1) : rowVals;
     const rowIdxValue = hasRowIndex ? parseInt(rowVals[0]) : rowIndex;
 
-    console.log(`Row ${rowIndex}: rowIdxValue = ${rowIdxValue}, Values =`, rowVals);
+    // console.log(`Row ${rowIndex}: rowIdxValue = ${rowIdxValue}, Values =`, rowVals);
 
     displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
@@ -1478,13 +1556,13 @@ function renderLivePreviewTable(csvText, relevantCells) {
         const hcRowIndex = hc.row_index;
         const hcColNameLower = hc.column_name.toLowerCase().replace(/\s+/g, '');
         const isMatch = hcRowIndex === rowIdxValue && fuzzyMatch(hcColNameLower, colNameLower);
-        console.log(`Checking: row=${hcRowIndex} vs ${rowIdxValue}, col='${hc.column_name}' vs '${colName}' -> ${isMatch}`);
+        // console.log(`Checking: row=${hcRowIndex} vs ${rowIdxValue}, col='${hc.column_name}' vs '${colName}' -> ${isMatch}`);
         return isMatch;
       });
 
       if (shouldHighlight) {
         td.classList.add("highlight");
-        console.log(`Highlighting cell at rowIdxValue=${rowIdxValue}, col='${colName}'`);
+        // console.log(`Highlighting cell at rowIdxValue=${rowIdxValue}, col='${colName}'`);
       }
       tr.appendChild(td);
     });
@@ -1525,10 +1603,10 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const legendModel = document.getElementById("full-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
     legendModel.style.display = "block";
-    console.log("Highlighted cells found:", tableEl.querySelectorAll("td.highlight"));
+    // console.log("Highlighted cells found:", tableEl.querySelectorAll("td.highlight"));
   } else {
     legendModel.style.display = "none";
-    console.log("No highlighted cells found.");
+    // console.log("No highlighted cells found.");
   }
 }
 

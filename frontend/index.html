@@ -17,20 +17,27 @@
 
   <header>
     <div class="header-container">
+      <!-- Left: IP Paris logo -->
       <a href="https://www.ip-paris.fr/" target="_blank" class="logo-link">
         <img src="images/ipp.png" alt="IP Paris Logo" class="logo desktop-logo" loading="lazy">
         <img src="images/ipp-circle.png" alt="IP Paris Circle Logo" class="logo mobile-logo" loading="lazy">
       </a>
+  
+      <!-- Center: T‑REX text and logo (centered absolutely) -->
       <div class="header-center">
-        <div class="tool-text">
-          <h1>T-REX</h1>
-          <p><strong>T</strong>able - <strong>R</strong>efute or <strong>E</strong>ntail e<strong>X</strong>plainer</p>
+        <div class="centered-text-container">
+          <div class="centered-text">
+            <h1>T‑REX</h1>
+            <p><strong>T</strong>able – <strong>R</strong>efute or <strong>E</strong>ntail e<strong>X</strong>plainer</p>
+          </div>
+          <img src="images/t-rex_small.png" alt="T‑REx Logo" id="toolLogo" loading="lazy">
         </div>
-        <img src="images/t-rex.png" alt="T-REx Logo" id="toolLogo" loading="lazy">
       </div>
+  
+      <!-- Right: Hamburger menu -->
       <button class="hamburger" aria-label="Menu">☰</button>
     </div>
-    <!-- Hamburger Menu -->
+    <!-- Hamburger Menu (if any) -->
     <nav class="hamburger-menu" style="display: none;">
       <div class="mode-tabs">
         <button class="mode-tab active" data-mode="live">Live Table Fact-Checking</button>
@@ -39,6 +46,7 @@
       </div>
     </nav>
   </header>
+  
 
   <main class="container">
     <!-- Mode Tabs -->
