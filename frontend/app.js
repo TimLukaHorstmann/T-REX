@@ -1447,7 +1447,7 @@ function setupLiveCheckEvents() {
       liveResultsEl.style.display = "none"; // Ensure results are hidden
       statusMessageEl.style.display = "block";
       statusMessageEl.innerHTML = `
-        ${translation.errorMessage}: ${err.message}
+        An error occured: ${err.message}
         <button id="retryBtn" class="btn-primary">[${translation.retryBtn}]</button>
       `;
       document.getElementById("retryBtn").addEventListener("click", () => {
