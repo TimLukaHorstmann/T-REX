@@ -140,6 +140,14 @@
   body.dark-mode .wiki-icon {
     filter: brightness(0) invert(1);
   }
+  body.dark-mode .meta-info-box {
+    background-color: var(--color-dark-info-panel-bg);
+    color: var(--color-dark-text);
+  }
+  
+  body.dark-mode .meta-info-box a {
+    color: var(--color-btn-primary-bg);
+  }
   body.dark-mode .btn-primary {
     background-color: var(--color-correct);
     color: var(--color-dark-bg);
@@ -182,6 +190,10 @@
   body.dark-mode .modelLoadingStatus,
   body.dark-mode .modelLoadingText {
     color: white;
+  }
+
+  body.dark-mode .dataset-loading-message {
+    color: var(--color-dark-text);
   }
 
   body.dark-mode .status-message {
@@ -747,6 +759,13 @@
     z-index: 5;
   }
 
+  #existingClaimsSelect {
+    width: 100%;
+    max-width: 100%;
+  }
+  #includeTableNameOption {
+    margin-bottom: 1rem;
+  }
   
   /* ======================================================
      INPUT GROUPS & TEXTAREAS
@@ -1421,12 +1440,18 @@
         width: 100%;
     }
     .table-container {
-        overflow-x: auto;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .styled-table th,
-    .styled-table td {
-        padding: 0.5rem;
-        font-size: 0.85rem;
+    .styled-table {
+      width: 100%;
+      max-width: 100%;
+      font-size: 0.75rem;
+      table-layout: auto;
+    }
+    .styled-table thead th,
+    .styled-table tbody td {
+      padding: 0.5rem;
     }
     .container {
         padding: 0.5rem;

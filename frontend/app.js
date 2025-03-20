@@ -218,6 +218,38 @@ document.addEventListener("DOMContentLoaded", async () => {
         this.style.height = this.scrollHeight + "px";
       });
     });
+
+    // Toggle functionality for the live meta-info section
+    const toggleLiveMetaInfoBtn = document.getElementById("toggleLiveMetaInfoBtn");
+    if (toggleLiveMetaInfoBtn) {
+      toggleLiveMetaInfoBtn.addEventListener("click", function() {
+        const metaInfo = document.getElementById("liveTableMetaInfo");
+        if (metaInfo.classList.contains("collapsed")) {
+          metaInfo.classList.remove("collapsed");
+          toggleLiveMetaInfoBtn.textContent = "▲ Table Details";
+        } else {
+          metaInfo.classList.add("collapsed");
+          toggleLiveMetaInfoBtn.textContent = "▼ Table Details";
+        }
+      });
+    }
+
+    // Toggle functionality for the live preview table section
+    const toggleLivePreviewTableBtn = document.getElementById("toggleLivePreviewTableBtn");
+    if (toggleLivePreviewTableBtn) {
+      toggleLivePreviewTableBtn.addEventListener("click", function() {
+        const previewTable = document.getElementById("livePreviewTableContainer");
+        if (previewTable.classList.contains("collapsed")) {
+          previewTable.classList.remove("collapsed");
+          toggleLivePreviewTableBtn.textContent = "▲ Table Preview";
+        } else {
+          previewTable.classList.add("collapsed");
+          toggleLivePreviewTableBtn.textContent = "▼ Table Preview";
+        }
+      });
+    }
+
+
   } catch (error) {
     console.error("Initialization failed:", error);
     document.getElementById("infoPanel").innerHTML = `<p style="color:red;">Failed to initialize the app: ${error}</p>`;
@@ -1017,6 +1049,11 @@ async function fetchAndFillTable(tableId) {
             </p>
           </div>
         `;
+        const toggleMetaBtn = document.getElementById("toggleLiveMetaInfoBtn");
+        if (toggleMetaBtn) {
+          toggleMetaBtn.style.display = "inline-block";
+          toggleMetaBtn.textContent = "▼ Table Details";
+        }
         // Initialize Wikipedia preview for the meta info area.
         wikipediaPreview.init({ root: liveTableMetaInfo });
       }
@@ -1608,6 +1645,22 @@ function renderLivePreviewTable(csvText, relevantCells) {
     legendModel.style.display = "none";
     // console.log("No highlighted cells found.");
   }
+  previewContainer.appendChild(tableEl);
+
+  document.getElementById("livePreviewTable").innerHTML = "";
+  document.getElementById("livePreviewTable").appendChild(tableEl);
+
+  const previewContainerWrapper = document.getElementById("livePreviewTableContainer");
+  if (previewContainerWrapper) {
+    previewContainerWrapper.style.display = "block";
+  }
+
+  const togglePreviewBtn = document.getElementById("toggleLivePreviewTableBtn");
+  if (togglePreviewBtn) {
+    togglePreviewBtn.style.display = "inline-block";
+    togglePreviewBtn.textContent = "▼ Table Preview";
+  }
+
 }
 
 // Ensure fuzzyMatch and levenshteinDistance are included (unchanged from previous)
@@ -1663,6 +1716,16 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
   }
 
   renderLivePreviewTable(csvText, relevantCells);
+
+  const previewContainer = document.getElementById("livePreviewTableContainer");
+  if (previewContainer && previewContainer.classList.contains("collapsed")) {
+    previewContainer.classList.remove("collapsed");
+    const togglePreviewBtn = document.getElementById("toggleLivePreviewTableBtn");
+    if (togglePreviewBtn) {
+      togglePreviewBtn.textContent = "▲ Table Preview";
+    }
+  }
+  
 }
 
 function csvToMarkdown(csvStr) {

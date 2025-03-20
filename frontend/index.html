@@ -154,17 +154,22 @@
               <input type="file" id="imageUpload" accept="image/*" style="display:none;">
             </div>
           </div>
-          <div id="liveTableMetaInfo" class="info-panel" style="display:none;"></div>
-          <div id="livePreviewTable" class="table-container"></div>
-          <div id="legend-live" class="legend">
-            <p id="full-highlight-legend-live">
-              <span class="highlight-legend"></span> Model-highlighted cells (i.e. cells that the LLM considered relevant to the claim)
-            </p>
-            <p id="full-entity-highlight-legend-live">
-              <span class="entity-highlight-legend"></span> Entity-linked cells (i.e. cells that Wenhuchen et al. automatically identified as relevant to the claim)
-            </p>
+          <button id="toggleLiveMetaInfoBtn" class="toggle-btn" style="display:none;">▼ Table Details</button>
+          <div id="liveTableMetaInfo" class="info-panel collapsible collapsed" style="display:none;"></div>
+          <button id="toggleLivePreviewTableBtn" class="toggle-btn" style="display:none;">▼ Table Preview</button>
+          <div id="livePreviewTableContainer" class="collapsible collapsed" style="display:none;">
+            <div id="livePreviewTable" class="table-container"></div>
+            <div id="legend-live" class="legend">
+              <p id="full-highlight-legend-live">
+                <span class="highlight-legend"></span> Model-highlighted cells (i.e. cells that the LLM considered relevant to the claim)
+              </p>
+              <p id="full-entity-highlight-legend-live">
+                <span class="entity-highlight-legend"></span> Entity-linked cells (i.e. cells that Wenhuchen et al. automatically identified as relevant to the claim)
+              </p>
+            </div>
           </div>
         </div>
+
 
 
         <!-- Claim input -->
@@ -172,8 +177,8 @@
           <h3>Enter Claim:</h3>
           <div class="input-group" id="existingClaimsWrapper" style="display:none;">
             <label for="existingClaimsSelect">or choose an existing one for this table from the TabFact dataset:</label>
-            <select id="existingClaimsSelect">
-              <option value="">-- Select a Claisdfm --</option>
+            <select id="existingClaimsSelect" class="styled-select">
+              <option value="">-- Select a Claim --</option>
             </select>
           </div>
           <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
