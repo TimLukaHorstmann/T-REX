@@ -1,8 +1,9 @@
 <h1 align="left">
-  <img src="frontend/images/t-rex.png" alt="T-REX Logo" style="height: 80px; vertical-align: bottom;">
+  <img src="frontend/images/t-rex_logo.png" alt="T-REX Logo" style="height: 65px; vertical-align: bottom;">
   T-REX: Table - Refute or Entail eXplainer
 </h1>
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit-blue.svg)](https://t-rex.r2.enst.fr/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/naptha/tesseract.js/graphs/commit-activity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -19,6 +20,8 @@
 ## 🖥️ Demo
 
 T-REX is presented as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/), showcasing its effectiveness and utility in practical NLP-driven applications.
+
+**Experience the live demo here: [https://t-rex.r2.enst.fr/](https://t-rex.r2.enst.fr/)**
 
 ## 🎯 Motivation
 
