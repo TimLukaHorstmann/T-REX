@@ -581,7 +581,6 @@
      INFO PANEL & META INFORMATION BOX
      ====================================================== */
   .info-panel {
-    margin: 1rem 0;
     background-color: #f7f7f7;
     padding: 0.7rem 1rem;
     border-left: 4px solid var(--color-btn-primary-bg);

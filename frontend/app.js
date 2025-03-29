@@ -1586,7 +1586,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
     displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
-      const colName = displayColumns[colIndex];
+      const colName = displayColumns[colIndex] || "";
       const colNameLower = colName.toLowerCase().replace(/\s+/g, '');
 
       const shouldHighlight = relevantCells.some(hc => {

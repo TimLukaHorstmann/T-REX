@@ -1,1 +1,2 @@
-uvicorn backend.api.main:app --host 0.0.0.0 --port 8000
+sudo systemctl restart fastapi.service
+sudo nginx -t && sudo systemctl reload nginx
