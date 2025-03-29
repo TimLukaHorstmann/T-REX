@@ -5,7 +5,8 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit-blue.svg)](https://t-rex.r2.enst.fr/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/naptha/tesseract.js/graphs/commit-activity)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: Custom NC](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE)
+
 
 **T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging advanced Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant table cells.
 
@@ -114,6 +115,19 @@ If you use this project, please cite our demo paper (submitted to ECML-PKDD 2025
   year={2025}
 }
 ```
+
+
+## 📄 License
+
+This software is released under a **Custom Non-Commercial License**.  
+It is free to use for **research, academic, or personal purposes**.
+
+> 🛑 **Commercial use is prohibited** without **explicit written permission** from the authors.
+
+To inquire about commercial licensing, please contact:  
+[**tim.horstmann@ip-paris.fr**](mailto:tim.horstmann@ip-paris.fr)
+
+See the [LICENSE](./LICENSE) file for full terms.
 
 ## 📝 Authors
 
