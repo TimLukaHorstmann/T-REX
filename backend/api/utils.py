@@ -1,18 +1,23 @@
 # backend/api/utils.py
+import csv
+import io
+
 def csv_to_markdown(csv_text: str) -> str:
-    """
-    Converts CSV text into a Markdown-formatted table.
-    Uses '#' as delimiter if present; otherwise uses comma.
-    """
-    lines = [line for line in csv_text.strip().splitlines() if line.strip()]
-    if not lines:
+    # Determine delimiter based on the first line: if there are more commas than '#' use comma.
+    first_line = csv_text.splitlines()[0]
+    comma_count = first_line.count(',')
+    hash_count = first_line.count('#')
+    delimiter = ',' if comma_count >= hash_count else '#'
+
+    f = io.StringIO(csv_text)
+    reader = csv.reader(f, delimiter=delimiter)
+    rows = list(reader)
+    if not rows:
         return ""
-    delimiter = "#" if "#" in lines[0] else ","
-    table_data = [line.split(delimiter) for line in lines]
-    headers = table_data[0]
-    rows = table_data[1:]
+    
+    headers = rows[0]
     md = "| " + " | ".join(headers) + " |\n"
     md += "| " + " | ".join(["---"] * len(headers)) + " |\n"
-    for row in rows:
+    for row in rows[1:]:
         md += "| " + " | ".join(row) + " |\n"
     return md

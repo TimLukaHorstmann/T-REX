@@ -13,7 +13,8 @@
   <div class="dark-mode-switch">
     <input type="checkbox" id="darkModeToggle">
     <label for="darkModeToggle"></label>
-  </div>
+    <span class="dark-mode-label">Dark Mode</span>
+  </div>  
 
   <header>
     <div class="header-container">
@@ -136,7 +137,7 @@
         <div class="input-group table-input-group">
           <h3>Enter Table:</h3>
           <div class="textarea-container">
-            <textarea id="inputTable" rows="6" placeholder="Paste table (CSV format, # delimited)"></textarea>
+            <textarea id="inputTable" rows="6" placeholder="Paste table (CSV format)"></textarea>
             <div id="imagePreview" class="image-preview" style="display: none;">
               <span class="close-preview">&times;</span>
             </div>            
@@ -147,8 +148,8 @@
               <button id="uploadImageBtn" class="btn-primary">Upload Table Image</button>
               <div class="ocr-selector">
                 <select id="ocrEngineSelect">
-                  <option id="tesseractEngine" value="tesseract" selected>Tesseract OCR (default)</option>
-                  <option id="ollamaEngine" value="ollama">Granite3.2-vision OCR</option>
+                  <option id="ollamaEngine" value="ollama" selected>Granite3.2-vision OCR (default)</option>
+                  <option id="tesseractEngine" value="tesseract">Tesseract OCR</option>
                 </select>
               </div>
               <input type="file" id="imageUpload" accept="image/*" style="display:none;">
@@ -281,6 +282,7 @@
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <!-- Main app logic -->
   <script src="translations.js"></script>

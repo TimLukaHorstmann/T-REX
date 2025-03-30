@@ -56,8 +56,12 @@
   }
   html {
     scroll-behavior: smooth;
+    height: 100%;
   }
   body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     font-family: var(--font-sans);
     font-size: var(--font-size-base);
     color: var(--color-text);
@@ -67,6 +71,12 @@
   /* ======================================================
      DARK MODE STYLES
      ====================================================== */
+
+  .dark-mode-label {
+    font-size: 0.8rem;
+    color: var(--color-dark-text);
+    vertical-align: middle;
+  }
   body.dark-mode {
     background: var(--color-dark-bg);
     color: var(--color-dark-text);
@@ -375,7 +385,8 @@
      MAIN CONTAINER & MODE TABS
      ====================================================== */
   .container {
-    max-width: 1100px;
+    width: 70%;
+    max-width: 1400px;
     margin: 1.5rem auto;
     padding: 0 1rem;
     display: flex;
@@ -419,6 +430,8 @@
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
   }
   .performance-metrics {
     margin: 1rem 0;
@@ -779,11 +792,12 @@
   }
   textarea {
     border-radius: 8px;
-    resize: none;
-    padding: 10px;
+    resize: vertical;
+    padding: 10px 10px 60px 10px;
     border: 1px solid #ccc;
     transition: border-color 0.3s;
     min-height: 150px;
+    box-sizing: border-box;
   }
   textarea:focus {
     outline: none;
@@ -831,7 +845,7 @@
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    resize: none;
+    resize: vertical;
     border: 1px solid #ccc;
     font-family: var(--font-sans);
     font-size: 1rem;
@@ -1027,7 +1041,11 @@
     padding-top: 0;
     padding-bottom: 0;
   }
-  
+  #toggleLiveMetaInfoBtn, #toggleLivePreviewTableBtn {
+    margin-bottom: 0.5rem;
+  }
+
+
   /* ======================================================
      JSON CONTAINER
      ====================================================== */
@@ -1156,7 +1174,7 @@
      FOOTER & PDF CONTAINER
      ====================================================== */
   footer {
-    margin-top: 5rem;
+    margin-top: auto;
     padding: 1.5rem 0;
     background-color: var(--color-header-bg);
     color: var(--color-header-text);

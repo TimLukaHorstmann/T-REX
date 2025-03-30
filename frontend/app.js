@@ -61,6 +61,30 @@ window.addEventListener("scroll", function() {
 });
 
 
+/**
+ * Converts a TabFact table (cells separated by "#") into a proper CSV.
+ * For each cell, if it contains a comma, double quote, or newline,
+ * the cell is wrapped in double quotes and internal double quotes are escaped.
+ */
+function convertTabfactToCSV(tabfactText) {
+  const lines = tabfactText.trim().split(/\r?\n/);
+  const csvLines = lines.map(line => {
+    const cells = line.split("#");
+    const processedCells = cells.map(cell => {
+      const trimmed = cell.trim();
+      // If the cell contains a comma, a double quote, or newline, escape it.
+      if (trimmed.includes(",") || trimmed.includes('"') || trimmed.includes("\n")) {
+        const escaped = trimmed.replace(/"/g, '""');
+        return `"${escaped}"`;
+      }
+      return trimmed;
+    });
+    return processedCells.join(",");
+  });
+  return csvLines.join("\n");
+}
+
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     try {
@@ -1365,7 +1389,8 @@ function setupLiveCheckEvents() {
             // Optionally accumulate malformed tokens if desired
           }
         }
-        if (autoScrollEnabled) {
+        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 50;
+        if (nearBottom) {
           window.scrollTo(0, document.body.scrollHeight);
         }
       }
@@ -1545,9 +1570,23 @@ function setupLiveCheckEvents() {
 function renderLivePreviewTable(csvText, relevantCells) {
   const previewContainer = document.getElementById("livePreviewTable");
   previewContainer.innerHTML = "";
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-  if (!lines.length) return;
-  const tableData = lines.map(line => line.split("#"));
+
+  let csvToParse = csvText;
+  const firstLine = csvText.split(/\r?\n/)[0] || "";
+  if (firstLine.includes("#") && !firstLine.includes(",")) {
+    csvToParse = convertTabfactToCSV(csvText);
+    document.getElementById("inputTable").value = csvToParse;
+  }
+  const parsed = Papa.parse(csvToParse, { skipEmptyLines: true, delimiter: "," });
+
+  if (parsed.errors && parsed.errors.length > 0) {
+    console.error("CSV Parsing Errors:", parsed.errors);
+    return;
+  }
+  const tableData = parsed.data;
+  if (!tableData || tableData.length === 0) return;
+
+
   if (!tableData.length) return;
 
   const columns = tableData[0];
