@@ -1485,7 +1485,7 @@ function setupLiveCheckEvents() {
       statusMessageEl.style.display = "block";
       statusMessageEl.innerHTML = `
         An error occured: ${err.message}
-        <button id="retryBtn" class="btn-primary">[${translation.retryBtn}]</button>
+        <button id="retryBtn" class="btn-primary">${translation.retryBtn}</button>
       `;
       document.getElementById("retryBtn").addEventListener("click", () => {
         statusMessageEl.style.display = "none";

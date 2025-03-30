@@ -7,14 +7,14 @@ from PIL import Image
 
 pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
-async def process_ocr(engine: str, model: str, image_bytes: bytes) -> str:
+async def process_ocr(engine: str, model: str, image_bytes: bytes, OLLAMA_API_URL: str) -> str:
     """
     Process an image using the specified OCR engine and return CSV text with '#' delimiter.
     """
     if engine == "tesseract":
         return process_tesseract_ocr(image_bytes)
     elif engine == "ollama":
-        return await process_ollama_ocr(image_bytes, model)
+        return await process_ollama_ocr(image_bytes, model, OLLAMA_API_URL)
     else:
         raise ValueError("Unsupported OCR engine.")
 
@@ -26,7 +26,7 @@ def process_tesseract_ocr(image_bytes: bytes) -> str:
     # Process text to CSV
     return process_ocr_text_to_csv(text)
 
-async def process_ollama_ocr(image_bytes: bytes, model: str) -> str:
+async def process_ollama_ocr(image_bytes: bytes, model: str, OLLAMA_API_URL: str) -> str:
     # Convert image to base64
     import base64
     base64_string = base64.b64encode(image_bytes).decode("utf-8")
@@ -41,7 +41,7 @@ async def process_ollama_ocr(image_bytes: bytes, model: str) -> str:
     
     async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
         try:
-            response = await client.post("http://localhost:11434/api/generate", json=payload)
+            response = await client.post(OLLAMA_API_URL, json=payload)
             response.raise_for_status()
             data = response.json()
             if "response" not in data:

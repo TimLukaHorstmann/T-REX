@@ -71,7 +71,7 @@ async def ocr(
 
     image_bytes = await file.read()
     try:
-        csv_text = await process_ocr(req.engine, req.model, image_bytes)
+        csv_text = await process_ocr(req.engine, req.model, image_bytes, OLLAMA_API_URL)
         return JSONResponse(content={"csv_text": csv_text})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
