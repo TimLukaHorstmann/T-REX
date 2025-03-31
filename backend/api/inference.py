@@ -9,17 +9,27 @@ def build_prompt(req: GenerateRequest) -> str:
     prompt = "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
     if req.includeTitle and req.tableTitle:
         prompt += f'Table Title: "{req.tableTitle}"\n'
-    
-    # Parse CSV and add row_index column
-    lines = req.tableText.strip().split("\n")
+
+    # Get non-empty lines
+    lines = [line for line in req.tableText.strip().split("\n") if line.strip()]
     if not lines:
         raise HTTPException(status_code=400, detail="Table text is empty.")
-    table_data = [line.split("#") for line in lines if line.strip()]
-    headers = ["row_index"] + table_data[0]  # Add row_index as first column
+
+    # Detect delimiter by checking the first line
+    first_line = lines[0]
+    delimiter = '#' if first_line.count('#') > first_line.count(',') else ','
+
+    # Use the detected delimiter for splitting
+    table_data = [line.split(delimiter) for line in lines]
+
+    # Add a row_index column to the header and data rows
+    headers = ["row_index"] + table_data[0]
     indexed_rows = [headers] + [[str(i)] + row for i, row in enumerate(table_data[1:])]
-    indexed_csv = "\n".join("#".join(row) for row in indexed_rows)
+
+    # Joining the rows
+    indexed_csv = "\n".join(delimiter.join(row) for row in indexed_rows)
     table_md = csv_to_markdown(indexed_csv)
-    
+
     prompt += f"#### Table (Markdown):\n{table_md}\n\n"
     prompt += f"#### Claim:\n\"{req.claimText}\"\n\n"
     prompt += "Instructions:\n"

@@ -4,7 +4,7 @@
 window.translationDict = {
   en: {
     enterTable: "Enter Table:",
-    inputTablePlaceholder: "Paste table (CSV format, # delimited)",
+    inputTablePlaceholder: "Paste table (CSV format)",
     selectFromDatasetBtn: "Choose from TabFact Dataset",
     uploadCSVBtn: "Upload CSV File",
     datasetModalHeader: "Select a Table from the TabFact Dataset",
@@ -34,7 +34,7 @@ window.translationDict = {
   },
   fr: {
     enterTable: "Entrez le tableau :",
-    inputTablePlaceholder: "Collez le tableau (format CSV, délimité par #)",
+    inputTablePlaceholder: "Collez le tableau (format CSV)",
     selectFromDatasetBtn: "Choisir dans l'ensemble de données TabFact",
     uploadCSVBtn: "Télécharger un fichier CSV",
     datasetModalHeader: "Sélectionner un tableau dans l'ensemble de données TabFact",
@@ -64,7 +64,7 @@ window.translationDict = {
   },
   de: {
     enterTable: "Tabelle eingeben:",
-    inputTablePlaceholder: "Tabelle einfügen (CSV-Format, # getrennt)",
+    inputTablePlaceholder: "Tabelle einfügen (CSV-Format)",
     selectFromDatasetBtn: "Aus TabFact-Datensatz auswählen",
     uploadCSVBtn: "CSV-Datei hochladen",
     datasetModalHeader: "Tabelle aus dem TabFact-Datensatz auswählen",
@@ -94,7 +94,7 @@ window.translationDict = {
   },
   es: {
     enterTable: "Ingresar tabla:",
-    inputTablePlaceholder: "Pega la tabla (formato CSV, delimitado por #)",
+    inputTablePlaceholder: "Pega la tabla (formato CSV)",
     selectFromDatasetBtn: "Elegir del conjunto de datos TabFact",
     uploadCSVBtn: "Subir archivo CSV",
     datasetModalHeader: "Seleccionar una tabla del conjunto de datos TabFact",
@@ -124,7 +124,7 @@ window.translationDict = {
   },
   pt: {
     enterTable: "Inserir Tabela:",
-    inputTablePlaceholder: "Cole a tabela (formato CSV, delimitado por #)",
+    inputTablePlaceholder: "Cole a tabela (formato CSV)",
     selectFromDatasetBtn: "Escolher do conjunto de dados TabFact",
     uploadCSVBtn: "Carregar arquivo CSV",
     datasetModalHeader: "Selecionar uma tabela do conjunto de dados TabFact",
@@ -154,7 +154,7 @@ window.translationDict = {
   },
   zh: {
     enterTable: "输入表格：",
-    inputTablePlaceholder: "粘贴表格（CSV格式，以#分隔）",
+    inputTablePlaceholder: "粘贴表格（CSV格式）",
     selectFromDatasetBtn: "从TabFact数据集中选择",
     uploadCSVBtn: "上传CSV文件",
     datasetModalHeader: "从TabFact数据集中选择表格",
@@ -184,7 +184,7 @@ window.translationDict = {
   },
   ar: {
     enterTable: "أدخل الجدول:",
-    inputTablePlaceholder: "ألصق الجدول (تنسيق CSV، مفصول بـ #)",
+    inputTablePlaceholder: "ألصق الجدول (تنسيق CSV)",
     selectFromDatasetBtn: "اختر من مجموعة بيانات TabFact",
     uploadCSVBtn: "تحميل ملف CSV",
     datasetModalHeader: "حدد جدولًا من مجموعة بيانات TabFact",
@@ -214,7 +214,7 @@ window.translationDict = {
   },
   ru: {
     enterTable: "Введите таблицу:",
-    inputTablePlaceholder: "Вставьте таблицу (формат CSV, разделённый #)",
+    inputTablePlaceholder: "Вставьте таблицу (формат CSV)",
     selectFromDatasetBtn: "Выбрать из набора данных TabFact",
     uploadCSVBtn: "Загрузить CSV-файл",
     datasetModalHeader: "Выберите таблицу из набора данных TabFact",

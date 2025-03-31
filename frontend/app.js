@@ -45,20 +45,58 @@ let cachedCsvIds = null;
 // Disable auto-scroll if the user scrolls up manually.
 let autoScrollEnabled = true;
 let lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-let autoScrollTimeout;
+let isUserScrolling = false;
+let scrollTimeout = null;
 
-window.addEventListener("scroll", function() {
-  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-  // If the user scrolled up more than 20px compared to the last position:
-  if (currentScrollPosition < lastScrollPosition - 20) {
+// Check if the user is near the bottom
+function isNearBottom(threshold = 50) {
+  const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+  const maxScroll = document.body.scrollHeight - window.innerHeight;
+  return currentScroll >= maxScroll - threshold;
+}
+
+// Immediate scroll handler to detect direction and disable auto-scroll
+const handleScrollImmediate = () => {
+  const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollingUp = currentScroll < lastScrollPosition;
+
+  // If scrolling up, disable auto-scroll immediately
+  if (scrollingUp) {
     autoScrollEnabled = false;
-    clearTimeout(autoScrollTimeout);
-    autoScrollTimeout = setTimeout(() => {
-      autoScrollEnabled = true;
-    }, 5000); // Re-enable auto-scroll after 5 seconds of no upward scrolling.
+    isUserScrolling = true;
   }
-  lastScrollPosition = currentScrollPosition;
-});
+
+  lastScrollPosition = currentScroll;
+};
+
+// Debounced scroll handler for re-enabling auto-scroll
+const handleScrollDebounced = () => {
+  const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+  const nearBottom = isNearBottom(50);
+
+  // Re-enable auto-scroll only if near bottom after stopping
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    if (nearBottom) {
+      isUserScrolling = false;
+      autoScrollEnabled = true;
+    }
+  }, 500); // 500ms delay to confirm user has stopped scrolling
+};
+
+// Debounce function
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+// Add event listeners
+window.addEventListener("scroll", handleScrollImmediate); // Immediate response
+window.addEventListener("scroll", debounce(handleScrollDebounced, 100)); // Debounced for re-enabling
+
 
 
 /**
@@ -584,6 +622,8 @@ async function renderClaimAndTable(resultObj) {
   document.getElementById("full-entity-highlight-legend-precomputed").style.display = "none";
   const container = document.getElementById("table-container");
   container.innerHTML = "";
+  
+  // Display claim info
   const infoDiv = document.createElement("div");
   infoDiv.className = "info-panel";
   infoDiv.innerHTML = `
@@ -594,19 +634,16 @@ async function renderClaimAndTable(resultObj) {
   `;
   container.appendChild(infoDiv);
 
+  // Display meta info (table title, Wikipedia link)
   const metaDiv = document.getElementById("tableMetaInfo");
   metaDiv.innerHTML = "";
   const meta = tableToPageMap[resultObj.table_id];
   if (meta) {
     const [tableTitle, wikipediaUrl] = meta;
-
-    // change first part of wikipedia url to reflect the selected language
     const lang = document.getElementById("liveLanguageSelect").value;
     const langCode = lang === "en" ? "" : lang + ".";
     const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
-
-    tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
-
+    const tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
     metaDiv.innerHTML = `
       <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
       <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview target="_blank">${newWikipediaUrl}</a></p>
@@ -615,6 +652,7 @@ async function renderClaimAndTable(resultObj) {
     metaDiv.innerHTML = `<p><em>No title/link found for this table</em></p>`;
   }
 
+  // Load the CSV from file
   const csvFileName = resultObj.table_id;
   const csvUrl = CSV_BASE_PATH + csvFileName;
   let csvText = "";
@@ -630,16 +668,20 @@ async function renderClaimAndTable(resultObj) {
     return;
   }
   
+  // Parse CSV by detecting the delimiter from the first line.
   const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-  const tableData = lines.map(line => line.split("#"));
-  if (!tableData.length) {
+  if (!lines.length) {
     container.appendChild(document.createElement("p")).textContent = "Table is empty or could not be parsed.";
     return;
   }
+  const firstLine = lines[0];
+  const delimiter = (firstLine.includes(",") && (!firstLine.includes("#") || firstLine.split(",").length > firstLine.split("#").length)) ? "," : "#";
+  const tableData = lines.map(line => line.split(delimiter));
   
   const columns = tableData[0];
   const dataRows = tableData.slice(1);
   
+  // Build the table element
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
   const thead = document.createElement("thead");
@@ -662,7 +704,7 @@ async function renderClaimAndTable(resultObj) {
       const shouldHighlight = resultObj.relevant_cells.some(
         hc => hc.row_index === rowIndex &&
               hc.column_name.trim().toLowerCase() === columnName.trim().toLowerCase()
-      );      
+      );
       if (shouldHighlight) {
         td.classList.add("highlight");
         document.getElementById("full-highlight-legend-precomputed").style.display = "block";
@@ -674,6 +716,7 @@ async function renderClaimAndTable(resultObj) {
   tableEl.appendChild(tbody);
   container.appendChild(tableEl);
 
+  // Entity highlighting
   if (tableEntityLinkingMap[resultObj.table_id]) {
     const entityStatements = tableEntityLinkingMap[resultObj.table_id][0];
     let entityCoords = [];
@@ -686,19 +729,17 @@ async function renderClaimAndTable(resultObj) {
         entityCoords.push({ row, col });
       }
     });
-    const tbody = tableEl.querySelector("tbody");
-    if (tbody) {
-      Array.from(tbody.rows).forEach((tr, rowIndex) => {
-        Array.from(tr.cells).forEach((td, colIndex) => {
-          if (entityCoords.some(coord => coord.row === rowIndex && coord.col === colIndex)) {
-            td.classList.add("entity-highlight");
-          }
-        });
+    Array.from(tbody.rows).forEach((tr, rowIndex) => {
+      Array.from(tr.cells).forEach((td, colIndex) => {
+        if (entityCoords.some(coord => coord.row === rowIndex && coord.col === colIndex)) {
+          td.classList.add("entity-highlight");
+        }
       });
-    }
+    });
     document.getElementById("full-entity-highlight-legend-precomputed").style.display = "block";
   }
 }
+
 
 function updateNativeMetrics() {
   if (!allResults || allResults.length === 0) {
@@ -841,7 +882,7 @@ function updateResultsChart(tableId) {
 
 // + BUTTON OPTIONS
 
-// Toggle the options dropdown when clicking the + button (unchanged)
+// Toggle the options dropdown when clicking the + button
 document.getElementById("tableOptionsBtn").addEventListener("click", function (e) {
   e.stopPropagation();
   const dropdown = document.getElementById("tableOptionsDropdown");
@@ -1207,6 +1248,12 @@ function setupLiveCheckEvents() {
     statusMessageEl.style.display = "none"; // Hide initially
     window.streamAborted = false;
   
+    // Reset auto-scroll state
+    autoScrollEnabled = true;
+    isUserScrolling = false;
+    lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    clearTimeout(scrollTimeout);
+  
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
     
@@ -1284,11 +1331,16 @@ function setupLiveCheckEvents() {
       while (true) {
         const { value, done } = await globalReader.read();
         if (done) break;
-        if (window.streamAborted) break; // Early exit if aborted
+        if (window.streamAborted) break;
   
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop();
+  
+        // Store scroll position and height before adding new content
+        const scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
+        const heightBefore = document.body.scrollHeight;
+  
         for (const line of lines) {
           if (!line.trim()) continue;
           try {
@@ -1386,16 +1438,22 @@ function setupLiveCheckEvents() {
             }
           } catch (e) {
             console.warn("Failed to parse JSON token:", e);
-            // Optionally accumulate malformed tokens if desired
           }
         }
-        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 50;
-        if (nearBottom) {
-          window.scrollTo(0, document.body.scrollHeight);
+  
+        // Auto-scroll logic: only scroll if enabled and user was near bottom before new content
+        const heightAfter = document.body.scrollHeight;
+        const wasNearBottomBefore = scrollBefore >= heightBefore - window.innerHeight - 50;
+  
+        if (autoScrollEnabled && !isUserScrolling && wasNearBottomBefore) {
+          window.scrollTo({
+            top: heightAfter,
+            behavior: "auto" // Changed to "auto" for instant jump, avoiding animation conflict
+          });
         }
       }
   
-      // Process remaining buffer
+      // Process remaining buffer (unchanged)
       if (buffer.trim() && !window.streamAborted) {
         try {
           const token = JSON.parse(buffer);
@@ -1441,7 +1499,7 @@ function setupLiveCheckEvents() {
           }
         }
   
-        // Process final output
+        // Process final output (unchanged)
         let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
         const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
         let finalOutputHtml = "";
@@ -1506,15 +1564,15 @@ function setupLiveCheckEvents() {
   
     } catch (err) {
       console.error("Live Check Error:", err);
-      liveResultsEl.style.display = "none"; // Ensure results are hidden
+      liveResultsEl.style.display = "none";
       statusMessageEl.style.display = "block";
       statusMessageEl.innerHTML = `
-        An error occured: ${err.message}
+        An error occurred: ${err.message}
         <button id="retryBtn" class="btn-primary">${translation.retryBtn}</button>
       `;
       document.getElementById("retryBtn").addEventListener("click", () => {
         statusMessageEl.style.display = "none";
-        runLiveCheckBtn.click(); // Retry the live check
+        runLiveCheckBtn.click();
       });
     } finally {
       if (queuedTimer) {
@@ -1528,7 +1586,7 @@ function setupLiveCheckEvents() {
       document.getElementById("stopLiveCheck").style.display = "none";
       document.getElementById("stopLiveCheck").classList.remove("running");
       if (globalReader) {
-        globalReader.cancel().catch(() => {}); // Clean up reader
+        globalReader.cancel().catch(() => {});
         globalReader = null;
       }
     }
@@ -1646,7 +1704,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
   });
   tableEl.appendChild(tbody);
 
-  // Entity highlighting (unchanged)
+  // Entity highlighting
   let tableKey = selectedTableId;
   if (tableKey && tableEntityLinkingMap && tableEntityLinkingMap[tableKey]) {
     const entityStatements = tableEntityLinkingMap[tableKey][0];
@@ -1702,7 +1760,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
 
 }
 
-// Ensure fuzzyMatch and levenshteinDistance are included (unchanged from previous)
+// Ensure fuzzyMatch and levenshteinDistance are included
 function levenshteinDistance(a, b) {
   const matrix = Array(b.length + 1).fill(null).map(() =>
     Array(a.length + 1).fill(null)
@@ -1817,7 +1875,13 @@ function extractJsonFromResponse(rawResponse) {
     // Validate and correct relevant_cells
     const csvText = document.getElementById("inputTable").value;
     const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-    const tableData = lines.map(line => line.split("#"));
+    if (!lines.length) {
+      console.warn("Input table is empty during JSON extraction.");
+      return parsed;
+    }
+    const firstLine = lines[0];
+    const delimiter = (firstLine.includes(",") && (!firstLine.includes("#") || firstLine.split(",").length > firstLine.split("#").length)) ? "," : "#";
+    const tableData = lines.map(line => line.split(delimiter));
     const columns = tableData[0];
     const dataRows = tableData.slice(1);
     const hasRowIndex = columns[0].toLowerCase() === "row_index";
@@ -1830,7 +1894,7 @@ function extractJsonFromResponse(rawResponse) {
         console.warn(`Invalid row_index ${row_index}; clamping to valid range`);
         row_index = Math.max(0, Math.min(dataRows.length - 1, row_index));
       }
-      // Fuzzy match column_name
+      // Fuzzy match column_name: compare lowercased, space‑removed strings
       const normalizedInput = column_name.toLowerCase().replace(/\s+/g, '');
       let bestMatch = displayColumns.find(col =>
         col.toLowerCase().replace(/\s+/g, '') === normalizedInput
@@ -1866,6 +1930,7 @@ function extractJsonFromResponse(rawResponse) {
     }
   }
 }
+
 
 
 
