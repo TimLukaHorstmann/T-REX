@@ -208,6 +208,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Language selection
     const languageSelect = document.getElementById("liveLanguageSelect");
+    const lang = document.getElementById("liveLanguageSelect").value;
+    const translation = translationDict[lang] || translationDict["en"];
     if (languageSelect) {
       languageSelect.addEventListener("change", () => {
         updateModelOptionsBasedOnLanguage();
@@ -216,7 +218,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           populateClaimsDropdown(globalCSVId);
         }
         if (document.getElementById("tableTitleLabel")) {
-          document.getElementById("tableTitleLabel").textContent = translationDict[languageSelect.value].table_title;
+          document.getElementById("tableTitleLabel").textContent = translation.table_title;
         }
       });
       // Initial call
@@ -285,13 +287,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const toggleLiveMetaInfoBtn = document.getElementById("toggleLiveMetaInfoBtn");
     if (toggleLiveMetaInfoBtn) {
       toggleLiveMetaInfoBtn.addEventListener("click", function() {
+        const lang = document.getElementById("liveLanguageSelect").value;
+        const translation = translationDict[lang] || translationDict["en"];
         const metaInfo = document.getElementById("liveTableMetaInfo");
         if (metaInfo.classList.contains("collapsed")) {
           metaInfo.classList.remove("collapsed");
-          toggleLiveMetaInfoBtn.textContent = "▲ Table Details";
+          toggleLiveMetaInfoBtn.textContent = "▲ "+ translation.tableDetails;
         } else {
           metaInfo.classList.add("collapsed");
-          toggleLiveMetaInfoBtn.textContent = "▼ Table Details";
+          toggleLiveMetaInfoBtn.textContent = "▼ "+ translation.tableDetails;
         }
       });
     }
@@ -300,13 +304,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const toggleLivePreviewTableBtn = document.getElementById("toggleLivePreviewTableBtn");
     if (toggleLivePreviewTableBtn) {
       toggleLivePreviewTableBtn.addEventListener("click", function() {
+        const lang = document.getElementById("liveLanguageSelect").value;
+        const translation = translationDict[lang] || translationDict["en"];
         const previewTable = document.getElementById("livePreviewTableContainer");
         if (previewTable.classList.contains("collapsed")) {
           previewTable.classList.remove("collapsed");
-          toggleLivePreviewTableBtn.textContent = "▲ Table Preview";
+          toggleLivePreviewTableBtn.textContent = "▲ " + translation.tablePreview;
         } else {
           previewTable.classList.add("collapsed");
-          toggleLivePreviewTableBtn.textContent = "▼ Table Preview";
+          toggleLivePreviewTableBtn.textContent = "▼ " + translation.tablePreview;
         }
       });
     }
@@ -618,11 +624,14 @@ function showClaimsForTable(tableId) {
 }
 
 async function renderClaimAndTable(resultObj) {
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+
   document.getElementById("full-highlight-legend-precomputed").style.display = "none";
   document.getElementById("full-entity-highlight-legend-precomputed").style.display = "none";
   const container = document.getElementById("table-container");
   container.innerHTML = "";
-  
+
   // Display claim info
   const infoDiv = document.createElement("div");
   infoDiv.className = "info-panel";
@@ -640,10 +649,9 @@ async function renderClaimAndTable(resultObj) {
   const meta = tableToPageMap[resultObj.table_id];
   if (meta) {
     const [tableTitle, wikipediaUrl] = meta;
-    const lang = document.getElementById("liveLanguageSelect").value;
     const langCode = lang === "en" ? "" : lang + ".";
     const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
-    const tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
+    const tableTitleLabel = translation.table_title || "Table Title";
     metaDiv.innerHTML = `
       <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
       <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview target="_blank">${newWikipediaUrl}</a></p>
@@ -667,7 +675,7 @@ async function renderClaimAndTable(resultObj) {
     container.appendChild(errMsg);
     return;
   }
-  
+
   // Parse CSV by detecting the delimiter from the first line.
   const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
   if (!lines.length) {
@@ -677,10 +685,10 @@ async function renderClaimAndTable(resultObj) {
   const firstLine = lines[0];
   const delimiter = (firstLine.includes(",") && (!firstLine.includes("#") || firstLine.split(",").length > firstLine.split("#").length)) ? "," : "#";
   const tableData = lines.map(line => line.split(delimiter));
-  
+
   const columns = tableData[0];
   const dataRows = tableData.slice(1);
-  
+
   // Build the table element
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
@@ -693,7 +701,7 @@ async function renderClaimAndTable(resultObj) {
   });
   thead.appendChild(headerRow);
   tableEl.appendChild(thead);
-  
+
   const tbody = document.createElement("tbody");
   dataRows.forEach((rowVals, rowIndex) => {
     const tr = document.createElement("tr");
@@ -707,7 +715,6 @@ async function renderClaimAndTable(resultObj) {
       );
       if (shouldHighlight) {
         td.classList.add("highlight");
-        document.getElementById("full-highlight-legend-precomputed").style.display = "block";
       }
       tr.appendChild(td);
     });
@@ -715,6 +722,12 @@ async function renderClaimAndTable(resultObj) {
   });
   tableEl.appendChild(tbody);
   container.appendChild(tableEl);
+
+  // Update model-highlighted legend with translated text
+  if (tableEl.querySelectorAll("td.highlight").length > 0) {
+    document.getElementById("full-highlight-legend-precomputed").innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
+    document.getElementById("full-highlight-legend-precomputed").style.display = "block";
+  }
 
   // Entity highlighting
   if (tableEntityLinkingMap[resultObj.table_id]) {
@@ -736,6 +749,8 @@ async function renderClaimAndTable(resultObj) {
         }
       });
     });
+    // Update entity legend with translated text
+    document.getElementById("full-entity-highlight-legend-precomputed").innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
     document.getElementById("full-entity-highlight-legend-precomputed").style.display = "block";
   }
 }
@@ -1097,6 +1112,8 @@ async function fetchAndFillTable(tableId) {
 
       // change first part of wikipedia url to reflect the selected language
       const lang = document.getElementById("liveLanguageSelect").value;
+      const translation = translationDict[lang] || translationDict["en"];
+
       const langCode = lang === "en" ? "" : lang + ".";
       const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
 
@@ -1117,7 +1134,7 @@ async function fetchAndFillTable(tableId) {
         const toggleMetaBtn = document.getElementById("toggleLiveMetaInfoBtn");
         if (toggleMetaBtn) {
           toggleMetaBtn.style.display = "inline-block";
-          toggleMetaBtn.textContent = "▼ Table Details";
+          toggleMetaBtn.textContent = "▼ " + translation.tableDetails;
         }
         // Initialize Wikipedia preview for the meta info area.
         wikipediaPreview.init({ root: liveTableMetaInfo });
@@ -1626,6 +1643,9 @@ function setupLiveCheckEvents() {
 }
 
 function renderLivePreviewTable(csvText, relevantCells) {
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+
   const previewContainer = document.getElementById("livePreviewTable");
   previewContainer.innerHTML = "";
 
@@ -1644,18 +1664,12 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const tableData = parsed.data;
   if (!tableData || tableData.length === 0) return;
 
-
   if (!tableData.length) return;
 
   const columns = tableData[0];
   const dataRows = tableData.slice(1);
   const hasRowIndex = columns[0].toLowerCase() === "row_index";
-  const displayColumns = hasRowIndex ? columns.slice(1) : columns; // Hide row_index
-
-  // console.log("Columns:", columns);
-  // console.log("Display Columns:", displayColumns);
-  // console.log("Data Rows:", dataRows);
-  // console.log("Relevant Cells:", relevantCells);
+  const displayColumns = hasRowIndex ? columns.slice(1) : columns;
 
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
@@ -1678,8 +1692,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
     const displayRow = hasRowIndex ? rowVals.slice(1) : rowVals;
     const rowIdxValue = hasRowIndex ? parseInt(rowVals[0]) : rowIndex;
 
-    // console.log(`Row ${rowIndex}: rowIdxValue = ${rowIdxValue}, Values =`, rowVals);
-
     displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
@@ -1690,13 +1702,11 @@ function renderLivePreviewTable(csvText, relevantCells) {
         const hcRowIndex = hc.row_index;
         const hcColNameLower = hc.column_name.toLowerCase().replace(/\s+/g, '');
         const isMatch = hcRowIndex === rowIdxValue && fuzzyMatch(hcColNameLower, colNameLower);
-        // console.log(`Checking: row=${hcRowIndex} vs ${rowIdxValue}, col='${hc.column_name}' vs '${colName}' -> ${isMatch}`);
         return isMatch;
       });
 
       if (shouldHighlight) {
         td.classList.add("highlight");
-        // console.log(`Highlighting cell at rowIdxValue=${rowIdxValue}, col='${colName}'`);
       }
       tr.appendChild(td);
     });
@@ -1727,6 +1737,8 @@ function renderLivePreviewTable(csvText, relevantCells) {
         });
       });
     }
+    // Update entity legend with translated text
+    document.getElementById("full-entity-highlight-legend-live").innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
     document.getElementById("full-entity-highlight-legend-live").style.display = "block";
   } else {
     document.getElementById("full-entity-highlight-legend-live").style.display = "none";
@@ -1734,15 +1746,14 @@ function renderLivePreviewTable(csvText, relevantCells) {
 
   previewContainer.appendChild(tableEl);
 
+  // Update model-highlighted legend with translated text
   const legendModel = document.getElementById("full-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
+    legendModel.innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
     legendModel.style.display = "block";
-    // console.log("Highlighted cells found:", tableEl.querySelectorAll("td.highlight"));
   } else {
     legendModel.style.display = "none";
-    // console.log("No highlighted cells found.");
   }
-  previewContainer.appendChild(tableEl);
 
   document.getElementById("livePreviewTable").innerHTML = "";
   document.getElementById("livePreviewTable").appendChild(tableEl);
@@ -1755,9 +1766,8 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const togglePreviewBtn = document.getElementById("toggleLivePreviewTableBtn");
   if (togglePreviewBtn) {
     togglePreviewBtn.style.display = "inline-block";
-    togglePreviewBtn.textContent = "▼ Table Preview";
+    togglePreviewBtn.textContent = "▼ " + translation.tablePreview;
   }
-
 }
 
 // Ensure fuzzyMatch and levenshteinDistance are included
@@ -1788,6 +1798,9 @@ function fuzzyMatch(str1, str2, threshold = 2) {
 
 
 function displayLiveResults(csvText, claim, answer, relevantCells) {
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+
   const liveResultsEl = document.getElementById("liveResults");
   if (liveResultsEl) {
     liveResultsEl.style.display = "block";
@@ -1804,9 +1817,6 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
     // Display final verdict in a styled box
     const verdictDiv = document.createElement("div");
     verdictDiv.className = "final-verdict " + (answer === "TRUE" ? "true" : "false");
-
-    const lang = document.getElementById("liveLanguageSelect").value;
-    const translation = translationDict[lang] || translationDict["en"];
     const verdictText = answer === "TRUE" ? translation.trueLabel : translation.falseLabel;
     verdictDiv.textContent = verdictText.toUpperCase();
     liveClaimList.appendChild(verdictDiv);
@@ -1819,7 +1829,7 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
     previewContainer.classList.remove("collapsed");
     const togglePreviewBtn = document.getElementById("toggleLivePreviewTableBtn");
     if (togglePreviewBtn) {
-      togglePreviewBtn.textContent = "▲ Table Preview";
+      togglePreviewBtn.textContent = "▲ " + translation.tablePreview;
     }
   }
   
@@ -2084,6 +2094,7 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
 
 function updateTranslations() {
   const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
   
   // Table Section
   const tableHeading = document.querySelector(".table-input-group h3");
@@ -2115,6 +2126,40 @@ function updateTranslations() {
 
   const mayTakeSeconds = document.getElementById("mayTakeSeconds");
   if (mayTakeSeconds) mayTakeSeconds.textContent = translationDict[lang].mayTakeSeconds;
+
+  const toggleLiveMetaInfoBtn = document.getElementById("toggleLiveMetaInfoBtn");
+  if (toggleLiveMetaInfoBtn) {
+    const isCollapsed = document.getElementById("liveTableMetaInfo").classList.contains("collapsed");
+    toggleLiveMetaInfoBtn.textContent = `${isCollapsed ? "▼" : "▲"} ${translation.tableDetails}`;
+  }
+
+  const toggleLivePreviewTableBtn = document.getElementById("toggleLivePreviewTableBtn");
+  if (toggleLivePreviewTableBtn) {
+    const isCollapsed = document.getElementById("livePreviewTableContainer").classList.contains("collapsed");
+    toggleLivePreviewTableBtn.textContent = `${isCollapsed ? "▼" : "▲"} ${translation.tablePreview}`;
+  }
+
+  // Update live legends if visible
+  const liveHighlightLegend = document.getElementById("full-highlight-legend-live");
+  if (liveHighlightLegend && liveHighlightLegend.style.display !== "none") {
+    liveHighlightLegend.innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
+  }
+
+  const liveEntityLegend = document.getElementById("full-entity-highlight-legend-live");
+  if (liveEntityLegend && liveEntityLegend.style.display !== "none") {
+    liveEntityLegend.innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
+  }
+
+  // Update precomputed legends if visible
+  const precomputedHighlightLegend = document.getElementById("full-highlight-legend-precomputed");
+  if (precomputedHighlightLegend && precomputedHighlightLegend.style.display !== "none") {
+    precomputedHighlightLegend.innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
+  }
+
+  const precomputedEntityLegend = document.getElementById("full-entity-highlight-legend-precomputed");
+  if (precomputedEntityLegend && precomputedEntityLegend.style.display !== "none") {
+    precomputedEntityLegend.innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
+  }
 
 
   // Claim Section

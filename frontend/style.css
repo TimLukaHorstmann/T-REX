@@ -211,6 +211,10 @@
     color: var(--color-dark-text);
     border-left-color: var(--color-correct);
   }
+
+  body.dark-mode .github-logo {
+    filter: invert(1);
+  }
   
   /* ======================================================
      DARK MODE TABLE OVERRIDES
@@ -386,7 +390,7 @@
      ====================================================== */
   .container {
     width: 70%;
-    max-width: 1400px;
+    max-width: 1100px;
     margin: 1.5rem auto;
     padding: 0 1rem;
     display: flex;
@@ -1209,6 +1213,25 @@
     margin-top: 0.5rem;
     text-align: center;
   }
+  /* GitHub Logo in Footer */
+  .github-link {
+    margin-top: 0.5rem;
+  }
+  
+  .github-link a {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.2s;
+  }
+  
+  .github-link a:hover {
+    opacity: 0.8;
+  }
+  
+  .github-link .fa-github {
+    font-size: 1.2rem;
+    vertical-align: middle;
+  }
   .pdf-container {
     width: 100%;
     height: 800px;
@@ -1409,6 +1432,7 @@
     }
     .container {
       padding: 0.5rem;
+      width: 90%;
     }
     .results-section {
       padding: 0.5rem;

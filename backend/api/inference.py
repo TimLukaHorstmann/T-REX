@@ -5,8 +5,26 @@ from fastapi import HTTPException
 from schemas import GenerateRequest
 from utils import csv_to_markdown
 
+# Map language codes to full names for better model understanding
+LANGUAGE_MAP = {
+    "en": "English",
+    "fr": "French",
+    "de": "German",
+    "es": "Spanish",
+    "pt": "Portuguese",
+    "zh": "Chinese",
+    "ar": "Arabic",
+    "ru": "Russian"
+}
+
 def build_prompt(req: GenerateRequest) -> str:
-    prompt = "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
+    # Get the full language name from the code
+    language_name = LANGUAGE_MAP.get(req.language, "English")  # Default to English if not found
+
+    # Start with a strong language directive
+    prompt = f"You are an AI assistant responding in {language_name}. All your explanations and outputs must be in {language_name}, regardless of the input language.\n\n"
+    prompt += "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
+    
     if req.includeTitle and req.tableTitle:
         prompt += f'Table Title: "{req.tableTitle}"\n'
 
@@ -35,13 +53,14 @@ def build_prompt(req: GenerateRequest) -> str:
     prompt += "Instructions:\n"
     prompt += "- Use the 'row_index' column (starting at 0 for the first data row, excluding header) to identify rows.\n"
     prompt += "- Match column names exactly as they appear in the table, including case and spacing.\n"
-    prompt += "- After your explanation, output a final answer in valid JSON format:\n"
+    prompt += f"- Provide your explanation and reasoning in {language_name}.\n"
+    prompt += f"- After your explanation, output a final answer in valid JSON format:\n"
     prompt += '{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}\n'
     prompt += "- Ensure row_index corresponds to the 'row_index' column value, not the physical row number in the table.\n"
-    if req.language != "en":
-        prompt += f"Please provide your response in {req.language}.\n"
-    elif req.language == "en" and "deepseek" in req.model.lower():
+    
+    if req.language == "en" and "deepseek" in req.model.lower():
         prompt += "\n<think>"
+
     return prompt.strip()
 
 async def stream_inference(prompt: str, req: GenerateRequest, OLLAMA_API_URL: str):
@@ -52,7 +71,7 @@ async def stream_inference(prompt: str, req: GenerateRequest, OLLAMA_API_URL: st
         "stream": req.stream,
         "keep_alive": req.keep_alive
     }
-    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:  # Add explicit timeout
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
         try:
             async with client.stream("POST", OLLAMA_API_URL, json=payload) as response:
                 response.raise_for_status()
