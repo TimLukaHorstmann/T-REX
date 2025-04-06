@@ -224,6 +224,12 @@
       <div id="liveResults" class="live-results">
         <div id="liveClaimList"></div>
       </div>
+      <!-- Scroll to Bottom Button -->
+      <button id="scrollToBottomBtn" class="scroll-to-bottom" style="display: none;" title="Scroll to Bottom">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 4V20M12 20L8 16M12 20L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <div id="statusMessage"></div>
       <p id="aiDisclaimer" class="disclaimer">AI-generated, for reference only</p>
       <p id="liveCheckInfo" class="disclaimer">Live check uses our backend inference service.</p>
@@ -292,8 +298,8 @@
 
   <!-- Main app logic -->
   <script src="translations.js"></script>
-  <script src="app.js"></script>
   <script src="wikipedia-preview.umd.js"></script>
+  <script src="app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <script>
     const darkModeToggleCheckbox = document.getElementById("darkModeToggle");

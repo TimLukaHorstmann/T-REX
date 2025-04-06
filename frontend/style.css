@@ -215,6 +215,15 @@
   body.dark-mode .github-logo {
     filter: invert(1);
   }
+
+  .dark-mode .scroll-to-bottom {
+    background-color: #333;
+    border-color: #555;
+  }
+  
+  .dark-mode .scroll-to-bottom svg {
+    color: #fff;
+  }
   
   /* ======================================================
      DARK MODE TABLE OVERRIDES
@@ -1030,6 +1039,36 @@
     font-size: var(--font-size-small);
     margin-left: 0px;
     padding: 0.2rem 0.5rem;
+  }
+
+  .scroll-to-bottom {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .scroll-to-bottom:hover {
+    opacity: 1;
+  }
+  
+  .scroll-to-bottom svg {
+    width: 20px;
+    height: 20px;
+    color: #333;
   }
   
   /* ======================================================

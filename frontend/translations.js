@@ -34,7 +34,8 @@ window.translationDict = {
     liveCheckInfo: "Live check uses our backend inference service. Translations were generated automatically and may contain errors.",
     queuedMessage: "Your request is queued, please wait...",
     networkError: "Network error:",
-    retryBtn: "Retry"
+    retryBtn: "Retry",
+    wikipediaNoSummary: "No summary available for this Wikipedia page."
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -68,7 +69,8 @@ window.translationDict = {
     liveCheckInfo: "La vérification en direct utilise notre service d'inférence backend. Les traductions ont été générées automatiquement et peuvent contenir des erreurs.",
     queuedMessage: "Votre demande est en file d'attente, veuillez patienter...",
     networkError: "Erreur réseau:",
-    retryBtn: "Réessayer"
+    retryBtn: "Réessayer",
+    wikipediaNoSummary: "Aucun résumé disponible pour cette page Wikipédia."
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -102,7 +104,8 @@ window.translationDict = {
     liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst. Übersetzungen wurden automatisch generiert und können Fehler enthalten.",
     queuedMessage: "Ihre Anfrage befindet sich in der Warteschlange, bitte warten...",
     networkError: "Netzwerkfehler:",
-    retryBtn: "Erneut versuchen"
+    retryBtn: "Erneut versuchen",
+    wikipediaNoSummary: "Keine Zusammenfassung für diese Wikipedia-Seite verfügbar."
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -136,7 +139,8 @@ window.translationDict = {
     liveCheckInfo: "La verificación en vivo utiliza nuestro servicio de inferencia backend. Las traducciones se generaron automáticamente y pueden contener errores.",
     queuedMessage: "Tu solicitud está en cola, por favor espera...",
     networkError: "Error de red:",
-    retryBtn: "Reintentar"
+    retryBtn: "Reintentar",
+    wikipediaNoSummary: "No hay resumen disponible para esta página de Wikipedia."
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -170,7 +174,8 @@ window.translationDict = {
     liveCheckInfo: "A verificação ao vivo usa nosso serviço de inferência backend. As traduções foram geradas automaticamente e podem conter erros.",
     queuedMessage: "Sua solicitação está na fila, por favor aguarde...",
     networkError: "Erro de rede:",
-    retryBtn: "Tentar novamente"
+    retryBtn: "Tentar novamente",
+    wikipediaNoSummary: "Nenhum resumo disponível para esta página da Wikipedia."
   },
   zh: {
     enterTable: "输入表格：",
@@ -204,7 +209,8 @@ window.translationDict = {
     liveCheckInfo: "实时检查使用我们的后端推理服务。翻译是自动生成的，可能包含错误。",
     queuedMessage: "您的请求已排队，请稍候...",
     networkError: "网络错误：",
-    retryBtn: "重试"
+    retryBtn: "重试",
+    wikipediaNoSummary: "此维基百科页面没有可用的摘要。"
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -238,7 +244,8 @@ window.translationDict = {
     liveCheckInfo: "يستخدم الفحص المباشر خدمة الاستدلال الخلفية لدينا. تم إنشاء الترجمات تلقائيًا وقد تحتوي على أخطاء.",
     queuedMessage: "تم وضع طلبك في قائمة الانتظار، يرجى الانتظار...",
     networkError: "خطأ في الشبكة:",
-    retryBtn: "إعادة المحاولة"
+    retryBtn: "إعادة المحاولة",
+    wikipediaNoSummary: "لا يوجد ملخص متاح لهذه الصفحة على ويكيبيديا."
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -272,6 +279,7 @@ window.translationDict = {
     liveCheckInfo: "Проверка в реальном времени использует нашу сервисную инфраструктуру. Переводы были созданы автоматически и могут содержать ошибки.",
     queuedMessage: "Ваш запрос поставлен в очередь, пожалуйста, подождите...",
     networkError: "Ошибка сети:",
-    retryBtn: "Повторить попытку"
+    retryBtn: "Повторить попытку",
+    wikipediaNoSummary: "Нет доступного резюме для этой страницы Википедии."
   }
 };

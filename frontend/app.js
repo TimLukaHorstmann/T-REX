@@ -226,9 +226,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateTranslations();
     }
 
-    // Handle paste events in the table textarea to detect images.
+    // Handle paste events in the table textarea to detect images and update preview
     document.getElementById("inputTable").addEventListener("paste", function (e) {
       const items = e.clipboardData.items;
+      let textPasted = false;
       for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf("image") !== -1) {
           const file = items[i].getAsFile();
@@ -254,7 +255,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
           e.preventDefault();
           return;
+        } else if (items[i].type === "text/plain") {
+          textPasted = true;
         }
+      }
+      // If text is pasted, trigger the input event after a slight delay to ensure value is updated
+      if (textPasted) {
+        e.preventDefault();
+        const text = e.clipboardData.getData("text/plain");
+        this.value = text;
+        setTimeout(() => {
+          const event = new Event("input", { bubbles: true });
+          this.dispatchEvent(event);
+        }, 0);
       }
     });
     // remove image preview when clicking the close button.
@@ -316,6 +329,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
     }
+
+    // Setup MutationObserver to watch for Wikipedia preview errors
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.addedNodes.length) {
+          const lang = document.getElementById("liveLanguageSelect").value;
+          const errorMessages = document.querySelectorAll('.wikipediapreview-body-message span');
+          errorMessages.forEach(span => {
+            const grandparent = span.parentElement.parentElement;
+            if (grandparent && grandparent.classList.contains('wikipediapreview-body-error') &&
+                span.textContent === "There was an issue while displaying this preview.") {
+              const translation = translationDict[lang] || translationDict["en"];
+              span.textContent = translation.wikipediaNoSummary;
+            }
+          });
+        }
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
 
   } catch (error) {
@@ -1058,7 +1090,21 @@ async function loadNextBatch(datasetList, lang) {
     //console.log(`Loaded ${loadedItems} of ${totalDatasetItems} items`);
 
     // Initialize Wikipedia preview for new items
-    wikipediaPreview.init({ root: datasetList });
+    wikipediaPreview.init({
+      root: datasetList,
+      lang: lang,
+      detectLinks: true,
+      onFail: function(element, wikiData) {
+        console.log("onFail triggered:", element, wikiData); // Debug log
+        const translation = translationDict[lang] || translationDict["en"];
+        return `<p>${translation.wikipediaNoSummary}</p>`;
+      }
+    });
+  
+    // Fallback: Patch errors after a delay
+    setTimeout(() => {
+      patchWikipediaPreviewErrors(datasetList, lang);
+    }, 1000);
 
     // Hide sentinel if all items are loaded
     if (loadedItems >= totalDatasetItems) {
@@ -1075,6 +1121,18 @@ async function loadNextBatch(datasetList, lang) {
   }
 }
 
+function patchWikipediaPreviewErrors(rootElement, lang) {
+  const translation = translationDict[lang] || translationDict["en"];
+  const errorMessages = rootElement.querySelectorAll('.wikipediapreview-body-message span');
+  errorMessages.forEach(span => {
+    // Check if the grandparent has the 'wikipediapreview-body-error' class
+    const grandparent = span.parentElement.parentElement;
+    if (grandparent && grandparent.classList.contains('wikipediapreview-body-error') &&
+        span.textContent === "There was an issue while displaying this preview.") {
+      span.textContent = translation.wikipediaNoSummary;
+    }
+  });
+}
 
 
 // Close the dataset modal when clicking outside its content.
@@ -1136,8 +1194,22 @@ async function fetchAndFillTable(tableId) {
           toggleMetaBtn.style.display = "inline-block";
           toggleMetaBtn.textContent = "▼ " + translation.tableDetails;
         }
-        // Initialize Wikipedia preview for the meta info area.
-        wikipediaPreview.init({ root: liveTableMetaInfo });
+        // Initialize Wikipedia preview with custom error handling
+        wikipediaPreview.init({
+          root: liveTableMetaInfo,
+          lang: lang,
+          detectLinks: true,
+          onFail: function(element, wikiData) {
+            console.log("onFail triggered:", element, wikiData); // Debug log
+            const translation = translationDict[lang] || translationDict["en"];
+            return `<p>${translation.wikipediaNoSummary}</p>`;
+          }
+        });
+    
+        // Fallback: Patch the error message in the DOM after a delay
+        setTimeout(() => {
+          patchWikipediaPreviewErrors(liveTableMetaInfo, lang);
+        }, 1000); // Delay to allow preview to render
       }
       includeTableNameOption.style.display = "block";
     }
@@ -1296,6 +1368,10 @@ function setupLiveCheckEvents() {
     liveThinkOutputEl.style.display = "none";
     liveClaimList.style.display = "none";
     liveResultsEl.style.display = "none";
+
+    // Show scroll-to-bottom button initially
+    const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
+    // scrollToBottomBtn.style.display = "block";
   
     let firstThinkTokenReceived = false;
     let firstAnswerTokenReceived = false;
@@ -1468,6 +1544,8 @@ function setupLiveCheckEvents() {
             behavior: "auto" // Changed to "auto" for instant jump, avoiding animation conflict
           });
         }
+        const isAtBottom = isNearBottom(50);
+        scrollToBottomBtn.style.display = isAtBottom ? "none" : "block";
       }
   
       // Process remaining buffer (unchanged)
@@ -1560,6 +1638,9 @@ function setupLiveCheckEvents() {
             this.textContent = "▼";
           }
         });
+
+        // Hide scroll-to-bottom button when streaming ends
+        scrollToBottomBtn.style.display = "none";
   
         liveResultsEl.style.display = "block";
         document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
@@ -1591,11 +1672,13 @@ function setupLiveCheckEvents() {
         statusMessageEl.style.display = "none";
         runLiveCheckBtn.click();
       });
+      scrollToBottomBtn.style.display = "none";
     } finally {
       if (queuedTimer) {
         clearTimeout(queuedTimer);
         if (requestStatus) requestStatus.style.display = "none";
       }
+      scrollToBottomBtn.style.display = "none";
       runLiveCheckBtn.disabled = false;
       runLiveCheckBtn.style.opacity = "1";
       runLiveCheckBtn.style.cursor = "pointer";
@@ -1639,7 +1722,18 @@ function setupLiveCheckEvents() {
     // Hide the stop button
     stopLiveCheckBtn.style.display = "none";
     stopLiveCheckBtn.classList.remove("running");
-  }); 
+  });
+
+  // Add click handler for scroll-to-bottom button
+  const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
+  scrollToBottomBtn.addEventListener("click", () => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth"
+    });
+    autoScrollEnabled = true; // Re-enable auto-scroll after manual scroll
+  });
+
 }
 
 function renderLivePreviewTable(csvText, relevantCells) {
