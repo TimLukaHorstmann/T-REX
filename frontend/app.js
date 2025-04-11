@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const globalFormatTypes = Array.from(new Set(manifestOptions.map(o => o.formatType))).sort();
       
       populateAllDropdowns();
-      ["modelSelect", "datasetSelect", "learningTypeSelect", "nValueSelect", "formatTypeSelect"].forEach(id => {
+      ["modelSelect", "learningTypeSelect", "nValueSelect", "formatTypeSelect"].forEach(id => {
         document.getElementById(id).addEventListener("change", updateDropdownsAndDisableInvalidOptions);
       });
       updateDropdownsAndDisableInvalidOptions();
@@ -381,16 +381,17 @@ async function fetchManifest() {
 function parseManifest(manifest) {
   manifest.results_files.forEach(filename => {
     const shortName = filename.replace(/^results\//, "");
-    const regex = /^results_with_cells_(.+?)_(test_examples|val_examples)_(\d+|all)_(zero_shot|one_shot|few_shot|chain_of_thought)_(naturalized|markdown|json|html)\.json$/;
+    const regex = /^results_with_cells_(.+?)_(test_examples)_(\d+|all)_(zero_shot|one_shot|few_shot|chain_of_thought)_(naturalized|markdown|json|html)\.json$/;
     const match = shortName.match(regex);
     if (match) {
-      const [_, model, dataset, nValue, learningType, formatType] = match;
-      manifestOptions.push({ model, dataset, nValue, learningType, formatType, filename });
+      const [_, model, , nValue, learningType, formatType] = match;
+      manifestOptions.push({ model, dataset: "test_examples", nValue, learningType, formatType, filename });
     } else {
       console.warn(`Filename "${filename}" does not match expected pattern; ignoring.`);
     }
   });
 }
+
 
 function populateAllDropdowns() {
   const models = Array.from(new Set(manifestOptions.map(opt => opt.model))).sort();
@@ -404,16 +405,14 @@ function populateAllDropdowns() {
   const formatTypes = Array.from(new Set(manifestOptions.map(opt => opt.formatType))).sort();
 
   populateSelect("modelSelect", models, "", true);
-  populateSelect("datasetSelect", datasets, "", true);
   populateSelect("learningTypeSelect", learningTypes, "", true);
   populateSelect("nValueSelect", nValues, "", true);
   populateSelect("formatTypeSelect", formatTypes, "", true);
 }
 
-function isValidCombination(model, dataset, learningType, nValue, formatType) {
+function isValidCombination(model, learningType, nValue, formatType) {
   return manifestOptions.some(opt => {
     if (model && opt.model !== model) return false;
-    if (dataset && opt.dataset !== dataset) return false;
     if (learningType && opt.learningType !== learningType) return false;
     if (nValue && opt.nValue !== nValue) return false;
     if (formatType && opt.formatType !== formatType) return false;
@@ -434,29 +433,26 @@ function updateDropdownDisabledState(dropdownId, isValidCandidate) {
 
 function updateDropdownsAndDisableInvalidOptions() {
   const currentModel = document.getElementById("modelSelect").value;
-  const currentDataset = document.getElementById("datasetSelect").value;
+  const currentDataset = "test_examples";
   const currentLearningType = document.getElementById("learningTypeSelect").value;
   const currentNValue = document.getElementById("nValueSelect").value;
   const currentFormatType = document.getElementById("formatTypeSelect").value;
 
   updateDropdownDisabledState("modelSelect", candidate =>
-    isValidCombination(candidate, currentDataset, currentLearningType, currentNValue, currentFormatType)
-  );
-  updateDropdownDisabledState("datasetSelect", candidate =>
-    isValidCombination(currentModel, candidate, currentLearningType, currentNValue, currentFormatType)
+    isValidCombination(candidate, currentLearningType, currentNValue, currentFormatType)
   );
   updateDropdownDisabledState("learningTypeSelect", candidate =>
-    isValidCombination(currentModel, currentDataset, candidate, currentNValue, currentFormatType)
+    isValidCombination(currentModel, candidate, currentNValue, currentFormatType)
   );
   updateDropdownDisabledState("nValueSelect", candidate =>
-    isValidCombination(currentModel, currentDataset, currentLearningType, candidate, currentFormatType)
+    isValidCombination(currentModel, currentLearningType, candidate, currentFormatType)
   );
   updateDropdownDisabledState("formatTypeSelect", candidate =>
-    isValidCombination(currentModel, currentDataset, currentLearningType, currentNValue, candidate)
+    isValidCombination(currentModel, currentLearningType, currentNValue, candidate)
   );
 
   const loadBtn = document.getElementById("loadBtn");
-  const allValues = [currentModel, currentDataset, currentLearningType, currentNValue, currentFormatType];
+  const allValues = [currentModel, currentLearningType, currentNValue, currentFormatType];
   if (allValues.some(v => v === "")) {
     loadBtn.disabled = true;
     loadBtn.style.cursor = "not-allowed";
@@ -529,7 +525,6 @@ function populateSelect(selectId, values, currentSelection = "", includeAny = tr
 
 function populateDropdowns() {
   populateSelect("modelSelect", Array.from(availableOptions.models).sort());
-  populateSelect("datasetSelect", Array.from(availableOptions.datasets).sort());
   populateSelect("learningTypeSelect", Array.from(availableOptions.learningTypes).sort());
   populateSelect("nValueSelect", Array.from(availableOptions.nValues).sort((a, b) => {
     if (a === "all") return 1;
@@ -546,7 +541,7 @@ function addLoadButtonListener() {
 
 async function loadResults() {
   const modelName = document.getElementById("modelSelect").value;
-  const datasetName = document.getElementById("datasetSelect").value;
+  const datasetName = "test_examples";
   const learningType = document.getElementById("learningTypeSelect").value;
   const nValue = document.getElementById("nValueSelect").value;
   const formatType = document.getElementById("formatTypeSelect").value;
@@ -601,9 +596,15 @@ function populateTableSelect() {
     const option = document.createElement("option");
     option.value = tid;
     let title = tableToPageMap[tid] ? tableToPageMap[tid][0] : "";
-    option.textContent = title ? `${tid} - ${title}` : tid;
+    if (title) {
+      title = title.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      option.innerHTML = `<strong>${title}</strong> [${tid}]`;
+    } else {
+      option.textContent = tid;
+    }
     tableSelect.appendChild(option);
   });
+  
   tableSelect.removeEventListener("change", onTableSelectChange);
   tableSelect.addEventListener("change", onTableSelectChange);
   tableSelect.value = tableIds[0];
@@ -808,6 +809,19 @@ function updateNativeMetrics() {
       FN++;
     }
   });
+
+  const plotly_config = {
+    modeBarButtonsToRemove: [
+      'zoom2d',
+      'pan2d',
+      'zoomIn2d',
+      'zoomOut2d',
+      'autoScale2d',
+      'resetScale2d',
+      'select2d',
+      'lasso2d'
+    ]
+  };
   
   const matrix = [
     [TN, FP],
@@ -842,7 +856,7 @@ function updateNativeMetrics() {
     }
   }
   
-  Plotly.newPlot('confusionMatrixPlot', heatmapData, heatmapLayout);
+  Plotly.newPlot('confusionMatrixPlot', heatmapData, heatmapLayout, plotly_config);
   
   const precision = (TP + FP) > 0 ? TP / (TP + FP) : 0;
   const recall    = (TP + FN) > 0 ? TP / (TP + FN) : 0;
@@ -860,7 +874,7 @@ function updateNativeMetrics() {
     yaxis: { range: [0, 1], title: 'Score' }
   };
   
-  Plotly.newPlot('performanceSummaryPlot', summaryData, summaryLayout);
+  Plotly.newPlot('performanceSummaryPlot', summaryData, summaryLayout, plotly_config);
 }
 
 function updateResultsChart(tableId) {
