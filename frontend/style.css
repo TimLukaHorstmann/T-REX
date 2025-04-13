@@ -1088,6 +1088,47 @@
     margin-bottom: 0.5rem;
   }
 
+  /* Update the live preview container styles */
+#livePreviewTableContainer {
+  /* Existing styles */
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.5s ease;
+  /* Add these styles for better scrolling */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#livePreviewTableContainer:not(.collapsed) {
+  /* When not collapsed, set reasonable max height with scrolling */
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+#livePreviewTable {
+  /* Add horizontal scrolling for wide tables */
+  overflow-x: auto;
+  /* Ensure enough padding around the table */
+  padding: 5px;
+}
+
+/* Make dark mode consistent with these changes */
+body.dark-mode #livePreviewTableContainer {
+  border-color: var(--color-dark-border);
+}
+
+/* Update mobile device styles */
+@media (max-width: 600px) {
+  #livePreviewTableContainer:not(.collapsed) {
+    /* Slightly smaller max height on mobile */
+    max-height: 400px;
+  }
+  
+  #livePreviewTable {
+    /* Ensure touch scrolling works well on mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+}
 
   /* ======================================================
      JSON CONTAINER
@@ -1557,4 +1598,3 @@
       display: none !important;
     }
   }
-  
