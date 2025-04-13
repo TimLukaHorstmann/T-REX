@@ -1341,7 +1341,7 @@ function setupLiveCheckEvents() {
     }
   });
 
-  ////////////////////// MAIN FUNCTIONALITY //////////////////////
+  ////////////////////// MAIN FUNCTIONALITY //////////////////////  
   runLiveCheckBtn.addEventListener("click", async () => {
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
@@ -1393,13 +1393,16 @@ function setupLiveCheckEvents() {
     let thinkText = "";
     let inThinkBlock = false;
     let buffer = "";
+
+    // Add model-specific tag detection
+    const model = document.getElementById("liveModelSelect").value;
+    const thinkTags = getThinkingTagsForModel(model);
   
     // --- Gather Inputs ---
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
     const language = selectedLanguage;
-    const model = document.getElementById("liveModelSelect").value;
-    const includeTitle = document.getElementById("includeTableNameCheck").checked;
+     const includeTitle = document.getElementById("includeTableNameCheck").checked;
     let tableTitle = "";
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
       tableTitle = tableToPageMap[selectedTableId][0];
@@ -1460,13 +1463,13 @@ function setupLiveCheckEvents() {
               requestStatus.style.display = "none";
             }
   
-            // Process tokenText to separate <think> blocks from answer tokens
+            // Process tokenText to separate thinking blocks from answer tokens using dynamic tags
             while (tokenText.length > 0) {
               if (inThinkBlock) {
-                const endIdx = tokenText.indexOf("</think>");
+                const endIdx = tokenText.indexOf(thinkTags.end);
                 if (endIdx !== -1) {
                   thinkText += tokenText.slice(0, endIdx);
-                  tokenText = tokenText.slice(endIdx + 8);
+                  tokenText = tokenText.slice(endIdx + thinkTags.end.length);
                   inThinkBlock = false;
                   continue;
                 } else {
@@ -1496,10 +1499,10 @@ function setupLiveCheckEvents() {
                   break;
                 }
               } else {
-                const startIdx = tokenText.indexOf("<think>");
+                const startIdx = tokenText.indexOf(thinkTags.start);
                 if (startIdx !== -1) {
                   finalText += tokenText.slice(0, startIdx);
-                  tokenText = tokenText.slice(startIdx + 7);
+                  tokenText = tokenText.slice(startIdx + thinkTags.start.length);
                   inThinkBlock = true;
                   continue;
                 } else {
@@ -1569,10 +1572,10 @@ function setupLiveCheckEvents() {
           let tokenText = token.response;
           while (tokenText.length > 0) {
             if (inThinkBlock) {
-              const endIdx = tokenText.indexOf("</think>");
+              const endIdx = tokenText.indexOf(thinkTags.end);
               if (endIdx !== -1) {
                 thinkText += tokenText.slice(0, endIdx);
-                tokenText = tokenText.slice(endIdx + 8);
+                tokenText = tokenText.slice(endIdx + thinkTags.end.length);
                 inThinkBlock = false;
                 continue;
               } else {
@@ -1581,10 +1584,10 @@ function setupLiveCheckEvents() {
                 break;
               }
             } else {
-              const startIdx = tokenText.indexOf("<think>");
+              const startIdx = tokenText.indexOf(thinkTags.start);
               if (startIdx !== -1) {
                 finalText += tokenText.slice(0, startIdx);
-                tokenText = tokenText.slice(startIdx + 7);
+                tokenText = tokenText.slice(startIdx + thinkTags.start.length);
                 inThinkBlock = true;
                 continue;
               } else {
@@ -1608,33 +1611,31 @@ function setupLiveCheckEvents() {
           }
         }
   
-        // Process final output (unchanged)
+        // Process final output with smarter JSON handling
         let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
-        const jsonMatch = cleanedResponse.match(/({[\s\S]*})/);
         let finalOutputHtml = "";
         let parsedJson = {};
-        if (jsonMatch) {
-          const jsonBlock = jsonMatch[0];
-          parsedJson = extractJsonFromResponse(jsonBlock);
-          const formattedJson = JSON.stringify(parsedJson, null, 2);
-          const jsonContainerHtml = `
-            <div class="json-container">
-              <div class="json-header">
-                <span>JSON</span>
-                <button class="copy-btn" onclick="copyToClipboard(this)">
-                  <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
-                </button>
-              </div>
-              <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
+        
+        // Extract JSON more precisely
+        parsedJson = extractJsonFromResponse(cleanedResponse);
+        const formattedJson = JSON.stringify(parsedJson, null, 2);
+        
+        // Generate JSON container HTML
+        const jsonContainerHtml = `
+          <div class="json-container">
+            <div class="json-header">
+              <span>JSON</span>
+              <button class="copy-btn" onclick="copyToClipboard(this)">
+                <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
+              </button>
             </div>
-          `;
-          const markdownPart = cleanedResponse.replace(jsonBlock, "").trim();
-          const markdownHtml = DOMPurify.sanitize(marked.parse(markdownPart));
-          finalOutputHtml = markdownHtml + jsonContainerHtml;
-        } else {
-          finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse));
-        }
-  
+            <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
+          </div>
+        `;
+        
+        // Parse the markdown without removing JSON from the explanation
+        finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse)) + jsonContainerHtml;
+        
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
@@ -1850,7 +1851,7 @@ function renderLivePreviewTable(csvText, relevantCells) {
   if (togglePreviewBtn) {
     togglePreviewBtn.style.display = "inline-block";
     togglePreviewBtn.textContent = "▼ " + translation.tablePreview;
-  }
+ }
 }
 
 // Ensure fuzzyMatch and levenshteinDistance are included
@@ -2002,11 +2003,9 @@ function extractJsonFromResponse(rawResponse) {
   }
 }
 
-
-
-
-function separateThinkFromResponse(rawText) {
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/i;
+function separateThinkFromResponse(rawText, model) {
+  const thinkTags = getThinkingTagsForModel(model);
+  const thinkRegex = new RegExp(`${thinkTags.start}([\\s\\S]*?)${thinkTags.end}`, 'i');
   const match = rawText.match(thinkRegex);
   let thinkContent = "";
   let remainder = rawText;
@@ -2015,6 +2014,17 @@ function separateThinkFromResponse(rawText) {
     remainder = rawText.replace(thinkRegex, "").trim();
   }
   return { think: thinkContent, noThink: remainder };
+}
+
+function getThinkingTagsForModel(model) {
+  switch (model) {
+    case "exaone-deep":
+      return { start: "<thought>", end: "</thought>" };
+    case "deepseek-r1:latest":
+      return { start: "<think>", end: "</think>" };
+    default:
+      return { start: "<think>", end: "</think>" }; // Default for other models
+  }
 }
 
 function copyToClipboard(btn) {
@@ -2039,7 +2049,7 @@ function updateModelOptionsBasedOnLanguage() {
   const languageSelect = document.getElementById("liveLanguageSelect");
   const selectedLanguage = languageSelect.value;
   const modelSelect = document.getElementById("liveModelSelect");
-  const allowedModels = ["llama3.2", "gemma3"];
+  const allowedModels = ["llama3.2", "gemma3", "cogito"];
 
   // Loop over model options and disable ones that are not allowed in non-English mode.
   for (const option of modelSelect.options) {
