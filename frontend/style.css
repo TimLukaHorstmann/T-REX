@@ -74,11 +74,14 @@
 
   .dark-mode-label {
     font-size: 0.8rem;
-    color: var(--color-dark-text);
+    color: #90caf9;
     vertical-align: middle;
   }
   body.dark-mode {
     background: var(--color-dark-bg);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .dark-mode-label {
     color: var(--color-dark-text);
   }
   body.dark-mode header,
@@ -88,6 +91,7 @@
   body.dark-mode .results-section,
   body.dark-mode .live-input-section,
   body.dark-mode .live-results,
+  body.dark-mode #liveResults,
   body.dark-mode .pdf-container {
     background: var(--color-dark-container-bg);
     box-shadow: none;
@@ -154,6 +158,10 @@
     background-color: var(--color-dark-info-panel-bg);
     color: var(--color-dark-text);
   }
+
+  body.dark-mode .toggle-btn {
+    color: var(--color-correct);
+  }
   
   body.dark-mode .meta-info-box a {
     color: var(--color-btn-primary-bg);
@@ -170,7 +178,6 @@
 
   body.dark-mode .answer-overlay,
   body.dark-mode .thinking-overlay {
-    background-color: rgba(255, 255, 255, 0.1);
     color: var(--color-dark-text);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
@@ -247,6 +254,21 @@
   body.dark-mode .styled-table tbody tr:hover {
     background-color: #444;
   }
+
+  body.dark-mode .highlight {
+    background-color: var(--color-verdict-true-text);
+    border: 2px solid var(--color-correct);
+  }
+  
+  body.dark-mode .styled-table td.highlight {
+    background-color: var(--color-verdict-true-text);
+    border: 2px solid var(--color-correct);
+  }
+
+  body.dark-mode .highlight-legend {
+    background-color: var(--color-verdict-true-text);
+  }
+
   body.dark-mode .entity-highlight {
     border: none;
     text-decoration: underline dashed var(--color-correct);
@@ -255,6 +277,25 @@
     border-bottom: 2px dashed var(--color-correct);
   }
   
+  body.dark-mode .copy-btn {
+    color: var(--color-correct);
+  }
+  .body.dark-mode copy-btn:hover {
+    color: var(--color-verdict-true-text);
+  }
+
+  body.dark-mode .spinner-overlay::after {
+    border-top: 3px solid var(--color-correct);
+  }
+
+
+  body.dark-mode .metrics-toggle {
+    color: var(--color-dark-text);
+    border-top: 1px solid #444;
+  }
+  body.dark-mode .metrics-toggle:hover {
+    background-color: #555;
+  }
   /* ======================================================
      DARK MODE TOGGLE SWITCH
      ====================================================== */

@@ -686,8 +686,10 @@ async function renderClaimAndTable(resultObj) {
     const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
     const tableTitleLabel = translation.table_title || "Table Title";
     metaDiv.innerHTML = `
-      <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
-      <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview target="_blank">${newWikipediaUrl}</a></p>
+      <div class="meta-info-box">
+        <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
+        <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" data-wp-lang="${lang}" target="_blank">${newWikipediaUrl}</a></p>
+      </div>
     `;
   } else {
     metaDiv.innerHTML = `<p><em>No title/link found for this table</em></p>`;

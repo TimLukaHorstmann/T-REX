@@ -15,7 +15,7 @@ from inference import build_prompt, stream_inference
 
 app = FastAPI()
 
-ALLOWED_MODELS = ["phi4", "deepseek-r1:latest", "gemma3", "cogito", "exaone-deep"] #, "phi3", "llama3.2"]
+ALLOWED_MODELS = ["phi4", "deepseek-r1:latest", "gemma3", "cogito"] #, "phi3", "llama3.2"]
 NON_ENGLISH_ALLOWED = ["gemma3", "llama3.2", "cogito"]
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
