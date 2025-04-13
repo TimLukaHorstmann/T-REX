@@ -1750,6 +1750,14 @@ function setupLiveCheckEvents() {
 
 }
 
+// Advanced fuzzy matching function for live section using string-similarity.
+function fuzzyMatchAdvanced(str1, str2, threshold = 0.9) {
+  // stringSimilarity.compareTwoStrings returns a value between 0 and 1.
+  const similarity = stringSimilarity.compareTwoStrings(str1, str2);
+  return similarity >= threshold;
+}
+
+// Updated live preview table rendering (only the relevant loop is shown)
 function renderLivePreviewTable(csvText, relevantCells) {
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
@@ -1771,8 +1779,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
   }
   const tableData = parsed.data;
   if (!tableData || tableData.length === 0) return;
-
-  if (!tableData.length) return;
 
   const columns = tableData[0];
   const dataRows = tableData.slice(1);
@@ -1798,21 +1804,22 @@ function renderLivePreviewTable(csvText, relevantCells) {
   dataRows.forEach((rowVals, rowIndex) => {
     const tr = document.createElement("tr");
     const displayRow = hasRowIndex ? rowVals.slice(1) : rowVals;
+    // Determine the row index value; if a row_index exists, use it (converted to number),
+    // otherwise use the loop index.
     const rowIdxValue = hasRowIndex ? parseInt(rowVals[0]) : rowIndex;
 
     displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
       const colName = displayColumns[colIndex] || "";
+      // Normalize the column name to lower case and remove whitespace
       const colNameLower = colName.toLowerCase().replace(/\s+/g, '');
-
+      // Use the advanced fuzzy matching function for determining cell highlight:
       const shouldHighlight = relevantCells.some(hc => {
-        const hcRowIndex = hc.row_index;
-        const hcColNameLower = hc.column_name.toLowerCase().replace(/\s+/g, '');
-        const isMatch = hcRowIndex === rowIdxValue && fuzzyMatch(hcColNameLower, colNameLower);
-        return isMatch;
+        // Normalize the column name from the LLM output similarly.
+        const hcColNormalized = hc.column_name.toLowerCase().replace(/\s+/g, '');
+        return hc.row_index === rowIdxValue && fuzzyMatchAdvanced(hcColNormalized, colNameLower);
       });
-
       if (shouldHighlight) {
         td.classList.add("highlight");
       }
@@ -1822,39 +1829,10 @@ function renderLivePreviewTable(csvText, relevantCells) {
   });
   tableEl.appendChild(tbody);
 
-  // Entity highlighting
-  let tableKey = selectedTableId;
-  if (tableKey && tableEntityLinkingMap && tableEntityLinkingMap[tableKey]) {
-    const entityStatements = tableEntityLinkingMap[tableKey][0];
-    let entityCoords = [];
-    const regex = /#([^#]+);(-?\d+),(-?\d+)#/g;
-    entityStatements.forEach(statement => {
-      let match;
-      while ((match = regex.exec(statement)) !== null) {
-        const row = Number(match[2]);
-        const col = Number(match[3]);
-        entityCoords.push({ row, col });
-      }
-    });
-    if (tbody) {
-      Array.from(tbody.rows).forEach((tr, rowIndex) => {
-        Array.from(tr.cells).forEach((td, colIndex) => {
-          if (entityCoords.some(coord => coord.row === rowIndex && coord.col === colIndex)) {
-            td.classList.add("entity-highlight");
-          }
-        });
-      });
-    }
-    // Update entity legend with translated text
-    document.getElementById("full-entity-highlight-legend-live").innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
-    document.getElementById("full-entity-highlight-legend-live").style.display = "block";
-  } else {
-    document.getElementById("full-entity-highlight-legend-live").style.display = "none";
-  }
-
+  previewContainer.innerHTML = "";
   previewContainer.appendChild(tableEl);
 
-  // Update model-highlighted legend with translated text
+  // Update legend for model-highlighted cells using translated text.
   const legendModel = document.getElementById("full-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
     legendModel.innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
@@ -1862,15 +1840,12 @@ function renderLivePreviewTable(csvText, relevantCells) {
   } else {
     legendModel.style.display = "none";
   }
-
-  document.getElementById("livePreviewTable").innerHTML = "";
-  document.getElementById("livePreviewTable").appendChild(tableEl);
-
+  
+  // Show the preview container and ensure toggle button is updated.
   const previewContainerWrapper = document.getElementById("livePreviewTableContainer");
   if (previewContainerWrapper) {
     previewContainerWrapper.style.display = "block";
   }
-
   const togglePreviewBtn = document.getElementById("toggleLivePreviewTableBtn");
   if (togglePreviewBtn) {
     togglePreviewBtn.style.display = "inline-block";
@@ -1969,83 +1944,61 @@ function csvToJson(csvStr) {
 }
 
 function extractJsonFromResponse(rawResponse) {
-  let start = rawResponse.indexOf("{");
-  if (start === -1) return null;
-  let braceCount = 0;
-  let end = -1;
-  for (let i = start; i < rawResponse.length; i++) {
-    if (rawResponse[i] === "{") braceCount++;
-    else if (rawResponse[i] === "}") {
-      braceCount--;
-      if (braceCount === 0) {
-        end = i;
-        break;
-      }
-    }
-  }
-  if (end === -1) return null;
-  const jsonText = rawResponse.substring(start, end + 1);
-  try {
-    const parsed = JSON.parse(jsonText);
-    if (!parsed.answer || !("relevant_cells" in parsed)) {
-      throw new Error("Missing required keys");
-    }
-    // Validate and correct relevant_cells
-    const csvText = document.getElementById("inputTable").value;
-    const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (!lines.length) {
-      console.warn("Input table is empty during JSON extraction.");
-      return parsed;
-    }
-    const firstLine = lines[0];
-    const delimiter = (firstLine.includes(",") && (!firstLine.includes("#") || firstLine.split(",").length > firstLine.split("#").length)) ? "," : "#";
-    const tableData = lines.map(line => line.split(delimiter));
-    const columns = tableData[0];
-    const dataRows = tableData.slice(1);
-    const hasRowIndex = columns[0].toLowerCase() === "row_index";
-    const displayColumns = hasRowIndex ? columns.slice(1) : columns;
-
-    parsed.relevant_cells = parsed.relevant_cells.map(cell => {
-      let { row_index, column_name } = cell;
-      // Validate row_index
-      if (typeof row_index !== "number" || row_index < 0 || row_index >= dataRows.length) {
-        console.warn(`Invalid row_index ${row_index}; clamping to valid range`);
-        row_index = Math.max(0, Math.min(dataRows.length - 1, row_index));
-      }
-      // Fuzzy match column_name: compare lowercased, space‑removed strings
-      const normalizedInput = column_name.toLowerCase().replace(/\s+/g, '');
-      let bestMatch = displayColumns.find(col =>
-        col.toLowerCase().replace(/\s+/g, '') === normalizedInput
-      );
-      if (!bestMatch) {
-        const distances = displayColumns.map(col => ({
-          col,
-          distance: levenshteinDistance(normalizedInput, col.toLowerCase().replace(/\s+/g, ''))
-        }));
-        const closest = distances.reduce((min, curr) =>
-          curr.distance < min.distance ? curr : min
-        );
-        if (closest.distance <= 2) {
-          bestMatch = closest.col;
-          console.warn(`Fuzzy matched '${column_name}' to '${bestMatch}'`);
-        } else {
-          console.warn(`No close match for column '${column_name}'; defaulting to first column`);
-          bestMatch = displayColumns[0];
+  // Array to hold all candidate JSON blocks found in the raw response.
+  let candidates = [];
+  let idx = 0;
+  // Loop to extract all complete JSON objects by locating balanced braces.
+  while (true) {
+    const start = rawResponse.indexOf("{", idx);
+    if (start === -1) break; // No more JSON object starts.
+    let braceCount = 0;
+    let end = -1;
+    // Traverse from the found start index to locate the matching closing brace.
+    for (let i = start; i < rawResponse.length; i++) {
+      if (rawResponse[i] === "{") {
+        braceCount++;
+      } else if (rawResponse[i] === "}") {
+        braceCount--;
+        if (braceCount === 0) {
+          end = i;
+          break;
         }
       }
-      return { row_index, column_name: bestMatch };
-    });
-    return parsed;
-  } catch (err) {
-    console.warn("JSON parsing error:", err);
-    const lowerResponse = rawResponse.toLowerCase();
-    if (lowerResponse.includes("true")) {
-      return { answer: "TRUE", relevant_cells: [] };
-    } else if (lowerResponse.includes("false")) {
-      return { answer: "FALSE", relevant_cells: [] };
-    } else {
-      return { answer: "FALSE", relevant_cells: [] };
     }
+    if (end !== -1) {
+      const candidate = rawResponse.substring(start, end + 1);
+      candidates.push(candidate);
+      idx = end + 1;
+    } else {
+      // If a complete JSON block wasn't found, exit the loop.
+      break;
+    }
+  }
+  
+  // Process candidates starting from the last one; 
+  // typically the final, complete JSON object comes last.
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    try {
+      const parsed = JSON.parse(candidates[i]);
+      // Ensure the JSON object contains the keys we require.
+      if (parsed && ("answer" in parsed) && ("relevant_cells" in parsed)) {
+        // (Optional: include any post-processing for relevant_cells here if needed.)
+        return parsed;
+      }
+    } catch (e) {
+      // If parsing fails for this candidate, continue to the next one.
+    }
+  }
+  
+  // Fallback: if no valid JSON block with required keys was found,
+  // return a default object based on heuristic text presence.
+  const lowerResponse = rawResponse.toLowerCase();
+  if (lowerResponse.includes("true")) {
+    return { answer: "TRUE", relevant_cells: [] };
+  } else if (lowerResponse.includes("false")) {
+    return { answer: "FALSE", relevant_cells: [] };
+  } else {
+    return { answer: "FALSE", relevant_cells: [] };
   }
 }
 
