@@ -94,10 +94,8 @@ function debounce(func, wait) {
 }
 
 // Add event listeners
-window.addEventListener("scroll", handleScrollImmediate); // Immediate response
-window.addEventListener("scroll", debounce(handleScrollDebounced, 100)); // Debounced for re-enabling
-
-
+window.addEventListener("scroll", handleScrollImmediate);
+window.addEventListener("scroll", debounce(handleScrollDebounced, 100));
 
 /**
  * Converts a TabFact table (cells separated by "#") into a proper CSV.
@@ -110,7 +108,6 @@ function convertTabfactToCSV(tabfactText) {
     const cells = line.split("#");
     const processedCells = cells.map(cell => {
       const trimmed = cell.trim();
-      // If the cell contains a comma, a double quote, or newline, escape it.
       if (trimmed.includes(",") || trimmed.includes('"') || trimmed.includes("\n")) {
         const escaped = trimmed.replace(/"/g, '""');
         return `"${escaped}"`;
@@ -121,7 +118,6 @@ function convertTabfactToCSV(tabfactText) {
   });
   return csvLines.join("\n");
 }
-
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -139,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn("Manifest does not contain results_files. Using an empty list.");
         manifest.results_files = [];
       }
-      parseManifest(manifest); // Populate manifestOptions
+      parseManifest(manifest);
 
       const globalModels = Array.from(new Set(manifestOptions.map(o => o.model))).sort();
       const globalDatasets = Array.from(new Set(manifestOptions.map(o => o.dataset))).sort();
@@ -172,7 +168,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       fileUpload.addEventListener("change", function(e) {
         const file = e.target.files[0];
         if (file) {
-          // Validate file size (e.g., 2MB limit)
           const maxSize = 2 * 1024 * 1024; // 2MB in bytes
           if (file.size > maxSize) {
             alert("CSV file is too large. Please upload a file smaller than 2MB.");
@@ -221,12 +216,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           document.getElementById("tableTitleLabel").textContent = translation.table_title;
         }
       });
-      // Initial call
       updateModelOptionsBasedOnLanguage();
       updateTranslations();
     }
 
-    // Handle paste events in the table textarea to detect images and update preview
+    // Handle paste events in the table textarea
     document.getElementById("inputTable").addEventListener("paste", function (e) {
       const items = e.clipboardData.items;
       let textPasted = false;
@@ -259,7 +253,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           textPasted = true;
         }
       }
-      // If text is pasted, trigger the input event after a slight delay to ensure value is updated
       if (textPasted) {
         e.preventDefault();
         const text = e.clipboardData.getData("text/plain");
@@ -270,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }, 0);
       }
     });
-    // remove image preview when clicking the close button.
+    // Remove image preview on close button click
     const imagePreviewEl = document.getElementById("imagePreview");
     imagePreviewEl.addEventListener("click", function (e) {
       if (e.target.classList.contains("close-preview")) {
@@ -288,7 +281,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
     
-    
     document.querySelectorAll("textarea").forEach(textarea => {
       textarea.addEventListener("input", function() {
         this.style.height = "auto";
@@ -305,10 +297,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const metaInfo = document.getElementById("liveTableMetaInfo");
         if (metaInfo.classList.contains("collapsed")) {
           metaInfo.classList.remove("collapsed");
-          toggleLiveMetaInfoBtn.textContent = "▲ "+ translation.tableDetails;
+          toggleLiveMetaInfoBtn.textContent = "▲ " + translation.tableDetails;
         } else {
           metaInfo.classList.add("collapsed");
-          toggleLiveMetaInfoBtn.textContent = "▼ "+ translation.tableDetails;
+          toggleLiveMetaInfoBtn.textContent = "▼ " + translation.tableDetails;
         }
       });
     }
@@ -330,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // Setup MutationObserver to watch for Wikipedia preview errors
+    // Setup MutationObserver for Wikipedia preview errors
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         if (mutation.addedNodes.length) {
@@ -349,13 +341,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-
   } catch (error) {
     console.error("Initialization failed:", error);
     document.getElementById("infoPanel").innerHTML = `<p style="color:red;">Failed to initialize the app: ${error}</p>`;
   }
 });
-
 
 async function fetchTableToPage() {
   const response = await fetch(TABLE_TO_PAGE_JSON_PATH);
@@ -391,7 +381,6 @@ function parseManifest(manifest) {
     }
   });
 }
-
 
 function populateAllDropdowns() {
   const models = Array.from(new Set(manifestOptions.map(opt => opt.model))).sort();
@@ -784,12 +773,10 @@ async function renderClaimAndTable(resultObj) {
         }
       });
     });
-    // Update entity legend with translated text
     document.getElementById("full-entity-highlight-legend-precomputed").innerHTML = `<span class="entity-highlight-legend"></span> ${translation.entityLinkedCells}`;
     document.getElementById("full-entity-highlight-legend-precomputed").style.display = "block";
   }
 }
-
 
 function updateNativeMetrics() {
   if (!allResults || allResults.length === 0) {
@@ -812,6 +799,8 @@ function updateNativeMetrics() {
     }
   });
 
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  
   const plotly_config = {
     modeBarButtonsToRemove: [
       'zoom2d',
@@ -835,7 +824,11 @@ function updateNativeMetrics() {
       x: ['Pred. Neg.', 'Pred. Pos.'],
       y: ['Act. Neg.', 'Act. Pos.'],
       type: 'heatmap',
-      colorscale: 'Inferno',
+      colorscale: isDarkMode ? [
+        [0, '#1e1e1e'],
+        [0.5, '#444'],
+        [1, '#4caf50']
+      ] : 'Inferno',
       showscale: false
   }];
   
@@ -843,7 +836,12 @@ function updateNativeMetrics() {
     title: 'Confusion Matrix',
     annotations: [],
     xaxis: { title: 'Predicted' },
-    yaxis: { title: 'Actual' }
+    yaxis: { title: 'Actual' },
+    paper_bgcolor: isDarkMode ? '#333' : '#fff',
+    plot_bgcolor: isDarkMode ? '#333' : '#fff',
+    font: {
+      color: isDarkMode ? '#e0e0e0' : '#333'
+    }
   };
   
   for (let i = 0; i < matrix.length; i++) {
@@ -868,12 +866,20 @@ function updateNativeMetrics() {
   const summaryData = [{
     x: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
     y: [accuracy, precision, recall, f1],
-    type: 'bar'
+    type: 'bar',
+    marker: {
+      color: isDarkMode ? ['#4caf50', '#2196f3', '#ff9800', '#f44336'] : undefined
+    }
   }];
   
   const summaryLayout = {
     title: 'Performance Summary',
-    yaxis: { range: [0, 1], title: 'Score' }
+    yaxis: { range: [0, 1], title: 'Score' },
+    paper_bgcolor: isDarkMode ? '#333' : '#fff',
+    plot_bgcolor: isDarkMode ? '#333' : '#fff',
+    font: {
+      color: isDarkMode ? '#e0e0e0' : '#333'
+    }
   };
   
   Plotly.newPlot('performanceSummaryPlot', summaryData, summaryLayout, plotly_config);
@@ -881,7 +887,6 @@ function updateNativeMetrics() {
 
 function updateResultsChart(tableId) {
   const resultsHeader = document.getElementById("resultsHeader");
-  const chartContainer = document.getElementById("chartContainer");
   if (!resultsHeader) return;
   const results = tableIdToResultsMap[tableId] || [];
   let correctCount = 0;
@@ -906,12 +911,19 @@ function updateResultsChart(tableId) {
       data: [correctCount, incorrectCount],
       backgroundColor: ["#4caf50", "#f44336"],
       hoverBackgroundColor: ["#66bb6a", "#ef5350"],
-      barThickness: 30
+      barPercentage: 0.5,
+      categoryPercentage: 0.8,
     }]
   };
+  
+  const isDarkMode = document.body.classList.contains('dark-mode');
   const ctx = document.getElementById("resultsChart").getContext("2d");
   if (resultsChartInstance) {
     resultsChartInstance.data = data;
+    resultsChartInstance.options.scales.y.ticks.color = isDarkMode ? "#e0e0e0" : "#333";
+    resultsChartInstance.options.scales.x.ticks.color = isDarkMode ? "#e0e0e0" : "#333";
+    resultsChartInstance.options.scales.x.stacked = false;
+    resultsChartInstance.options.scales.y.stacked = false;
     resultsChartInstance.update();
   } else {
     resultsChartInstance = new Chart(ctx, {
@@ -921,19 +933,31 @@ function updateResultsChart(tableId) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { 
+            display: false,
+            labels: {
+              color: isDarkMode ? "#e0e0e0" : "#333"
+            }
+          },
           tooltip: {
             callbacks: {
               label: function(context) {
                 return `${context.label}: ${context.parsed.y !== undefined ? context.parsed.y : context.parsed}`;
               }
-            }
+            },
+            bodyColor: isDarkMode ? "#e0e0e0" : "#333",
+            titleColor: isDarkMode ? "#e0e0e0" : "#333"
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: { stepSize: 1 }
+            ticks: { stepSize: 1, color: isDarkMode ? "#e0e0e0" : "#333" },
+            stacked: false,
+          },
+          x: {
+            ticks: { color: isDarkMode ? "#e0e0e0" : "#333" },
+            stacked: false,
           }
         }
       }
@@ -945,14 +969,12 @@ function updateResultsChart(tableId) {
 
 // + BUTTON OPTIONS
 
-// Toggle the options dropdown when clicking the + button
 document.getElementById("tableOptionsBtn").addEventListener("click", function (e) {
   e.stopPropagation();
   const dropdown = document.getElementById("tableOptionsDropdown");
   dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
 });
 
-// Hide the dropdown when clicking outside the dropdown
 document.addEventListener("click", function (e) {
   const dropdown = document.getElementById("tableOptionsDropdown");
   if (!dropdown.contains(e.target)) {
@@ -960,13 +982,11 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// For the "Choose from TabFact Dataset" button, open a modal with an overview of tables.
 document.getElementById("selectFromDatasetBtn").addEventListener("click", async function () {
   document.getElementById("tableOptionsDropdown").style.display = "none";
   openDatasetOverviewModal();
 });
 
-// For the "Upload CSV File" button, trigger a click on the hidden file input.
 document.getElementById("uploadCSVBtn").addEventListener("click", function () {
   document.getElementById("tableOptionsDropdown").style.display = "none";
   const fileInput = document.getElementById("fileUpload");
@@ -977,22 +997,17 @@ document.getElementById("uploadCSVBtn").addEventListener("click", function () {
   }
 });
 
-
-
-// Function to open the dataset overview modal.
 const BATCH_SIZE = 1000;
 let loadedItems = 0;
 let totalDatasetItems = 0;
 
 async function fetchDatasetPage(offset, limit) {
   const url = `/api/dataset_ids?offset=${offset}&limit=${limit}`;
-  // console.log(`Fetching dataset page: ${url}`);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch dataset IDs: ${response.status} ${response.statusText}`);
   }
   const data = await response.json();
-  //console.log(`Fetched batch: offset=${offset}, limit=${limit}, ids.length=${data.ids.length}, total=${data.total}`);
   return data;
 }
 
@@ -1002,7 +1017,6 @@ async function openDatasetOverviewModal() {
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
 
-  // Reset state
   loadedItems = 0;
   datasetList.innerHTML = `<p class="dataset-loading-message">${translation.loading_Message}</p>`;
   modal.style.display = "flex";
@@ -1011,20 +1025,17 @@ async function openDatasetOverviewModal() {
     const data = await fetchDatasetPage(loadedItems, BATCH_SIZE);
     totalDatasetItems = data.total;
     datasetList.innerHTML = `<p class="dataset-loading-message">${totalDatasetItems} ${translation.tables_loaded}.</p>`;
-    await loadNextBatch(datasetList, lang); // Initial load
+    await loadNextBatch(datasetList, lang);
 
-    // Setup Intersection Observer for lazy loading
     const observer = new IntersectionObserver(
       async (entries, observer) => {
         if (entries[0].isIntersecting && loadedItems < totalDatasetItems) {
-          //console.log(`Observer triggered: loadedItems=${loadedItems}, total=${totalDatasetItems}`);
           await loadNextBatch(datasetList, lang);
         }
       },
       { root: datasetList, rootMargin: "0px", threshold: 0.1 }
     );
 
-    // Ensure sentinel exists and is observable
     let sentinel = document.getElementById("sentinel");
     if (!sentinel) {
       sentinel = document.createElement("div");
@@ -1038,7 +1049,6 @@ async function openDatasetOverviewModal() {
     }
     observer.observe(sentinel);
 
-    // Cleanup observer when modal closes
     modal.addEventListener("click", function cleanup(e) {
       if (e.target === modal) {
         observer.disconnect();
@@ -1056,10 +1066,8 @@ async function loadNextBatch(datasetList, lang) {
     const translation = translationDict[lang] || translationDict["en"];
     const data = await fetchDatasetPage(loadedItems, BATCH_SIZE);
     const ids = data.ids;
-    //console.log(`Loading batch: offset=${loadedItems}, ids.length=${ids.length}`);
 
     if (ids.length === 0) {
-      //console.log("No more items to load in this batch.");
       const sentinel = document.getElementById("sentinel");
       if (sentinel) sentinel.style.display = "none";
       return;
@@ -1103,30 +1111,25 @@ async function loadNextBatch(datasetList, lang) {
 
     loadedItems += ids.length;
     datasetList.insertBefore(fragment, document.getElementById("sentinel"));
-    //console.log(`Loaded ${loadedItems} of ${totalDatasetItems} items`);
 
-    // Initialize Wikipedia preview for new items
     wikipediaPreview.init({
       root: datasetList,
       lang: lang,
       detectLinks: true,
       onFail: function(element, wikiData) {
-        console.log("onFail triggered:", element, wikiData); // Debug log
+        console.log("onFail triggered:", element, wikiData);
         const translation = translationDict[lang] || translationDict["en"];
         return `<p>${translation.wikipediaNoSummary}</p>`;
       }
     });
   
-    // Fallback: Patch errors after a delay
     setTimeout(() => {
       patchWikipediaPreviewErrors(datasetList, lang);
     }, 1000);
 
-    // Hide sentinel if all items are loaded
     if (loadedItems >= totalDatasetItems) {
       const sentinel = document.getElementById("sentinel");
       if (sentinel) sentinel.style.display = "none";
-      //console.log("All items loaded; hiding sentinel.");
     }
   } catch (err) {
     console.error("Error loading batch:", err);
@@ -1141,7 +1144,6 @@ function patchWikipediaPreviewErrors(rootElement, lang) {
   const translation = translationDict[lang] || translationDict["en"];
   const errorMessages = rootElement.querySelectorAll('.wikipediapreview-body-message span');
   errorMessages.forEach(span => {
-    // Check if the grandparent has the 'wikipediapreview-body-error' class
     const grandparent = span.parentElement.parentElement;
     if (grandparent && grandparent.classList.contains('wikipediapreview-body-error') &&
         span.textContent === "There was an issue while displaying this preview.") {
@@ -1150,8 +1152,6 @@ function patchWikipediaPreviewErrors(rootElement, lang) {
   });
 }
 
-
-// Close the dataset modal when clicking outside its content.
 document.getElementById("datasetOverviewModal").addEventListener("click", function(e) {
   if (e.target === this) {
     this.style.display = "none";
@@ -1183,16 +1183,11 @@ async function fetchAndFillTable(tableId) {
     const meta = tableToPageMap[tableId];
     if (meta) {
       const [tableTitle, wikipediaUrl] = meta;
-
-      // change first part of wikipedia url to reflect the selected language
       const lang = document.getElementById("liveLanguageSelect").value;
       const translation = translationDict[lang] || translationDict["en"];
-
       const langCode = lang === "en" ? "" : lang + ".";
       const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
-
       tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
-
       if (liveTableMetaInfo) {
         liveTableMetaInfo.style.display = "block";
         liveTableMetaInfo.innerHTML = `
@@ -1210,22 +1205,19 @@ async function fetchAndFillTable(tableId) {
           toggleMetaBtn.style.display = "inline-block";
           toggleMetaBtn.textContent = "▼ " + translation.tableDetails;
         }
-        // Initialize Wikipedia preview with custom error handling
         wikipediaPreview.init({
           root: liveTableMetaInfo,
           lang: lang,
           detectLinks: true,
           onFail: function(element, wikiData) {
-            console.log("onFail triggered:", element, wikiData); // Debug log
+            console.log("onFail triggered:", element, wikiData);
             const translation = translationDict[lang] || translationDict["en"];
             return `<p>${translation.wikipediaNoSummary}</p>`;
           }
         });
-    
-        // Fallback: Patch the error message in the DOM after a delay
         setTimeout(() => {
           patchWikipediaPreviewErrors(liveTableMetaInfo, lang);
-        }, 1000); // Delay to allow preview to render
+        }, 1000);
       }
       includeTableNameOption.style.display = "block";
     }
@@ -1236,12 +1228,10 @@ async function fetchAndFillTable(tableId) {
   }
 }
 
-
 function populateClaimsDropdown(tableId) {
   const claimsWrapperEl = document.getElementById("existingClaimsWrapper");
   const claimsSelectEl = document.getElementById("existingClaimsSelect");
 
-  // first option according to language (e.g. Select a Claim in English)
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
   const selectClaimPlaceholder = translation.selectClaimPlaceholder;
@@ -1318,10 +1308,57 @@ function setupTabSwitching() {
   });
 }
 
-function setupLiveCheckEvents() {
-  // Mark model as loaded.
-  window.modelLoaded = true;
+function renderMarkdownAndMath(markdownText, containerElement) {
+  // Pre-process math expressions in square brackets to convert them to proper LaTeX delimiters
+  let processedText = markdownText;
+  
+  // Convert square bracket math notation to proper LaTeX delimiters
+  processedText = processedText.replace(/\[([^\]]+)\]/g, function(match, content) {
+    console.log("we are using the function")
+    console.log(content)
+    // If it contains LaTeX-like commands or math symbols, it's probably a math expression
+    if (content.includes('{' && '}')){
+      return content
+    }
+    else if (content.includes('\\') || /[\+\-\*\/\=\(\)\<\>\{\}\^\~\_]/.test(content)) {
+      return '$' + content + '$';
+    }
+    return match; // Not math, leave as is
+  });
+  
+  // Also find LaTeX commands that aren't already in delimiters
+  processedText = processedText.replace(/(\s|\(|\[|^)(\\frac|\\sqrt|\\sum|\\prod|\\int|\\lim|\\infty|\\pi|\\alpha|\\beta|\\gamma|\\delta|\\epsilon)([^$\n]*?)(\s|\)|]|$)/g, 
+    function(match, prefix, command, content, suffix) {
+      // Avoid double-wrapping if already in math delimiters
+      if (prefix.includes('$') || suffix.includes('$')) {
+        return match;
+      }
+      return prefix + '$' + command + content + '$' + suffix;
+    }
+  );
+  
+  const sanitizedHtml = DOMPurify.sanitize(marked.parse(processedText));
+  containerElement.innerHTML = sanitizedHtml;
+  
+  // Process math using MathJax
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise([containerElement]).catch(err => {
+      console.error('MathJax error:', err);
+    });
+  } else if (window.renderMathInElement) {
+    renderMathInElement(containerElement, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ]
+    });
+  }
+}
 
+function setupLiveCheckEvents() {
+  window.modelLoaded = true;
   const inputTableEl = document.getElementById("inputTable");
   const inputClaimEl = document.getElementById("inputClaim");
   const runLiveCheckBtn = document.getElementById("runLiveCheck");
@@ -1343,17 +1380,15 @@ function setupLiveCheckEvents() {
     }
   });
 
-  ////////////////////// MAIN FUNCTIONALITY //////////////////////  
   runLiveCheckBtn.addEventListener("click", async () => {
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
     
     const statusMessageEl = document.getElementById("statusMessage");
-    statusMessageEl.style.display = "none"; // Hide initially
+    statusMessageEl.style.display = "none";
     window.streamAborted = false;
   
-    // Reset auto-scroll state
     autoScrollEnabled = true;
     isUserScrolling = false;
     lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
@@ -1377,7 +1412,6 @@ function setupLiveCheckEvents() {
     const liveResultsEl = document.getElementById("liveResults");
     const liveClaimList = document.getElementById("liveClaimList");
   
-    // Clear previous outputs
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
@@ -1385,9 +1419,7 @@ function setupLiveCheckEvents() {
     liveClaimList.style.display = "none";
     liveResultsEl.style.display = "none";
 
-    // Show scroll-to-bottom button initially
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
-    // scrollToBottomBtn.style.display = "block";
   
     let firstThinkTokenReceived = false;
     let firstAnswerTokenReceived = false;
@@ -1396,15 +1428,13 @@ function setupLiveCheckEvents() {
     let inThinkBlock = false;
     let buffer = "";
 
-    // Add model-specific tag detection
     const model = document.getElementById("liveModelSelect").value;
     const thinkTags = getThinkingTagsForModel(model);
   
-    // --- Gather Inputs ---
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
     const language = selectedLanguage;
-     const includeTitle = document.getElementById("includeTableNameCheck").checked;
+    const includeTitle = document.getElementById("includeTableNameCheck").checked;
     let tableTitle = "";
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
       tableTitle = tableToPageMap[selectedTableId][0];
@@ -1449,7 +1479,6 @@ function setupLiveCheckEvents() {
         const lines = buffer.split("\n");
         buffer = lines.pop();
   
-        // Store scroll position and height before adding new content
         const scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
         const heightBefore = document.body.scrollHeight;
   
@@ -1465,7 +1494,6 @@ function setupLiveCheckEvents() {
               requestStatus.style.display = "none";
             }
   
-            // Process tokenText to separate thinking blocks from answer tokens using dynamic tags
             while (tokenText.length > 0) {
               if (inThinkBlock) {
                 const endIdx = tokenText.indexOf(thinkTags.end);
@@ -1484,8 +1512,10 @@ function setupLiveCheckEvents() {
                         <span id="thinkingLabel" class="thinking-label">Thinking...</span>
                         <button id="toggleThinkingBtn" class="toggle-btn">▲</button>
                       </div>
-                      <div id="thinkContent" class="collapsible">${DOMPurify.sanitize(marked.parse(thinkText.trim()))}</div>
+                      <div id="thinkContent" class="collapsible"></div>
                     `;
+                    const thinkContentDiv = document.getElementById("thinkContent");
+                    renderMarkdownAndMath(thinkText.trim(), thinkContentDiv);
                     document.getElementById("toggleThinkingBtn").addEventListener("click", function() {
                       const content = document.getElementById("thinkContent");
                       if (content.classList.contains("collapsed")) {
@@ -1516,8 +1546,10 @@ function setupLiveCheckEvents() {
                         <span id="answer-label">${translation.answerLabel}</span>
                         <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
                       </div>
-                      <div id="answerContent" class="collapsible">${DOMPurify.sanitize(marked.parse(finalText.trim()))}</div>
+                      <div id="answerContent" class="collapsible"></div>
                     `;
+                    const answerContentDiv = document.getElementById("answerContent");
+                    renderMarkdownAndMath(finalText.trim(), answerContentDiv);
                     document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
                       const content = document.getElementById("answerContent");
                       if (content.classList.contains("collapsed")) {
@@ -1535,39 +1567,36 @@ function setupLiveCheckEvents() {
               }
             }
   
-            // Update thinking and answer blocks
             if (firstThinkTokenReceived) {
               const thinkContentDiv = document.getElementById("thinkContent");
               if (thinkContentDiv) {
-                thinkContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(thinkText.trim()));
+                renderMarkdownAndMath(thinkText.trim(), thinkContentDiv);
               }
             }
             if (firstAnswerTokenReceived) {
               const answerContentDiv = document.getElementById("answerContent");
               if (answerContentDiv) {
-                answerContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(finalText.trim()));
+                renderMarkdownAndMath(finalText.trim(), answerContentDiv);
               }
-            }
+            }            
           } catch (e) {
             console.warn("Failed to parse JSON token:", e);
           }
         }
   
-        // Auto-scroll logic: only scroll if enabled and user was near bottom before new content
         const heightAfter = document.body.scrollHeight;
         const wasNearBottomBefore = scrollBefore >= heightBefore - window.innerHeight - 50;
   
         if (autoScrollEnabled && !isUserScrolling && wasNearBottomBefore) {
           window.scrollTo({
             top: heightAfter,
-            behavior: "auto" // Changed to "auto" for instant jump, avoiding animation conflict
+            behavior: "auto"
           });
         }
         const isAtBottom = isNearBottom(50);
         scrollToBottomBtn.style.display = isAtBottom ? "none" : "block";
       }
   
-      // Process remaining buffer (unchanged)
       if (buffer.trim() && !window.streamAborted) {
         try {
           const token = JSON.parse(buffer);
@@ -1613,16 +1642,13 @@ function setupLiveCheckEvents() {
           }
         }
   
-        // Process final output with smarter JSON handling
         let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
         let finalOutputHtml = "";
         let parsedJson = {};
         
-        // Extract JSON more precisely
         parsedJson = extractJsonFromResponse(cleanedResponse);
         const formattedJson = JSON.stringify(parsedJson, null, 2);
         
-        // Generate JSON container HTML
         const jsonContainerHtml = `
           <div class="json-container">
             <div class="json-header">
@@ -1635,16 +1661,18 @@ function setupLiveCheckEvents() {
           </div>
         `;
         
-        // Parse the markdown without removing JSON from the explanation
-        finalOutputHtml = DOMPurify.sanitize(marked.parse(cleanedResponse)) + jsonContainerHtml;
-        
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
             <button id="toggleAnswerBtn" class="toggle-btn">▲</button>
           </div>
-          <div id="answerContent" class="collapsible">${finalOutputHtml}</div>
+          <div id="answerContent" class="collapsible"></div>
         `;
+        const answerContentDiv = document.getElementById("answerContent");
+        renderMarkdownAndMath(cleanedResponse.trim(), answerContentDiv);
+        // Then append the JSON container as needed:
+        answerContentDiv.innerHTML += jsonContainerHtml;
+
         document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
           const content = document.getElementById("answerContent");
           if (content.classList.contains("collapsed")) {
@@ -1656,7 +1684,6 @@ function setupLiveCheckEvents() {
           }
         });
 
-        // Hide scroll-to-bottom button when streaming ends
         scrollToBottomBtn.style.display = "none";
   
         liveResultsEl.style.display = "block";
@@ -1711,24 +1738,20 @@ function setupLiveCheckEvents() {
   
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
-    // Set abort flag
     window.streamAborted = true;
     if (globalReader) {
       globalReader.cancel("User aborted");
       console.log("Generation aborted by user.");
     }
-    // Hide the results box and clear its content
     const liveResultsEl = document.getElementById("liveResults");
     liveResultsEl.style.display = "none";
     
-    // Show the status message
     const abortMsgEl = document.getElementById("statusMessage");
     abortMsgEl.style.display = "block";
     const lang = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[lang] || window.translationDict["en"];
     abortMsgEl.textContent = translation.statusMessage;
     
-    // Reset the run button
     const runLiveCheckBtn = document.getElementById("runLiveCheck");
     runLiveCheckBtn.disabled = false;
     runLiveCheckBtn.style.opacity = "1";
@@ -1736,31 +1759,25 @@ function setupLiveCheckEvents() {
     runLiveCheckBtn.classList.remove("loading");
     runLiveCheckBtn.innerHTML = translation.runLiveCheckBtn;
     
-    // Hide the stop button
     stopLiveCheckBtn.style.display = "none";
     stopLiveCheckBtn.classList.remove("running");
   });
 
-  // Add click handler for scroll-to-bottom button
   const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
   scrollToBottomBtn.addEventListener("click", () => {
     window.scrollTo({
       top: document.body.scrollHeight,
       behavior: "smooth"
     });
-    autoScrollEnabled = true; // Re-enable auto-scroll after manual scroll
+    autoScrollEnabled = true;
   });
-
 }
 
-// Advanced fuzzy matching function for live section using string-similarity.
 function fuzzyMatchAdvanced(str1, str2, threshold = 0.9) {
-  // stringSimilarity.compareTwoStrings returns a value between 0 and 1.
   const similarity = stringSimilarity.compareTwoStrings(str1, str2);
   return similarity >= threshold;
 }
 
-// Updated live preview table rendering (only the relevant loop is shown)
 function renderLivePreviewTable(csvText, relevantCells) {
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
@@ -1791,7 +1808,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
   const tableEl = document.createElement("table");
   tableEl.classList.add("styled-table");
 
-  // Header
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
   displayColumns.forEach(col => {
@@ -1802,24 +1818,18 @@ function renderLivePreviewTable(csvText, relevantCells) {
   thead.appendChild(headerRow);
   tableEl.appendChild(thead);
 
-  // Body
   const tbody = document.createElement("tbody");
   dataRows.forEach((rowVals, rowIndex) => {
     const tr = document.createElement("tr");
     const displayRow = hasRowIndex ? rowVals.slice(1) : rowVals;
-    // Determine the row index value; if a row_index exists, use it (converted to number),
-    // otherwise use the loop index.
     const rowIdxValue = hasRowIndex ? parseInt(rowVals[0]) : rowIndex;
 
     displayRow.forEach((cellVal, colIndex) => {
       const td = document.createElement("td");
       td.textContent = cellVal;
       const colName = displayColumns[colIndex] || "";
-      // Normalize the column name to lower case and remove whitespace
       const colNameLower = colName.toLowerCase().replace(/\s+/g, '');
-      // Use the advanced fuzzy matching function for determining cell highlight:
       const shouldHighlight = relevantCells.some(hc => {
-        // Normalize the column name from the LLM output similarly.
         const hcColNormalized = hc.column_name.toLowerCase().replace(/\s+/g, '');
         return hc.row_index === rowIdxValue && fuzzyMatchAdvanced(hcColNormalized, colNameLower);
       });
@@ -1835,7 +1845,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
   previewContainer.innerHTML = "";
   previewContainer.appendChild(tableEl);
 
-  // Update legend for model-highlighted cells using translated text.
   const legendModel = document.getElementById("full-highlight-legend-live");
   if (tableEl.querySelectorAll("td.highlight").length > 0) {
     legendModel.innerHTML = `<span class="highlight-legend"></span> ${translation.modelHighlightedCells}`;
@@ -1844,7 +1853,6 @@ function renderLivePreviewTable(csvText, relevantCells) {
     legendModel.style.display = "none";
   }
   
-  // Show the preview container and ensure toggle button is updated.
   const previewContainerWrapper = document.getElementById("livePreviewTableContainer");
   if (previewContainerWrapper) {
     previewContainerWrapper.style.display = "block";
@@ -1853,10 +1861,9 @@ function renderLivePreviewTable(csvText, relevantCells) {
   if (togglePreviewBtn) {
     togglePreviewBtn.style.display = "inline-block";
     togglePreviewBtn.textContent = "▼ " + translation.tablePreview;
- }
+  }
 }
 
-// Ensure fuzzyMatch and levenshteinDistance are included
 function levenshteinDistance(a, b) {
   const matrix = Array(b.length + 1).fill(null).map(() =>
     Array(a.length + 1).fill(null)
@@ -1882,7 +1889,6 @@ function fuzzyMatch(str1, str2, threshold = 2) {
   return distance <= threshold || str1.includes(str2) || str2.includes(str1);
 }
 
-
 function displayLiveResults(csvText, claim, answer, relevantCells) {
   const lang = document.getElementById("liveLanguageSelect").value;
   const translation = translationDict[lang] || translationDict["en"];
@@ -1895,12 +1901,10 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
   if (liveClaimList) {
     liveClaimList.style.display = "block";
     liveClaimList.innerHTML = "";
-    // Display the claim text in quotes without any prefix
     const claimDisplay = document.createElement("div");
     claimDisplay.className = "claim-display";
     claimDisplay.textContent = `"${claim}"`;
     liveClaimList.appendChild(claimDisplay);
-    // Display final verdict in a styled box
     const verdictDiv = document.createElement("div");
     verdictDiv.className = "final-verdict " + (answer === "TRUE" ? "true" : "false");
     const verdictText = answer === "TRUE" ? translation.trueLabel : translation.falseLabel;
@@ -1918,7 +1922,6 @@ function displayLiveResults(csvText, claim, answer, relevantCells) {
       togglePreviewBtn.textContent = "▲ " + translation.tablePreview;
     }
   }
-  
 }
 
 function csvToMarkdown(csvStr) {
@@ -1947,16 +1950,13 @@ function csvToJson(csvStr) {
 }
 
 function extractJsonFromResponse(rawResponse) {
-  // Array to hold all candidate JSON blocks found in the raw response.
   let candidates = [];
   let idx = 0;
-  // Loop to extract all complete JSON objects by locating balanced braces.
   while (true) {
     const start = rawResponse.indexOf("{", idx);
-    if (start === -1) break; // No more JSON object starts.
+    if (start === -1) break;
     let braceCount = 0;
     let end = -1;
-    // Traverse from the found start index to locate the matching closing brace.
     for (let i = start; i < rawResponse.length; i++) {
       if (rawResponse[i] === "{") {
         braceCount++;
@@ -1973,28 +1973,20 @@ function extractJsonFromResponse(rawResponse) {
       candidates.push(candidate);
       idx = end + 1;
     } else {
-      // If a complete JSON block wasn't found, exit the loop.
       break;
     }
   }
   
-  // Process candidates starting from the last one; 
-  // typically the final, complete JSON object comes last.
   for (let i = candidates.length - 1; i >= 0; i--) {
     try {
       const parsed = JSON.parse(candidates[i]);
-      // Ensure the JSON object contains the keys we require.
       if (parsed && ("answer" in parsed) && ("relevant_cells" in parsed)) {
-        // (Optional: include any post-processing for relevant_cells here if needed.)
         return parsed;
       }
     } catch (e) {
-      // If parsing fails for this candidate, continue to the next one.
     }
   }
   
-  // Fallback: if no valid JSON block with required keys was found,
-  // return a default object based on heuristic text presence.
   const lowerResponse = rawResponse.toLowerCase();
   if (lowerResponse.includes("true")) {
     return { answer: "TRUE", relevant_cells: [] };
@@ -2025,12 +2017,11 @@ function getThinkingTagsForModel(model) {
     case "deepseek-r1:latest":
       return { start: "<think>", end: "</think>" };
     default:
-      return { start: "<think>", end: "</think>" }; // Default for other models
+      return { start: "<think>", end: "</think>" };
   }
 }
 
 function copyToClipboard(btn) {
-  // Find the <code> element in the sibling .json-content container.
   const codeBlock = btn.parentNode.nextElementSibling.querySelector('code');
   const codeText = codeBlock.textContent;
 
@@ -2053,7 +2044,6 @@ function updateModelOptionsBasedOnLanguage() {
   const modelSelect = document.getElementById("liveModelSelect");
   const allowedModels = ["llama3.2", "gemma3", "cogito"];
 
-  // Loop over model options and disable ones that are not allowed in non-English mode.
   for (const option of modelSelect.options) {
     if (selectedLanguage !== "en") {
       option.disabled = !allowedModels.includes(option.value);
@@ -2061,7 +2051,6 @@ function updateModelOptionsBasedOnLanguage() {
       option.disabled = false;
     }
   }
-  // If the current selected model is now disabled, switch to the first allowed one.
   if (modelSelect.selectedOptions.length > 0) {
     const selectedOption = modelSelect.selectedOptions[0];
     if (selectedOption.disabled) {
@@ -2075,14 +2064,12 @@ function updateModelOptionsBasedOnLanguage() {
   }
 }
 
-
 async function processImageViaBackend(file) {
   const engine = document.getElementById("ocrEngineSelect").value;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("engine", engine);
   formData.append("model", "granite3.2-vision");
-
 
   ocrAbortController = new AbortController();
   try {
@@ -2105,16 +2092,14 @@ async function processImageViaBackend(file) {
     return data.csv_text;
   } catch (error) {
     console.error("Error in processImageViaBackend:", error);
-    throw error; // Re-throw to be handled by the caller
+    throw error;
   }
 }
 
-// Event listener for image upload button
 document.getElementById("uploadImageBtn").addEventListener("click", function() {
   document.getElementById("imageUpload").click();
 });
 
-// When an image is selected, process it using the chosen OCR engine
 document.getElementById("imageUpload").addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (file) {
@@ -2163,7 +2148,6 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
       });
   }
 });
-
 
 function updateTranslations() {
   const lang = document.getElementById("liveLanguageSelect").value;

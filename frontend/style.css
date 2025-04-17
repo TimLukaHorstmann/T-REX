@@ -46,6 +46,9 @@
     --color-dark-input-bg: #2a2a2a;
     --color-dark-border: #444;
     --color-dark-language-chooser-bg: rgba(34, 34, 34, 0.85);
+
+    --plotly-light-bg: #fff;
+    --plotly-dark-bg: #333;
   }
   
   /* Reset & Base Styles */
@@ -1639,3 +1642,44 @@ body.dark-mode #livePreviewTableContainer {
       display: none !important;
     }
   }
+
+/* ======================================================
+   DARK MODE - CHOICES.JS (TABLE SELECT) IMPROVEMENTS
+   ====================================================== */
+body.dark-mode .choices {
+  background-color: var(--color-dark-input-bg);
+}
+
+body.dark-mode .choices__inner {
+  background-color: var(--color-dark-input-bg);
+  border-color: var(--color-dark-border);
+  color: var(--color-dark-text);
+}
+
+body.dark-mode .choices__list--dropdown {
+  background-color: var(--color-dark-info-panel-bg);
+  border-color: var(--color-dark-border);
+  color: var(--color-dark-text);
+}
+
+body.dark-mode .choices__list--dropdown .choices__item,
+body.dark-mode .choices__list--dropdown .choices__item--choice {
+  color: var(--color-dark-text);
+  background-color: var(--color-dark-info-panel-bg);
+}
+
+body.dark-mode .choices__list--dropdown .choices__item--choice.is-highlighted,
+body.dark-mode .choices__list--dropdown .choices__item--choice.is-selected {
+  background-color: var(--color-dark-border);
+  color: var(--color-dark-text);
+}
+
+body.dark-mode .choices__placeholder {
+  color: #aaa;
+}
+
+body.dark-mode .choices__input {
+  background-color: var(--color-dark-input-bg);
+  color: var(--color-dark-text);
+}
+  

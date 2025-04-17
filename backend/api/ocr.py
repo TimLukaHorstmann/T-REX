@@ -1,15 +1,17 @@
-# backend/api/ocr.py
 import io
+import csv
 import json
+import re
 import httpx
 import pytesseract
 from PIL import Image
 
+# Set tesseract executable path
 pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
 async def process_ocr(engine: str, model: str, image_bytes: bytes, OLLAMA_API_URL: str) -> str:
     """
-    Process an image using the specified OCR engine and return CSV text with '#' delimiter.
+    Process an image using the specified OCR engine and return CSV text with commas as delimiters.
     """
     if engine == "tesseract":
         return process_tesseract_ocr(image_bytes)
@@ -17,23 +19,33 @@ async def process_ocr(engine: str, model: str, image_bytes: bytes, OLLAMA_API_UR
         return await process_ollama_ocr(image_bytes, model, OLLAMA_API_URL)
     else:
         raise ValueError("Unsupported OCR engine.")
-
+    
 def process_tesseract_ocr(image_bytes: bytes) -> str:
-    # Convert bytes to image
+    """
+    Process the image using Tesseract OCR and convert the resulting text into CSV.
+    """
+    # Convert bytes to an image
     image = Image.open(io.BytesIO(image_bytes))
-    # Perform OCR
-    text = pytesseract.image_to_string(image, lang="eng")
-    # Process text to CSV
-    return process_ocr_text_to_csv(text)
+    # Perform OCR to get text
+    ocr_text = pytesseract.image_to_string(image, lang="eng")
+    return process_text_to_csv(ocr_text)
 
 async def process_ollama_ocr(image_bytes: bytes, model: str, OLLAMA_API_URL: str) -> str:
-    # Convert image to base64
+    """
+    Process the image with Ollama OCR. It sends the image (encoded in base64) to the API,
+    then processes the CSV text returned by the API.
+    
+    The payload prompt now requests a CSV output with commas as delimiters.
+    """
     import base64
     base64_string = base64.b64encode(image_bytes).decode("utf-8")
     
     payload = {
         "model": model,
-        "prompt": "Return only the table extracted from the image as #-separated values! Do not include row numbers or any additional text. Preserve any commas that appear in numbers. DO NOT USE A COMMA AS A DELIMITER.",
+        "prompt": (
+            "Return only the table extracted from the image as CSV with commas as delimiters. "
+            "Wrap cells that contain commas in double quotes. Do not include row numbers or any additional text."
+        ),
         "images": [base64_string],
         "stream": False,
         "keep_alive": 0
@@ -46,69 +58,63 @@ async def process_ollama_ocr(image_bytes: bytes, model: str, OLLAMA_API_URL: str
             data = response.json()
             if "response" not in data:
                 raise ValueError("Ollama response missing 'response' key.")
-            return process_ollama_csv(data["response"])
+            return process_csv_text(data["response"])
         except httpx.RequestError as e:
             raise Exception(f"Ollama API error: {str(e)}")
 
-def process_ocr_text_to_csv(ocr_text: str) -> str:
-    lines = ocr_text.split("\n")
-    lines = [line.strip() for line in lines if line.strip()]
+def process_text_to_csv(ocr_text: str) -> str:
+    """
+    Convert raw OCR text into a CSV formatted string.
+    
+    This function splits the text into non-empty lines, then splits each line into cells based
+    on tabs or two-or-more consecutive whitespace characters. It then writes the rows to a CSV
+    string using Python’s csv.writer, ensuring that any cells containing commas are automatically
+    quoted.
+    
+    Before writing the CSV, it checks if the first column is an index column 
+    (header cell is empty and all other first cells are numbers) and, if so, removes it.
+    """
+    # Split the OCR output into non-empty lines.
+    lines = [line.strip() for line in ocr_text.splitlines() if line.strip()]
     if not lines:
         return ""
     
-    # Replace multiple spaces/tabs with '#'
-    lines = [line.replace("\t", "#").replace("  ", "#").strip() for line in lines]
-    
-    # Merge split header if second line is short
-    if len(lines) > 1:
-        header_tokens = lines[0].split("#")
-        second_tokens = lines[1].split("#")
-        if len(second_tokens) < 3:
-            header_tokens[-1] = header_tokens[-1] + " " + " ".join(second_tokens)
-            lines[0] = "#".join(header_tokens)
-            lines.pop(1)
-    
-    expected_columns = lines[0].count("#") + 1
-    processed_lines = [lines[0]]
-    buffer = ""
-    
-    for line in lines[1:]:
-        cols = line.split("#")
-        if len(cols) < expected_columns:
-            buffer += (buffer and " " or "") + line
-            if buffer.count("#") + 1 >= expected_columns:
-                processed_lines.append(buffer)
-                buffer = ""
-        else:
-            if buffer:
-                line = buffer + " " + line
-                buffer = ""
-            processed_lines.append(line)
-    if buffer:
-        processed_lines.append(buffer)
-    
-    return "\n".join(processed_lines)
-
-def process_ollama_csv(csv_text: str) -> str:
-    csv_text = csv_text.replace('"', '')
-    placeholder = "THOUSANDSSEP"
-    
-    def protect_thousand_separators(text):
-        regex = r"(\d),(\d{3})(?!\d)"
-        import re
-        while re.search(regex, text):
-            text = re.sub(regex, r"\1" + placeholder + r"\2", text)
-        return text
-    
-    csv_text = protect_thousand_separators(csv_text)
-    lines = [line.strip() for line in csv_text.split("\n") if line.strip()]
-    processed_lines = []
-    
+    rows = []
     for line in lines:
-        cells = line.split(",")
-        if cells[0] == "":
-            cells.pop(0)
-        processed_lines.append("#".join(cells))
+        # Split on tabs or two or more whitespace characters.
+        cells = re.split(r'\t+|\s{2,}', line)
+        # Remove extra spaces from each cell.
+        cells = [cell.strip() for cell in cells if cell.strip()]
+        rows.append(cells)
+        
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+    for row in rows:
+        writer.writerow(row)
+    return output.getvalue()
+
+def process_csv_text(csv_text: str) -> str:
+    """
+    Process CSV text received from the Ollama OCR API.
     
-    result = "\n".join(processed_lines)
-    return result.replace(placeholder, ",")
+    This function attempts to read the API text as CSV (using csv.reader) and then re-writes it 
+    using csv.writer to ensure standard CSV formatting (i.e. correct quoting of cells with commas).
+    
+    It also removes the first column if it detects an index column (empty header cell and numeric values).
+    """
+    input_io = io.StringIO(csv_text)
+    try:
+        reader = csv.reader(input_io, delimiter=',')
+        rows = list(reader)
+    except Exception:
+        # Fallback: If csv.reader fails, manually split into rows and cells.
+        rows = [line.split(',') for line in csv_text.splitlines() if line.strip()]
+    
+    # Remove the index column if applicable.
+    rows = [row[1:] for row in rows]
+    
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+    for row in rows:
+        writer.writerow(row)
+    return output.getvalue()

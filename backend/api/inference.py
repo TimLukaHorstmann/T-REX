@@ -54,6 +54,7 @@ def build_prompt(req: GenerateRequest) -> str:
     prompt += "- Use the 'row_index' column (starting at 0 for the first data row, excluding header) to identify rows.\n"
     prompt += "- Match column names exactly as they appear in the table, including case and spacing.\n"
     prompt += f"- Provide your explanation and reasoning in {language_name}.\n"
+    prompt += "- When writing mathematical expressions, always enclose them in dollar signs ($) for inline math (e.g., $x^2 + y^2$) or double dollar signs ($$) for display math (e.g., $$\\frac{a}{b}$$).\n"
     prompt += f"- After your explanation, output a final answer in valid JSON format:\n"
     prompt += '{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}\n'
     prompt += "- Ensure row_index corresponds to the 'row_index' column value, not the physical row number in the table.\n"
