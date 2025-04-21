@@ -17,12 +17,22 @@ LANGUAGE_MAP = {
     "ru": "Russian"
 }
 
+# when using Cogito
+DEEP_THINKING_INSTRUCTION = "Enable deep thinking subroutine."
+
 def build_prompt(req: GenerateRequest) -> str:
+
+    # If user wants deep thinking with Cogito, inject that first:
+    if req.model == "cogito" and req.includeThinking:
+        prompt = DEEP_THINKING_INSTRUCTION + "\n\n"
+    else:
+        prompt = ""
+
     # Get the full language name from the code
     language_name = LANGUAGE_MAP.get(req.language, "English")  # Default to English if not found
 
     # Start with a strong language directive
-    prompt = f"You are an AI assistant responding in {language_name}. All your explanations and outputs must be in {language_name}, regardless of the input language.\n\n"
+    prompt += f"You are an AI assistant responding in {language_name}. All your explanations and outputs must be in {language_name}, regardless of the input language.\n\n"
     prompt += "You are tasked with determining whether a claim about the following table is TRUE or FALSE.\n"
     
     if req.includeTitle and req.tableTitle:

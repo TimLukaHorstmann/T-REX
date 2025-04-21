@@ -25,6 +25,8 @@ let availableOptions = {
   formatTypes: new Set()
 };
 let tableToPageMap = {};  // csv filename -> [title, link]
+let tableIdToClaimsMap = {}; // table_id -> claims
+let thinkStartRemainder = ""; // ← buffer for any partial "<think>" tag
 let selectedTableId = null;
 let resultsChartInstance = null;
 let manifestOptions = []; // Array of manifest options for filtering
@@ -121,6 +123,7 @@ function convertTabfactToCSV(tabfactText) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    validateLiveCheckInputs();
     try {
       tableToPageMap = await fetchTableToPage();
     } catch (e) {
@@ -199,7 +202,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleArrow.textContent = "►";
       }
     });
-    validateLiveCheckInputs();
 
     // Language selection
     const languageSelect = document.getElementById("liveLanguageSelect");
@@ -322,6 +324,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
+    // Initialize marked.js for Markdown rendering
+    marked.setOptions({
+      gfm:       true,
+      headerIds: true,
+      mangle:    true,
+      breaks:    true, // Enable line breaks in Markdown
+      // breaks:false (implicit default)
+    });
+
     // Setup MutationObserver for Wikipedia preview errors
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
@@ -347,6 +358,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+  // --- COGITO deep‑thinking toggle ---
+  const liveModelSelect = document.getElementById("liveModelSelect");
+  const thinkingOptionDiv = document.getElementById("thinkingOption");
+  liveModelSelect.addEventListener("change", () => {
+    if (liveModelSelect.value === "cogito") {
+      thinkingOptionDiv.style.display = "flex";
+    } else {
+      thinkingOptionDiv.style.display = "none";
+      document.getElementById("enableThinkingCheck").checked = false;
+    }
+  });
 async function fetchTableToPage() {
   const response = await fetch(TABLE_TO_PAGE_JSON_PATH);
   if (!response.ok) {
@@ -1314,8 +1336,8 @@ function renderMarkdownAndMath(markdownText, containerElement) {
   
   // Convert square bracket math notation to proper LaTeX delimiters
   processedText = processedText.replace(/\[([^\]]+)\]/g, function(match, content) {
-    console.log("we are using the function")
-    console.log(content)
+    // console.log("we are using the function")
+    // console.log(content)
     // If it contains LaTeX-like commands or math symbols, it's probably a math expression
     if (content.includes('{' && '}')){
       return content
@@ -1381,22 +1403,24 @@ function setupLiveCheckEvents() {
   });
 
   runLiveCheckBtn.addEventListener("click", async () => {
+    // Disable the Run button
     runLiveCheckBtn.disabled = true;
     runLiveCheckBtn.style.opacity = "0.6";
     runLiveCheckBtn.style.cursor = "not-allowed";
-    
+
     const statusMessageEl = document.getElementById("statusMessage");
     statusMessageEl.style.display = "none";
     window.streamAborted = false;
-  
+
+    // Reset scrolling state
     autoScrollEnabled = true;
     isUserScrolling = false;
     lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     clearTimeout(scrollTimeout);
-  
+
+    // Handle queued state message
     const selectedLanguage = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[selectedLanguage] || window.translationDict["en"];
-    
     let requestStatus = document.getElementById("requestStatus");
     let queuedTimer = setTimeout(() => {
       if (!requestStatus) {
@@ -1408,10 +1432,9 @@ function setupLiveCheckEvents() {
       requestStatus.style.display = "block";
       requestStatus.textContent = translation.queuedMessage;
     }, 2000);
-  
+
     const liveResultsEl = document.getElementById("liveResults");
     const liveClaimList = document.getElementById("liveClaimList");
-  
     liveStreamOutputEl.textContent = "";
     liveThinkOutputEl.textContent = "";
     liveStreamOutputEl.style.display = "none";
@@ -1420,80 +1443,114 @@ function setupLiveCheckEvents() {
     liveResultsEl.style.display = "none";
 
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
-  
+
+    // Streaming state
     let firstThinkTokenReceived = false;
     let firstAnswerTokenReceived = false;
     let finalText = "";
     let thinkText = "";
     let inThinkBlock = false;
     let buffer = "";
+    // Buffers for partial tag fragments
+    let pendingThinkStart = "";
+    let pendingThinkEnd = "";
 
     const model = document.getElementById("liveModelSelect").value;
     const thinkTags = getThinkingTagsForModel(model);
-  
+
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
-    const language = selectedLanguage;
     const includeTitle = document.getElementById("includeTableNameCheck").checked;
     let tableTitle = "";
     if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
       tableTitle = tableToPageMap[selectedTableId][0];
     }
-  
+    const includeThinking = (
+      document.getElementById("enableThinkingCheck").checked && model === "cogito"
+    );
+
     const requestBody = {
-      tableText: tableText,
-      claimText: claimText,
-      language: language,
-      model: model,
-      includeTitle: includeTitle,
-      tableTitle: tableTitle,
+      tableText,
+      claimText,
+      language: selectedLanguage,
+      model,
+      includeTitle,
+      tableTitle,
+      includeThinking,
       max_tokens: 2048,
       keep_alive: 0,
       stream: true
     };
-  
+
     try {
       const response = await fetch(`/api/inference`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody)
       });
-  
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
       }
-  
-      document.getElementById("stopLiveCheck").style.display = "inline-block";
-      document.getElementById("stopLiveCheck").classList.add("running");
-  
+
+      // Show Stop button
+      const stopBtn = document.getElementById("stopLiveCheck");
+      stopBtn.style.display = "inline-block";
+      stopBtn.classList.add("running");
+
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
-  
+
       while (true) {
         const { value, done } = await globalReader.read();
-        if (done) break;
-        if (window.streamAborted) break;
-  
-        buffer += decoder.decode(value, { stream: true });
+        if (done || window.streamAborted) break;
+
+        const chunkStr = decoder.decode(value, { stream: true });
+        buffer += chunkStr;
         const lines = buffer.split("\n");
         buffer = lines.pop();
-  
+
         const scrollBefore = window.pageYOffset || document.documentElement.scrollTop;
         const heightBefore = document.body.scrollHeight;
-  
+
         for (const line of lines) {
           if (!line.trim()) continue;
           try {
             const token = JSON.parse(line);
             let tokenText = token.response;
-  
-            if (queuedTimer) {
-              clearTimeout(queuedTimer);
-              queuedTimer = null;
-              requestStatus.style.display = "none";
+
+            // Prepend any pending partial tag fragments
+            if (!inThinkBlock && pendingThinkStart) {
+              tokenText = pendingThinkStart + tokenText;
+              pendingThinkStart = "";
             }
-  
+            if (inThinkBlock && pendingThinkEnd) {
+              tokenText = pendingThinkEnd + tokenText;
+              pendingThinkEnd = "";
+            }
+
+            // Detect and buffer a split '<think>' fragment
+            if (!inThinkBlock && !tokenText.includes(thinkTags.start)) {
+              for (let i = thinkTags.start.length - 1; i > 0; i--) {
+                if (tokenText.endsWith(thinkTags.start.slice(0, i))) {
+                  pendingThinkStart = thinkTags.start.slice(0, i);
+                  tokenText = tokenText.slice(0, -i);
+                  break;
+                }
+              }
+            }
+            // Detect and buffer a split '</think>' fragment
+            if (inThinkBlock && !tokenText.includes(thinkTags.end)) {
+              for (let i = thinkTags.end.length - 1; i > 0; i--) {
+                if (tokenText.endsWith(thinkTags.end.slice(0, i))) {
+                  pendingThinkEnd = thinkTags.end.slice(0, i);
+                  tokenText = tokenText.slice(0, -i);
+                  break;
+                }
+              }
+            }
+
+            // Original streaming logic (unchanged)
             while (tokenText.length > 0) {
               if (inThinkBlock) {
                 const endIdx = tokenText.indexOf(thinkTags.end);
@@ -1566,37 +1623,33 @@ function setupLiveCheckEvents() {
                 }
               }
             }
-  
+
+            // Update displayed content if already initialized
             if (firstThinkTokenReceived) {
               const thinkContentDiv = document.getElementById("thinkContent");
-              if (thinkContentDiv) {
-                renderMarkdownAndMath(thinkText.trim(), thinkContentDiv);
-              }
+              renderMarkdownAndMath(thinkText.trim(), thinkContentDiv);
             }
             if (firstAnswerTokenReceived) {
               const answerContentDiv = document.getElementById("answerContent");
-              if (answerContentDiv) {
-                renderMarkdownAndMath(finalText.trim(), answerContentDiv);
-              }
-            }            
+              renderMarkdownAndMath(finalText.trim(), answerContentDiv);
+            }
+
           } catch (e) {
             console.warn("Failed to parse JSON token:", e);
           }
         }
-  
+
+        // Auto-scroll behavior
         const heightAfter = document.body.scrollHeight;
         const wasNearBottomBefore = scrollBefore >= heightBefore - window.innerHeight - 50;
-  
         if (autoScrollEnabled && !isUserScrolling && wasNearBottomBefore) {
-          window.scrollTo({
-            top: heightAfter,
-            behavior: "auto"
-          });
+          window.scrollTo({ top: heightAfter, behavior: "auto" });
         }
         const isAtBottom = isNearBottom(50);
         scrollToBottomBtn.style.display = isAtBottom ? "none" : "block";
       }
-  
+
+      // Handle leftover buffer
       if (buffer.trim() && !window.streamAborted) {
         try {
           const token = JSON.parse(buffer);
@@ -1631,24 +1684,20 @@ function setupLiveCheckEvents() {
           console.warn("Error processing final buffer:", e);
         }
       }
-  
+
       const endTime = performance.now();
       if (!window.streamAborted) {
+        // Finalize thinking label
         if (firstThinkTokenReceived) {
           const thinkingLabel = document.getElementById("thinkingLabel");
-          if (thinkingLabel) {
-            thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
-            thinkingLabel.classList.add("done");
-          }
+          thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
+          thinkingLabel.classList.add("done");
         }
-  
-        let cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
-        let finalOutputHtml = "";
-        let parsedJson = {};
-        
-        parsedJson = extractJsonFromResponse(cleanedResponse);
+
+        // Extract and display final JSON / answer
+        const cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
+        const parsedJson = extractJsonFromResponse(cleanedResponse);
         const formattedJson = JSON.stringify(parsedJson, null, 2);
-        
         const jsonContainerHtml = `
           <div class="json-container">
             <div class="json-header">
@@ -1660,7 +1709,7 @@ function setupLiveCheckEvents() {
             <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
           </div>
         `;
-        
+
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
@@ -1670,9 +1719,7 @@ function setupLiveCheckEvents() {
         `;
         const answerContentDiv = document.getElementById("answerContent");
         renderMarkdownAndMath(cleanedResponse.trim(), answerContentDiv);
-        // Then append the JSON container as needed:
         answerContentDiv.innerHTML += jsonContainerHtml;
-
         document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
           const content = document.getElementById("answerContent");
           if (content.classList.contains("collapsed")) {
@@ -1685,11 +1732,11 @@ function setupLiveCheckEvents() {
         });
 
         scrollToBottomBtn.style.display = "none";
-  
         liveResultsEl.style.display = "block";
         document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
         displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
-  
+
+        // Collapse panels by default
         setTimeout(() => {
           const thinkContent = document.getElementById("thinkContent");
           const answerContent = document.getElementById("answerContent");
@@ -1703,7 +1750,7 @@ function setupLiveCheckEvents() {
           }
         }, 0);
       }
-  
+
     } catch (err) {
       console.error("Live Check Error:", err);
       liveResultsEl.style.display = "none";
@@ -1735,7 +1782,8 @@ function setupLiveCheckEvents() {
       }
     }
   });
-  
+
+  // Stop button handler
   const stopLiveCheckBtn = document.getElementById("stopLiveCheck");
   stopLiveCheckBtn.addEventListener("click", () => {
     window.streamAborted = true;
@@ -1745,30 +1793,25 @@ function setupLiveCheckEvents() {
     }
     const liveResultsEl = document.getElementById("liveResults");
     liveResultsEl.style.display = "none";
-    
     const abortMsgEl = document.getElementById("statusMessage");
     abortMsgEl.style.display = "block";
     const lang = document.getElementById("liveLanguageSelect").value;
     const translation = window.translationDict[lang] || window.translationDict["en"];
     abortMsgEl.textContent = translation.statusMessage;
-    
-    const runLiveCheckBtn = document.getElementById("runLiveCheck");
-    runLiveCheckBtn.disabled = false;
-    runLiveCheckBtn.style.opacity = "1";
-    runLiveCheckBtn.style.cursor = "pointer";
-    runLiveCheckBtn.classList.remove("loading");
-    runLiveCheckBtn.innerHTML = translation.runLiveCheckBtn;
-    
+    const runBtn = document.getElementById("runLiveCheck");
+    runBtn.disabled = false;
+    runBtn.style.opacity = "1";
+    runBtn.style.cursor = "pointer";
+    runBtn.classList.remove("loading");
+    runBtn.innerHTML = translation.runLiveCheckBtn;
     stopLiveCheckBtn.style.display = "none";
     stopLiveCheckBtn.classList.remove("running");
   });
 
-  const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
-  scrollToBottomBtn.addEventListener("click", () => {
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: "smooth"
-    });
+  // Scroll-to-bottom handler
+  const scrollToBottomBtnEl = document.getElementById("scrollToBottomBtn");
+  scrollToBottomBtnEl.addEventListener("click", () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     autoScrollEnabled = true;
   });
 }
@@ -2015,6 +2058,8 @@ function getThinkingTagsForModel(model) {
     case "exaone-deep":
       return { start: "<thought>", end: "</thought>" };
     case "deepseek-r1:latest":
+      return { start: "<think>", end: "</think>" };
+    case "cogito":
       return { start: "<think>", end: "</think>" };
     default:
       return { start: "<think>", end: "</think>" };

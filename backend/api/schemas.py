@@ -9,6 +9,7 @@ class GenerateRequest(BaseModel):
     model: str
     includeTitle: bool = False
     tableTitle: str = ""
+    includeThinking: bool = False
     max_tokens: int = 2048
     keep_alive: int = 0
     stream: bool = True
