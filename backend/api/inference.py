@@ -4,6 +4,7 @@ import httpx
 from fastapi import HTTPException
 from schemas import GenerateRequest
 from utils import csv_to_markdown
+import re
 
 # Map language codes to full names for better model understanding
 LANGUAGE_MAP = {
@@ -71,6 +72,9 @@ def build_prompt(req: GenerateRequest) -> str:
     
     if req.language == "en" and "deepseek" in req.model.lower():
         prompt += "\n<think>"
+    
+    if req.model == "cogito" and req.includeThinking:
+        prompt += "\nYour first token must be <think>\n"
 
     return prompt.strip()
 
@@ -82,19 +86,27 @@ async def stream_inference(prompt: str, req: GenerateRequest, OLLAMA_API_URL: st
         "stream": req.stream,
         "keep_alive": req.keep_alive
     }
+    # Define a regex pattern to match tokens like <|...|>
+    unwanted_token_pattern = re.compile(r'\s*<\|[^>]+>\|\s*')
+
     async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
         try:
             async with client.stream("POST", OLLAMA_API_URL, json=payload) as response:
                 response.raise_for_status()
                 async for chunk in response.aiter_lines():
                     if chunk:
-                        yield chunk + "\n"
+                        # Clean the chunk by removing unwanted tokens
+                        cleaned_chunk = unwanted_token_pattern.sub('', chunk)
+                        if cleaned_chunk: # Only yield if something remains after cleaning
+                            yield cleaned_chunk + "\n"
                         try:
+                            # Still parse the original chunk for control data like "done"
                             data = json.loads(chunk)
                             if data.get("done", False):
                                 break
                         except json.JSONDecodeError:
-                            continue  # Skip malformed lines
+                            # If the original chunk wasn't JSON, continue (it was likely just text)
+                            continue
                 yield ""  # Signal end of stream
         except httpx.RequestError as e:
             raise HTTPException(status_code=500, detail=f"Ollama API error: {str(e)}")

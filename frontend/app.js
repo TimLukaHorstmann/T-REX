@@ -1589,19 +1589,24 @@ function setupLiveCheckEvents() {
       stopBtn.style.display = "inline-block";
       stopBtn.classList.add("running");
 
-      // Hide queued message
-      let requestStatus = document.getElementById("requestStatus");
-      if (requestStatus) {
-        requestStatus.style.display = "none";
-        requestStatus.remove();
-      }
-
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
+      let firstChunkReceived = false;
 
       while (true) {
         const { value, done } = await globalReader.read();
+
+        if (!firstChunkReceived && value) {
+          firstChunkReceived = true;
+          clearTimeout(queuedTimer); // Clear the timer as soon as we get data
+          let currentRequestStatus = document.getElementById("requestStatus");
+          if (currentRequestStatus) {
+            currentRequestStatus.style.display = "none";
+            currentRequestStatus.remove();
+          }
+        }
+
         if (done || window.streamAborted) break;
 
         const chunkStr = decoder.decode(value, { stream: true });
@@ -1665,7 +1670,7 @@ function setupLiveCheckEvents() {
                     liveThinkOutputEl.style.display = "block";
                     liveThinkOutputEl.innerHTML = `
                       <div class="thinking-overlay">
-                        <span id="thinkingLabel" class="thinking-label">Thinking...</span>
+                        <span id="thinkingLabel" class="thinking-label">${translation.thinkingLabel}</span>
                         <button id="toggleThinkingBtn" class="toggle-btn">▲</button>
                       </div>
                       <div id="thinkContent" class="collapsible"></div>
@@ -1789,7 +1794,8 @@ function setupLiveCheckEvents() {
         // Finalize thinking label
         if (firstThinkTokenReceived) {
           const thinkingLabel = document.getElementById("thinkingLabel");
-          thinkingLabel.textContent = `Thought for ${((endTime - startTime) / 1000).toFixed(1)}s.`;
+          const duration = ((endTime - startTime) / 1000).toFixed(1);
+          thinkingLabel.textContent = translation.thoughtDurationLabel.replace('{duration}', duration);
           thinkingLabel.classList.add("done");
         }
 
@@ -2440,4 +2446,7 @@ function updateTranslations() {
   if (aiDisclaimer) aiDisclaimer.textContent = translationDict[lang].aiDisclaimer;
   const liveCheckInfo = document.querySelector("#liveCheckInfo");
   if (liveCheckInfo) liveCheckInfo.textContent = translationDict[lang].liveCheckInfo;
+
+  const enableThinkingLabel = document.querySelector('#thinkingOption label[for="enableThinkingCheck"]');
+  if (enableThinkingLabel) enableThinkingLabel.textContent = translation.enableThinkingLabel;
 }

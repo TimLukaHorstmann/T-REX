@@ -35,7 +35,10 @@ window.translationDict = {
     queuedMessage: "Your request is queued, please wait...",
     networkError: "Network error:",
     retryBtn: "Retry",
-    wikipediaNoSummary: "No summary available for this Wikipedia page."
+    wikipediaNoSummary: "No summary available for this Wikipedia page.",
+    thinkingLabel: "Thinking...", 
+    thoughtDurationLabel: "Thought for {duration}s.", 
+    enableThinkingLabel: "Enable deep thinking" 
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -70,7 +73,10 @@ window.translationDict = {
     queuedMessage: "Votre demande est en file d'attente, veuillez patienter...",
     networkError: "Erreur réseau:",
     retryBtn: "Réessayer",
-    wikipediaNoSummary: "Aucun résumé disponible pour cette page Wikipédia."
+    wikipediaNoSummary: "Aucun résumé disponible pour cette page Wikipédia.",
+    thinkingLabel: "Réflexion...", 
+    thoughtDurationLabel: "Réfléchi pendant {duration}s.", 
+    enableThinkingLabel: "Activer la réflexion approfondie" 
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -105,7 +111,10 @@ window.translationDict = {
     queuedMessage: "Ihre Anfrage befindet sich in der Warteschlange, bitte warten...",
     networkError: "Netzwerkfehler:",
     retryBtn: "Erneut versuchen",
-    wikipediaNoSummary: "Keine Zusammenfassung für diese Wikipedia-Seite verfügbar."
+    wikipediaNoSummary: "Keine Zusammenfassung für diese Wikipedia-Seite verfügbar.",
+    thinkingLabel: "Denken...", 
+    thoughtDurationLabel: "Gedacht für {duration}s.", 
+    enableThinkingLabel: "Tiefes Denken aktivieren" 
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -140,7 +149,10 @@ window.translationDict = {
     queuedMessage: "Tu solicitud está en cola, por favor espera...",
     networkError: "Error de red:",
     retryBtn: "Reintentar",
-    wikipediaNoSummary: "No hay resumen disponible para esta página de Wikipedia."
+    wikipediaNoSummary: "No hay resumen disponible para esta página de Wikipedia.",
+    thinkingLabel: "Pensando...", 
+    thoughtDurationLabel: "Pensado durante {duration}s.", 
+    enableThinkingLabel: "Habilitar pensamiento profundo" 
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -175,7 +187,10 @@ window.translationDict = {
     queuedMessage: "Sua solicitação está na fila, por favor aguarde...",
     networkError: "Erro de rede:",
     retryBtn: "Tentar novamente",
-    wikipediaNoSummary: "Nenhum resumo disponível para esta página da Wikipedia."
+    wikipediaNoSummary: "Nenhum resumo disponível para esta página da Wikipedia.",
+    thinkingLabel: "Pensando...", 
+    thoughtDurationLabel: "Pensou por {duration}s.", 
+    enableThinkingLabel: "Habilitar pensamento profundo" 
   },
   zh: {
     enterTable: "输入表格：",
@@ -210,7 +225,10 @@ window.translationDict = {
     queuedMessage: "您的请求已排队，请稍候...",
     networkError: "网络错误：",
     retryBtn: "重试",
-    wikipediaNoSummary: "此维基百科页面没有可用的摘要。"
+    wikipediaNoSummary: "此维基百科页面没有可用的摘要。",
+    thinkingLabel: "思考中...", 
+    thoughtDurationLabel: "思考了 {duration} 秒。", 
+    enableThinkingLabel: "启用深度思考" 
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -245,7 +263,10 @@ window.translationDict = {
     queuedMessage: "تم وضع طلبك في قائمة الانتظار، يرجى الانتظار...",
     networkError: "خطأ في الشبكة:",
     retryBtn: "إعادة المحاولة",
-    wikipediaNoSummary: "لا يوجد ملخص متاح لهذه الصفحة على ويكيبيديا."
+    wikipediaNoSummary: "لا يوجد ملخص متاح لهذه الصفحة على ويكيبيديا.",
+    thinkingLabel: "يفكر...", 
+    thoughtDurationLabel: "فكر لمدة {duration} ثانية.", 
+    enableThinkingLabel: "تمكين التفكير العميق" 
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -280,6 +301,9 @@ window.translationDict = {
     queuedMessage: "Ваш запрос поставлен в очередь, пожалуйста, подождите...",
     networkError: "Ошибка сети:",
     retryBtn: "Повторить попытку",
-    wikipediaNoSummary: "Нет доступного резюме для этой страницы Википедии."
+    wikipediaNoSummary: "Нет доступного резюме для этой страницы Википедии.",
+    thinkingLabel: "Думает...", 
+    thoughtDurationLabel: "Думал {duration} сек.", 
+    enableThinkingLabel: "Включить глубокое мышление" 
   }
 };
