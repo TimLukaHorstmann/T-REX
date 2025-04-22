@@ -792,9 +792,10 @@
      LIVE INPUT SECTION & LANGUAGE CHOOSER
      ====================================================== */
   .live-input-section {
-    position: relative;
-    padding-top: 0px;
+    position: relative; /* Ensure this is relative for absolute positioning of children */
+    padding-top: 0px; /* Adjust as needed if elements overlap */
     margin-bottom: 20px;
+    /* display: flex; justify-content: space-between; */ /* REMOVE - Keep block layout */
   }
   .styled-select {
     -webkit-appearance: none;
@@ -848,8 +849,8 @@
 .model-modal {
   position: absolute;
   top: calc(100% + 8px); /* Position below button with small gap */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0; /* Align to the left edge of the chooser */
+  transform: translateY(-10px); /* Start slightly up */
   min-width: 250px; /* Set a minimum width */
   background: var(--color-modal-bg); /* Use variable */
   border: 1px solid #ccc;
@@ -857,16 +858,26 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Slightly stronger shadow */
   padding: 0.5rem;
   z-index: 1000;
-  display: none; /* Hidden by default */
+  /* display: none; */ /* Hidden by default - controlled by opacity/visibility */
+  opacity: 0; /* Start hidden */
+  visibility: hidden; /* Start hidden */
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s; /* Add transitions */
 }
+
+/* Add .visible class for showing the modal */
+.model-modal.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0); /* End at final position */
+}
+
 
 /* Arrow pointing up */
 .model-modal::before {
   content: "";
   position: absolute;
   bottom: 100%; /* Position it above the modal */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 15px;
   width: 0;
   height: 0;
   border-left: 8px solid transparent;
@@ -874,6 +885,12 @@
   border-bottom: 8px solid var(--color-modal-bg); /* Arrow color matches modal */
   /* Add a border below the arrow to blend with modal border */
   filter: drop-shadow(0 -1px 0px #ccc); /* Match border color */
+  transition: opacity 0.2s ease-out; /* Add transition for arrow */
+  opacity: 0; /* Hide arrow initially */
+}
+
+.model-modal.visible::before {
+  opacity: 1; /* Show arrow when modal is visible */
 }
 
 
@@ -945,6 +962,130 @@
 }
 /* ... rest of thinking-option styles ... */
 
+/* ----- Language Chooser ----- */
+.language-chooser {
+  /* position: relative; */      /* REMOVE - Keep relative positioning for the modal */
+  /* display: inline-block; */ /* REMOVE - Change to inline-block */
+  /* vertical-align: top; */     /* REMOVE - Align with model chooser */
+  position: absolute;      /* Position absolutely in the top-right */
+  top: 0;                  /* Align to the top */
+  right: 0;                 /* Align to the right */
+  display: inline-block;   /* Needed for relative positioning of its modal */
+  z-index: 10;             /* Ensure it's above other elements if needed */
+}
+
+.language-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.8em;
+  /* border: 1px solid #ccc;
+  border-radius: 6px; */
+  border: none; /* Remove border */
+  background: var(--color-controls-bg);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  color: var(--color-text);
+}
+
+.language-selector-btn:hover {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  border-color: #aaa;
+}
+
+.language-selector-btn i {
+  font-size: 0.7em;
+}
+
+/* ----- Language Dropdown Modal ----- */
+.language-modal {
+  position: absolute;
+  top: calc(100% + 8px); /* Position below button */
+  right: 0; /* Align modal to the right edge of the chooser */
+  min-width: 180px; /* Adjust width as needed */
+  background: var(--color-modal-bg);
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 0.5rem;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px); /* Start slightly up for animation */
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
+}
+
+.language-modal.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0); /* End at final position */
+}
+
+/* Arrow pointing up for language modal */
+.language-modal::before {
+  content: "";
+  position: absolute;
+  bottom: 100%; /* Position above the modal */
+  right: 15px; /* Position arrow near the right edge */
+  /* Adjust 'right' value if needed to center under the button */
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--color-modal-bg); /* Arrow color matches modal */
+  filter: drop-shadow(0 -1px 0px #ccc); /* Match border color */
+  transition: opacity 0.2s ease-out;
+  opacity: 0; /* Hide arrow initially */
+}
+
+.language-modal.visible::before {
+  opacity: 1; /* Show arrow when modal is visible */
+}
+
+/* ----- Language Modal Content & Options ----- */
+.language-modal-content {
+  max-width: none;
+  padding: 0;
+}
+
+.language-modal-content h3 {
+  margin-bottom: 0.8em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #eee;
+}
+
+.language-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5em;
+}
+
+.language-option {
+  padding: 0.6em 0.8em;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.language-option:hover {
+  background: #f5f5f5;
+  border-color: #ddd;
+}
+
+.language-option-header {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Remove old floating style if present */
+/* #languageChooserFloating { ... } */
+
 /* ======================================================
    DARK MODE STYLES
    ====================================================== */
@@ -988,6 +1129,35 @@ body.dark-mode .thinking-option {
 }
 
 /* ... rest of dark mode styles ... */
+
+body.dark-mode .language-selector-btn {
+  background: var(--color-dark-controls-bg);
+  border-color: var(--color-dark-border);
+  color: var(--color-dark-text);
+}
+body.dark-mode .language-selector-btn:hover {
+  border-color: #777;
+}
+
+body.dark-mode .language-modal {
+  background: var(--color-dark-info-panel-bg);
+  border-color: var(--color-dark-border);
+}
+
+body.dark-mode .language-modal::before {
+  border-bottom-color: var(--color-dark-info-panel-bg);
+  filter: drop-shadow(0 -1px 0px var(--color-dark-border));
+}
+
+body.dark-mode .language-modal-content h3 {
+  color: #aaa;
+  border-bottom-color: var(--color-dark-border);
+}
+
+body.dark-mode .language-option:hover {
+  background: #3a3a3a;
+  border-color: #555;
+}
 
   select#liveModelSelect option:disabled {
     color: #999;
@@ -1769,6 +1939,9 @@ body.dark-mode #livePreviewTableContainer {
     }
     .live-input-section {
       padding-top: 20px;
+    }
+    .language-chooser {
+      margin-top: 20px;
     }
     #languageChooserFloating select {
       font-size: 0.8rem;

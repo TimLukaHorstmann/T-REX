@@ -161,66 +161,101 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // SETUP MODEL SELECTOR
-    // grab our new elements
     const modelSelectorBtn = document.getElementById("modelSelectorBtn");
     const modelModal       = document.getElementById("modelModal");
-    const closeModelModal  = document.getElementById("closeModelModal");
+    // const closeModelModal  = document.getElementById("closeModelModal"); // No longer needed
     const modelOptions    = document.querySelectorAll(".model-option");
     const liveModelSelect = document.getElementById("liveModelSelect");
     const currentModelName= document.getElementById("currentModelName");
     const thinkingOptionDiv = document.getElementById("thinkingOption");
 
-    // Toggle the dropdown when you click the model‑selector button
+    // Toggle the model dropdown
     modelSelectorBtn.addEventListener("click", e => {
       e.stopPropagation();
-      modelModal.style.display = modelModal.style.display === "block" ? "none" : "block";
+      modelModal.classList.toggle("visible");
+      // Close language modal if open
+      document.getElementById("languageModal").classList.remove("visible");
     });
 
-    // Anywhere else on the page closes it
-    document.addEventListener("click", e => {
-      if (!modelModal.contains(e.target) && e.target !== modelSelectorBtn) {
-        modelModal.style.display = "none";
-      }
-    });
-
-    // pick a model
+    // Select a model
     modelOptions.forEach(opt => {
       opt.addEventListener("click", () => {
-        // Check if the option is disabled
-        if (opt.classList.contains('disabled')) {
-          return; // Do nothing if disabled
-        }
+        if (opt.classList.contains('disabled')) return;
         const modelValue = opt.getAttribute("data-model");
         const modelText = opt.querySelector(".model-option-header").textContent;
-
-        // Update hidden select
         liveModelSelect.value = modelValue;
-
-        // Update button text
         currentModelName.textContent = modelText;
-
-        // Close modal
-        modelModal.style.display = "none";
-
-        // Trigger change event on hidden select for compatibility (e.g., thinking option)
-        liveModelSelect.dispatchEvent(new Event('change'));
-        validateLiveCheckInputs(); // Re-validate inputs
+        modelModal.classList.remove("visible");
+        liveModelSelect.dispatchEvent(new Event('change')); // Trigger change on hidden select
+        validateLiveCheckInputs();
       });
     });
 
-    // reuse your existing change‑handler to toggle deep thinking
+    // Handle thinking option visibility on model change
     liveModelSelect.addEventListener("change", () => {
-      if (liveModelSelect.value === "cogito") {
-        thinkingOptionDiv.style.display = "flex";
-      } else {
-        thinkingOptionDiv.style.display = "none";
+      thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
+      if (liveModelSelect.value !== "cogito") {
         document.getElementById("enableThinkingCheck").checked = false;
       }
     });
+    // Initial check for thinking option
+    thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
 
-    // initialize: hide deep‑thinking if not cogito
-    if (liveModelSelect.value !== "cogito")
-      thinkingOptionDiv.style.display = "none";
+
+    // SETUP LANGUAGE SELECTOR
+    const languageSelectorBtn = document.getElementById("languageSelectorBtn");
+    const languageModal = document.getElementById("languageModal");
+    const languageOptions = document.querySelectorAll(".language-option");
+    const liveLanguageSelect = document.getElementById("liveLanguageSelect"); // Hidden select
+    const currentLanguageName = document.getElementById("currentLanguageName");
+
+    // Set initial language button text based on hidden select
+    const initialLangOption = liveLanguageSelect.options[liveLanguageSelect.selectedIndex];
+    if (initialLangOption) {
+        // Find the corresponding visible option to get the display text
+        const initialLangTextElement = document.querySelector(`.language-option[data-lang="${initialLangOption.value}"] .language-option-header`);
+        if (initialLangTextElement) {
+            currentLanguageName.textContent = initialLangTextElement.textContent;
+        } else {
+             currentLanguageName.textContent = initialLangOption.text; // Fallback
+        }
+    }
+
+    // Toggle the language dropdown
+    languageSelectorBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      languageModal.classList.toggle("visible");
+      // Close model modal if open
+      document.getElementById("modelModal").classList.remove("visible");
+    });
+
+    // Select a language
+    languageOptions.forEach(opt => {
+      opt.addEventListener("click", () => {
+        const langValue = opt.getAttribute("data-lang");
+        const langText = opt.querySelector(".language-option-header").textContent;
+
+        liveLanguageSelect.value = langValue; // Update hidden select
+        currentLanguageName.textContent = langText; // Update button text
+        languageModal.classList.remove("visible"); // Close dropdown
+
+        // Trigger change event on hidden select to run existing logic
+        liveLanguageSelect.dispatchEvent(new Event('change'));
+      });
+    });
+
+    // Close modals if clicking outside
+    document.addEventListener("click", e => {
+      // Close model modal
+      if (!modelModal.contains(e.target) && e.target !== modelSelectorBtn && modelModal.classList.contains("visible")) {
+        modelModal.classList.remove("visible");
+      }
+      // Close language modal
+      if (!languageModal.contains(e.target) && e.target !== languageSelectorBtn && languageModal.classList.contains("visible")) {
+        languageModal.classList.remove("visible");
+      }
+    });
+
 
     await fetchTotalExamplesClaims();
     await fetchFullCleaned();
@@ -1554,6 +1589,13 @@ function setupLiveCheckEvents() {
       stopBtn.style.display = "inline-block";
       stopBtn.classList.add("running");
 
+      // Hide queued message
+      let requestStatus = document.getElementById("requestStatus");
+      if (requestStatus) {
+        requestStatus.style.display = "none";
+        requestStatus.remove();
+      }
+
       globalReader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       const startTime = performance.now();
@@ -2296,9 +2338,20 @@ document.getElementById("imageUpload").addEventListener("change", function(e) {
 });
 
 function updateTranslations() {
-  const lang = document.getElementById("liveLanguageSelect").value;
+  const lang = document.getElementById("liveLanguageSelect").value; // Use hidden select value
   const translation = translationDict[lang] || translationDict["en"];
-  
+
+  // Update language selector button text
+  const currentLanguageNameEl = document.getElementById("currentLanguageName");
+  const currentLangOptionHeader = document.querySelector(`.language-option[data-lang="${lang}"] .language-option-header`);
+  if (currentLanguageNameEl && currentLangOptionHeader) {
+      currentLanguageNameEl.textContent = currentLangOptionHeader.textContent;
+  } else if (currentLanguageNameEl && liveLanguageSelect.options[liveLanguageSelect.selectedIndex]) {
+      // Fallback to hidden select text if element not found (shouldn't happen with correct HTML)
+      currentLanguageNameEl.textContent = liveLanguageSelect.options[liveLanguageSelect.selectedIndex].text;
+  }
+
+  // ... rest of updateTranslations function updating other elements ...
   // Table Section
   const tableHeading = document.querySelector(".table-input-group h3");
   if (tableHeading) tableHeading.textContent = translationDict[lang].enterTable;

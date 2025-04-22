@@ -143,15 +143,15 @@
               <div class="model-options">
                 <div class="model-option" data-model="phi4">
                   <div class="model-option-header">Phi4 (14b)</div>
-                  <div class="model-option-desc">Great at table fact-checking</div>
-                </div>
-                <div class="model-option" data-model="deepseek-r1:latest">
-                  <div class="model-option-header">DeepSeek‑R1 (7b)</div>
-                  <div class="model-option-desc">Advanced reasoning (deep‑thinking)</div>
+                  <div class="model-option-desc">Great for table fact-checking</div>
                 </div>
                 <div class="model-option" data-model="cogito">
                   <div class="model-option-header">Cogito (8b)</div>
-                  <div class="model-option-desc">Advanced reasoning (deep‑thinking)</div>
+                  <div class="model-option-desc">Strong hybrid reasoning model</div>
+                </div>
+                <div class="model-option" data-model="deepseek-r1:latest">
+                  <div class="model-option-header">DeepSeek‑R1 (7b)</div>
+                  <div class="model-option-desc">Uses advanced reasoning</div>
                 </div>
                 <div class="model-option" data-model="gemma3">
                   <div class="model-option-header">Gemma3 (4b)</div>
@@ -239,8 +239,9 @@
           </button>
         </div>
         <!-- Floating language chooser -->
-        <div id="languageChooserFloating">
-          <select id="liveLanguageSelect" class="styled-select">
+        <div id="languageChooser" class="language-chooser">
+          <!-- Hidden select for compatibility -->
+          <select id="liveLanguageSelect" style="display:none">
             <option value="en" selected>English</option>
             <option value="fr">Français</option>
             <option value="es">Español</option>
@@ -250,6 +251,45 @@
             <option value="zh">中文</option>
             <option value="ar">العربية</option>
           </select>
+
+          <!-- Visible button -->
+          <button id="languageSelectorBtn" class="language-selector-btn">
+            <span id="currentLanguageName">English</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+
+          <!-- Language Dropdown -->
+          <div id="languageModal" class="language-modal">
+            <div class="language-modal-content">
+              <h3>Select Language</h3>
+              <div class="language-options">
+                <div class="language-option" data-lang="en">
+                  <div class="language-option-header">English</div>
+                </div>
+                <div class="language-option" data-lang="fr">
+                  <div class="language-option-header">Français</div>
+                </div>
+                <div class="language-option" data-lang="es">
+                  <div class="language-option-header">Español</div>
+                </div>
+                <div class="language-option" data-lang="pt">
+                  <div class="language-option-header">Português</div>
+                </div>
+                <div class="language-option" data-lang="de">
+                  <div class="language-option-header">Deutsch</div>
+                </div>
+                <div class="language-option" data-lang="ru">
+                  <div class="language-option-header">Русский</div>
+                </div>
+                <div class="language-option" data-lang="zh">
+                  <div class="language-option-header">中文</div>
+                </div>
+                <div class="language-option" data-lang="ar">
+                  <div class="language-option-header">العربية</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
