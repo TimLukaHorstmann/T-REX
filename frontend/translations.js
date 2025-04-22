@@ -38,7 +38,11 @@ window.translationDict = {
     wikipediaNoSummary: "No summary available for this Wikipedia page.",
     thinkingLabel: "Thinking...", 
     thoughtDurationLabel: "Thought for {duration}s.", 
-    enableThinkingLabel: "Enable deep thinking" 
+    enableThinkingLabel: "Enable deep thinking",
+    phi4Desc: "Great for table fact-checking",
+    cogitoDesc: "Strong hybrid reasoning model",
+    deepseekDesc: "Uses advanced reasoning",
+    gemma3Desc: "Lightweight & fast"
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -76,7 +80,11 @@ window.translationDict = {
     wikipediaNoSummary: "Aucun résumé disponible pour cette page Wikipédia.",
     thinkingLabel: "Réflexion...", 
     thoughtDurationLabel: "Réfléchi pendant {duration}s.", 
-    enableThinkingLabel: "Activer la réflexion approfondie" 
+    enableThinkingLabel: "Activer la réflexion approfondie",
+    phi4Desc: "Idéal pour la vérification des faits dans les tableaux",
+    cogitoDesc: "Modèle de raisonnement hybride puissant",
+    deepseekDesc: "Utilise un raisonnement avancé",
+    gemma3Desc: "Léger et rapide"
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -114,7 +122,11 @@ window.translationDict = {
     wikipediaNoSummary: "Keine Zusammenfassung für diese Wikipedia-Seite verfügbar.",
     thinkingLabel: "Denken...", 
     thoughtDurationLabel: "Gedacht für {duration}s.", 
-    enableThinkingLabel: "Tiefes Denken aktivieren" 
+    enableThinkingLabel: "Tiefes Denken aktivieren",
+    phi4Desc: "Hervorragend für die Faktenprüfung von Tabellen",
+    cogitoDesc: "Starkes hybrides Reasoning-Modell",
+    deepseekDesc: "Nutzt fortgeschrittenes Reasoning",
+    gemma3Desc: "Leichtgewichtig & schnell"
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -152,7 +164,11 @@ window.translationDict = {
     wikipediaNoSummary: "No hay resumen disponible para esta página de Wikipedia.",
     thinkingLabel: "Pensando...", 
     thoughtDurationLabel: "Pensado durante {duration}s.", 
-    enableThinkingLabel: "Habilitar pensamiento profundo" 
+    enableThinkingLabel: "Habilitar pensamiento profundo",
+    phi4Desc: "Excelente para la verificación de hechos en tablas",
+    cogitoDesc: "Modelo de razonamiento híbrido fuerte",
+    deepseekDesc: "Utiliza razonamiento avanzado",
+    gemma3Desc: "Ligero y rápido"
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -190,7 +206,11 @@ window.translationDict = {
     wikipediaNoSummary: "Nenhum resumo disponível para esta página da Wikipedia.",
     thinkingLabel: "Pensando...", 
     thoughtDurationLabel: "Pensou por {duration}s.", 
-    enableThinkingLabel: "Habilitar pensamento profundo" 
+    enableThinkingLabel: "Habilitar pensamento profundo",
+    phi4Desc: "Ótimo para verificação de fatos em tabelas",
+    cogitoDesc: "Modelo de raciocínio híbrido forte",
+    deepseekDesc: "Usa raciocínio avançado",
+    gemma3Desc: "Leve e rápido"
   },
   zh: {
     enterTable: "输入表格：",
@@ -228,7 +248,11 @@ window.translationDict = {
     wikipediaNoSummary: "此维基百科页面没有可用的摘要。",
     thinkingLabel: "思考中...", 
     thoughtDurationLabel: "思考了 {duration} 秒。", 
-    enableThinkingLabel: "启用深度思考" 
+    enableThinkingLabel: "启用深度思考",
+    phi4Desc: "非常适合表格事实核查",
+    cogitoDesc: "强大的混合推理模型",
+    deepseekDesc: "使用高级推理",
+    gemma3Desc: "轻量级且快速"
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -266,7 +290,11 @@ window.translationDict = {
     wikipediaNoSummary: "لا يوجد ملخص متاح لهذه الصفحة على ويكيبيديا.",
     thinkingLabel: "يفكر...", 
     thoughtDurationLabel: "فكر لمدة {duration} ثانية.", 
-    enableThinkingLabel: "تمكين التفكير العميق" 
+    enableThinkingLabel: "تمكين التفكير العميق",
+    phi4Desc: "رائع للتحقق من صحة الحقائق في الجداول",
+    cogitoDesc: "نموذج استدلال هجين قوي",
+    deepseekDesc: "يستخدم الاستدلال المتقدم",
+    gemma3Desc: "خفيف الوزن وسريع"
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -304,6 +332,10 @@ window.translationDict = {
     wikipediaNoSummary: "Нет доступного резюме для этой страницы Википедии.",
     thinkingLabel: "Думает...", 
     thoughtDurationLabel: "Думал {duration} сек.", 
-    enableThinkingLabel: "Включить глубокое мышление" 
+    enableThinkingLabel: "Включить глубокое мышление",
+    phi4Desc: "Отлично подходит для проверки фактов в таблицах",
+    cogitoDesc: "Сильная гибридная модель рассуждений",
+    deepseekDesc: "Использует продвинутые рассуждения",
+    gemma3Desc: "Легковесный и быстрый"
   }
 };

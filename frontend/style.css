@@ -932,7 +932,28 @@
   font-weight: 500; /* Less bold */
   margin-bottom: 0.2em;
   font-size: 0.9rem; /* Slightly smaller */
+  display: flex; /* Use flexbox to align header and bubble */
+  align-items: center; /* Vertically align items */
 }
+
+.model-param-bubble {
+  display: inline-block;
+  margin-left: 0.5em; /* Space between name and bubble */
+  padding: 0.1em 0.4em;
+  font-size: 0.7rem; /* Smaller font size */
+  font-weight: normal; /* Normal weight */
+  color: #888; /* Subtle gray text */
+  background-color: #eee; /* Light gray background */
+  border-radius: 4px; /* Rounded corners */
+  vertical-align: middle; /* Align with text */
+  line-height: 1; /* Adjust line height if needed */
+}
+
+/* Add bubble to the main selector button as well */
+.model-selector-btn .model-param-bubble {
+  margin-left: 0.3em; /* Adjust spacing if needed */
+}
+
 .model-option-desc {
   font-size: 0.75rem; /* Smaller description */
   color: #777;
@@ -1117,6 +1138,11 @@ body.dark-mode .model-modal-content h3 {
 body.dark-mode .model-option:not(.disabled):hover {
   background: #3a3a3a;
   border-color: #555;
+}
+
+body.dark-mode .model-param-bubble {
+  color: #bbb; /* Lighter gray for dark mode */
+  background-color: #555; /* Darker background for dark mode */
 }
 
 body.dark-mode .model-option-desc {

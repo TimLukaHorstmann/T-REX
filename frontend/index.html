@@ -132,7 +132,8 @@
 
           <!-- visible button to open modal -->
           <button id="modelSelectorBtn" class="model-selector-btn">
-            <span id="currentModelName">Phi4 (14b)</span>
+            <span id="currentModelName">Phi4</span> <!-- Removed (14b) -->
+            <span class="model-param-bubble">14b</span> <!-- Added bubble -->
             <i class="fa-solid fa-chevron-right"></i>
           </button>
 
@@ -142,19 +143,19 @@
               <h3>Select Model</h3>
               <div class="model-options">
                 <div class="model-option" data-model="phi4">
-                  <div class="model-option-header">Phi4 (14b)</div>
+                  <div class="model-option-header">Phi4 <span class="model-param-bubble">14b</span></div>
                   <div class="model-option-desc">Great for table fact-checking</div>
                 </div>
                 <div class="model-option" data-model="cogito">
-                  <div class="model-option-header">Cogito (8b)</div>
+                  <div class="model-option-header">Cogito <span class="model-param-bubble">8b</span></div>
                   <div class="model-option-desc">Strong hybrid reasoning model</div>
                 </div>
                 <div class="model-option" data-model="deepseek-r1:latest">
-                  <div class="model-option-header">DeepSeek‑R1 (7b)</div>
+                  <div class="model-option-header">DeepSeek‑R1 <span class="model-param-bubble">7b</span></div>
                   <div class="model-option-desc">Uses advanced reasoning</div>
                 </div>
                 <div class="model-option" data-model="gemma3">
-                  <div class="model-option-header">Gemma3 (4b)</div>
+                  <div class="model-option-header">Gemma3 <span class="model-param-bubble">4b</span></div>
                   <div class="model-option-desc">Lightweight &amp; fast</div>
                 </div>
               </div>

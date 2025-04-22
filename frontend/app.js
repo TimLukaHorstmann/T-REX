@@ -169,34 +169,97 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentModelName= document.getElementById("currentModelName");
     const thinkingOptionDiv = document.getElementById("thinkingOption");
 
+    // Set initial model button text based on hidden select
+    const initialModelOption = liveModelSelect.options[liveModelSelect.selectedIndex];
+    if (initialModelOption) {
+        const selectedModelValue = initialModelOption.value;
+        const selectedOptionDiv = document.querySelector(`.model-option[data-model="${selectedModelValue}"]`);
+        if (selectedOptionDiv) {
+            const headerText = selectedOptionDiv.querySelector('.model-option-header').textContent.replace(/\s*\d+b\s*$/, '').trim(); // Remove param count
+            const paramBubble = selectedOptionDiv.querySelector('.model-param-bubble');
+            currentModelName.textContent = headerText; // Set only the name
+            // Update the bubble in the button
+            const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble');
+            if (buttonBubble && paramBubble) {
+                buttonBubble.textContent = paramBubble.textContent;
+            } else if (buttonBubble) {
+                 buttonBubble.textContent = ''; // Clear if no bubble exists for the model
+                 buttonBubble.style.display = 'none'; // Hide bubble element
+            }
+        } else {
+             currentModelName.textContent = initialModelOption.text.replace(/\s*\(\d+b\)\s*$/, '').trim(); // Fallback, remove param count
+             const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble');
+             if (buttonBubble) {
+                 // Attempt to extract param count from original text if needed, or hide
+                 const match = initialModelOption.text.match(/\((\d+b)\)/);
+                 if (match) {
+                     buttonBubble.textContent = match[1];
+                     buttonBubble.style.display = 'inline-block';
+                 } else {
+                     buttonBubble.textContent = '';
+                     buttonBubble.style.display = 'none';
+                 }
+             }
+        }
+    }
+
+
     // Toggle the model dropdown
     modelSelectorBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      modelModal.classList.toggle("visible");
-      // Close language modal if open
-      document.getElementById("languageModal").classList.remove("visible");
+        e.stopPropagation(); // Prevent click from closing immediately
+        modelModal.classList.toggle("visible");
+        // Hide language modal if open
+        document.getElementById("languageModal").classList.remove("visible");
     });
 
     // Select a model
     modelOptions.forEach(opt => {
-      opt.addEventListener("click", () => {
-        if (opt.classList.contains('disabled')) return;
-        const modelValue = opt.getAttribute("data-model");
-        const modelText = opt.querySelector(".model-option-header").textContent;
-        liveModelSelect.value = modelValue;
-        currentModelName.textContent = modelText;
-        modelModal.classList.remove("visible");
-        liveModelSelect.dispatchEvent(new Event('change')); // Trigger change on hidden select
-        validateLiveCheckInputs();
-      });
+        opt.addEventListener("click", () => {
+            if (opt.classList.contains('disabled')) {
+                return; // Do nothing if the option is disabled
+            }
+
+            const modelValue = opt.getAttribute("data-model");
+            const headerText = opt.querySelector('.model-option-header').textContent.replace(/\s*\d+b\s*$/, '').trim(); // Get text without bubble
+            const paramBubble = opt.querySelector('.model-param-bubble');
+
+            // Update hidden select
+            liveModelSelect.value = modelValue;
+
+            // Update button text and bubble
+            currentModelName.textContent = headerText;
+            const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble');
+             if (buttonBubble && paramBubble) {
+                 buttonBubble.textContent = paramBubble.textContent;
+                 buttonBubble.style.display = 'inline-block'; // Ensure it's visible
+             } else if (buttonBubble) {
+                 buttonBubble.textContent = ''; // Clear if no bubble exists
+                 buttonBubble.style.display = 'none'; // Hide bubble element
+             }
+
+
+            // Trigger change event for compatibility
+            liveModelSelect.dispatchEvent(new Event('change'));
+
+            // Hide modal
+            modelModal.classList.remove("visible");
+
+            // Update thinking option visibility
+            thinkingOptionDiv.style.display = modelValue === "cogito" ? "flex" : "none";
+            if (modelValue !== "cogito") {
+                document.getElementById("enableThinkingCheck").checked = false;
+            }
+            validateLiveCheckInputs(); // Re-validate inputs after model change
+        });
     });
 
     // Handle thinking option visibility on model change
     liveModelSelect.addEventListener("change", () => {
-      thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
-      if (liveModelSelect.value !== "cogito") {
-        document.getElementById("enableThinkingCheck").checked = false;
-      }
+        thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
+        if (liveModelSelect.value !== "cogito") {
+            document.getElementById("enableThinkingCheck").checked = false;
+        }
+        validateLiveCheckInputs();
     });
     // Initial check for thinking option
     thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
@@ -2192,29 +2255,30 @@ function updateModelOptionsBasedOnLanguage() {
   const languageSelect = document.getElementById("liveLanguageSelect");
   const selectedLanguage = languageSelect.value;
   const modelSelect = document.getElementById("liveModelSelect");
-  const modelOptions = document.querySelectorAll(".model-option"); // Get visible options
+  const modelOptions = document.querySelectorAll(".model-option");
   const currentModelNameEl = document.getElementById("currentModelName");
   const thinkingOptionDiv = document.getElementById("thinkingOption");
+  const modelSelectorBtn = document.getElementById("modelSelectorBtn"); // Get the button
+  const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble'); // Get the bubble in the button
 
   // Define models that support multiple languages
   const multilingualModels = ["cogito", "gemma3"];
   let firstAvailableModelValue = null;
   let currentSelectionDisabled = false;
-  const currentSelectedValue = modelSelect.value; // Store current value before loop
+  const currentSelectedValue = modelSelect.value;
 
   // --- 1. Update hidden select and check current selection ---
   for (const option of modelSelect.options) {
-    const isMultilingual = multilingualModels.includes(option.value);
-    if (selectedLanguage !== "en" && !isMultilingual) {
-      option.disabled = true;
-      if (option.value === currentSelectedValue) { // Check against stored value
-        currentSelectionDisabled = true;
-      }
-    } else {
-      option.disabled = false;
-      if (firstAvailableModelValue === null) {
-        firstAvailableModelValue = option.value; // Track the first available model
-      }
+    const modelValue = option.value;
+    const isMultilingual = multilingualModels.includes(modelValue);
+    const isDisabled = selectedLanguage !== "en" && !isMultilingual;
+    option.disabled = isDisabled;
+
+    if (!isDisabled && !firstAvailableModelValue) {
+      firstAvailableModelValue = modelValue; // Track the first available model
+    }
+    if (modelValue === currentSelectedValue && isDisabled) {
+      currentSelectionDisabled = true; // Mark if the current selection is now disabled
     }
   }
 
@@ -2222,40 +2286,49 @@ function updateModelOptionsBasedOnLanguage() {
   modelOptions.forEach(opt => {
     const modelValue = opt.getAttribute("data-model");
     const isMultilingual = multilingualModels.includes(modelValue);
-    if (selectedLanguage !== "en" && !isMultilingual) {
-      opt.classList.add('disabled');
+    const isDisabled = selectedLanguage !== "en" && !isMultilingual;
+    if (isDisabled) {
+      opt.classList.add("disabled");
     } else {
-      opt.classList.remove('disabled');
+      opt.classList.remove("disabled");
     }
   });
 
   // --- 3. Handle case where current selection becomes disabled ---
   if (currentSelectionDisabled && firstAvailableModelValue) {
     modelSelect.value = firstAvailableModelValue; // Switch to the first available model
-    // Update the button text to match the new selection
-    const newSelectedOption = modelSelect.options[modelSelect.selectedIndex];
-    if (newSelectedOption) {
-      // Find the corresponding visible option text
-       const visibleOption = document.querySelector(`.model-option[data-model="${newSelectedOption.value}"] .model-option-header`);
-       if (visibleOption) {
-           currentModelNameEl.textContent = visibleOption.textContent;
-       } else {
-           currentModelNameEl.textContent = newSelectedOption.text; // Fallback
-       }
+    // Update the button text and bubble based on the new selection
+    const newSelectedOptionDiv = document.querySelector(`.model-option[data-model="${firstAvailableModelValue}"]`);
+    if (newSelectedOptionDiv) {
+        const headerText = newSelectedOptionDiv.querySelector('.model-option-header').textContent.replace(/\s*\d+b\s*$/, '').trim();
+        const paramBubble = newSelectedOptionDiv.querySelector('.model-param-bubble');
+        currentModelNameEl.textContent = headerText;
+        if (buttonBubble && paramBubble) {
+            buttonBubble.textContent = paramBubble.textContent;
+            buttonBubble.style.display = 'inline-block';
+        } else if (buttonBubble) {
+            buttonBubble.textContent = '';
+            buttonBubble.style.display = 'none';
+        }
     }
-    // Manually trigger change to update thinking option visibility etc.
-     liveModelSelect.dispatchEvent(new Event('change'));
+    // Trigger change event to update thinking option etc.
+    modelSelect.dispatchEvent(new Event('change'));
   } else {
-    // Ensure thinking option visibility is correct even if selection didn't change
-     if (modelSelect.value === "cogito") {
-       thinkingOptionDiv.style.display = "flex";
-     } else {
-       thinkingOptionDiv.style.display = "none";
-       // document.getElementById("enableThinkingCheck").checked = false; // Keep existing logic if needed
+    // Ensure the button bubble is correctly displayed for the current valid selection
+    const currentSelectedOptionDiv = document.querySelector(`.model-option[data-model="${modelSelect.value}"]`);
+     if (currentSelectedOptionDiv) {
+         const paramBubble = currentSelectedOptionDiv.querySelector('.model-param-bubble');
+         if (buttonBubble && paramBubble) {
+             buttonBubble.textContent = paramBubble.textContent;
+             buttonBubble.style.display = 'inline-block';
+         } else if (buttonBubble) {
+             buttonBubble.textContent = '';
+             buttonBubble.style.display = 'none';
+         }
      }
   }
 
-   validateLiveCheckInputs(); // Re-validate after potential changes
+   validateLiveCheckInputs();
 }
 
 async function processImageViaBackend(file) {
@@ -2353,9 +2426,39 @@ function updateTranslations() {
   if (currentLanguageNameEl && currentLangOptionHeader) {
       currentLanguageNameEl.textContent = currentLangOptionHeader.textContent;
   } else if (currentLanguageNameEl && liveLanguageSelect.options[liveLanguageSelect.selectedIndex]) {
-      // Fallback to hidden select text if element not found (shouldn't happen with correct HTML)
+      // Fallback if the visible option isn't found (shouldn't happen often)
       currentLanguageNameEl.textContent = liveLanguageSelect.options[liveLanguageSelect.selectedIndex].text;
   }
+
+  // Update model descriptions in the modal
+  const modelOptions = document.querySelectorAll(".model-option");
+  modelOptions.forEach(opt => {
+    const modelValue = opt.getAttribute("data-model");
+    const descEl = opt.querySelector(".model-option-desc");
+    if (descEl) {
+      let translationKey;
+      switch (modelValue) {
+        case "phi4":
+          translationKey = "phi4Desc";
+          break;
+        case "cogito":
+          translationKey = "cogitoDesc";
+          break;
+        case "deepseek-r1:latest":
+          translationKey = "deepseekDesc";
+          break;
+        case "gemma3":
+          translationKey = "gemma3Desc";
+          break;
+        default:
+          translationKey = null;
+      }
+      if (translationKey && translation[translationKey]) {
+        descEl.textContent = translation[translationKey];
+      }
+    }
+  });
+
 
   // ... rest of updateTranslations function updating other elements ...
   // Table Section
