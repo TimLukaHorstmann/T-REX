@@ -1216,6 +1216,30 @@ body.dark-mode .language-option:hover {
   }
   #includeTableNameOption {
     margin-bottom: 1rem;
+    display: flex; /* Use flexbox for alignment */
+    align-items: center; /* Vertically align items */
+    gap: 0.5rem; /* Add space between checkbox, label, and input */
+    font-size: 0.8rem; /* Apply smaller font size to the container */
+  }
+  
+  #includeTableNameOption label { /* Style the label specifically if needed */
+    margin-bottom: 0; /* Remove default margin */
+    white-space: nowrap; /* Prevent label text wrapping */
+  }
+  
+  #tableTitleInput {
+    flex-grow: 1; /* Allow input to take remaining space */
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem; /* Match font size */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  /* Dark mode for the new input */
+  body.dark-mode #tableTitleInput {
+    background-color: var(--color-dark-input-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
   }
   
   /* ======================================================

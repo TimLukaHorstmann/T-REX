@@ -20,11 +20,12 @@ window.translationDict = {
     mayTakeSeconds: "This may take a few seconds depending on the table size and OCR engine you selected.",
     tables_loaded: "tables loaded",
     table_title: "Table Title",
+    passTableTitleToModel: "Pass table title to model:", // Updated key and text
+    tableTitlePlaceholder: "Enter table title (optional)", // New key for placeholder
     enterClaim: "Enter Claim:",
     inputClaimPlaceholder: "Paste claim here",
     selectClaimPlaceholder: "Select a claim",
     existingClaimsWrapperLabel: "or choose an existing one for this table from the TabFact dataset:",
-    includeTableTitleInPrompt: "Include table title in prompt",
     runLiveCheckBtn: "Run Live Check",
     statusMessage: "Live check aborted.",
     answerLabel: "Answer",
@@ -62,11 +63,12 @@ window.translationDict = {
     mayTakeSeconds: "Cela peut prendre quelques secondes en fonction de la taille du tableau et du moteur OCR que vous avez sélectionné.",
     tables_loaded: "tableaux chargés",
     table_title: "Titre du tableau",
+    passTableTitleToModel: "Transmettre le titre du tableau au modèle :", // Updated key and text
+    tableTitlePlaceholder: "Entrez le titre du tableau (facultatif)", // New key for placeholder
     enterClaim: "Entrez la réclamation :",
     inputClaimPlaceholder: "Collez la réclamation ici",
     selectClaimPlaceholder: "Sélectionnez une réclamation",
     existingClaimsWrapperLabel: "ou choisissez-en une existante pour ce tableau dans l'ensemble de données TabFact :",
-    includeTableTitleInPrompt: "Inclure le titre du tableau dans la demande",
     runLiveCheckBtn: "Exécuter la vérification en direct",
     statusMessage: "Vérification en direct annulée.",
     answerLabel: "Réponse",
@@ -104,11 +106,12 @@ window.translationDict = {
     mayTakeSeconds: "Dies kann je nach Tabellengröße und ausgewählter OCR-Engine einige Sekunden dauern.",
     tables_loaded: "Tabellen geladen",
     table_title: "Tabellentitel",
+    passTableTitleToModel: "Tabellentitel an Modell übergeben:", // Updated key and text
+    tableTitlePlaceholder: "Tabellentitel eingeben (optional)", // New key for placeholder
     enterClaim: "Behauptung eingeben:",
     inputClaimPlaceholder: "Behauptung hier einfügen",
     selectClaimPlaceholder: "Wählen Sie eine Behauptung",
     existingClaimsWrapperLabel: "oder wählen Sie eine vorhandene für diese Tabelle aus dem TabFact-Datensatz:",
-    includeTableTitleInPrompt: "Tabellentitel in der Eingabe einschließen",
     runLiveCheckBtn: "Live-Check durchführen",
     statusMessage: "Live-Check abgebrochen.",
     answerLabel: "Antwort",
@@ -146,11 +149,12 @@ window.translationDict = {
     mayTakeSeconds: "Esto puede tardar unos segundos dependiendo del tamaño de la tabla y el motor OCR seleccionado.",
     tables_loaded: "tablas cargadas",
     table_title: "Título de la tabla",
+    passTableTitleToModel: "Pasar título de la tabla al modelo:", // Updated key and text
+    tableTitlePlaceholder: "Ingrese el título de la tabla (opcional)", // New key for placeholder
     enterClaim: "Ingresar afirmación:",
     inputClaimPlaceholder: "Pega la afirmación aquí",
     selectClaimPlaceholder: "Selecciona una afirmación",
     existingClaimsWrapperLabel: "o elige una existente para esta tabla del conjunto de datos TabFact:",
-    includeTableTitleInPrompt: "Incluir el título de la tabla en la consulta",
     runLiveCheckBtn: "Ejecutar verificación en vivo",
     statusMessage: "Verificación en vivo cancelada.",
     answerLabel: "Respuesta",
@@ -188,11 +192,12 @@ window.translationDict = {
     mayTakeSeconds: "Isso pode levar alguns segundos dependendo do tamanho da tabela e do motor OCR selecionado.",
     tables_loaded: "tabelas carregadas",
     table_title: "Título da Tabela",
+    passTableTitleToModel: "Passar título da tabela para o modelo:", // Updated key and text
+    tableTitlePlaceholder: "Insira o título da tabela (opcional)", // New key for placeholder
     enterClaim: "Inserir Declaração:",
     inputClaimPlaceholder: "Cole a declaração aqui",
     selectClaimPlaceholder: "Selecione uma declaração",
     existingClaimsWrapperLabel: "ou escolha uma existente para esta tabela do conjunto de dados TabFact:",
-    includeTableTitleInPrompt: "Incluir o título da tabela no prompt",
     runLiveCheckBtn: "Executar verificação ao vivo",
     statusMessage: "Verificação ao vivo cancelada.",
     answerLabel: "Resposta",
@@ -230,11 +235,12 @@ window.translationDict = {
     mayTakeSeconds: "这可能需要几秒钟，具体取决于表格大小和所选OCR引擎。",
     tables_loaded: "表格已加载",
     table_title: "表格标题",
+    passTableTitleToModel: "将表格标题传递给模型：", // Updated key and text
+    tableTitlePlaceholder: "输入表格标题（可选）", // New key for placeholder
     enterClaim: "输入声明：",
     inputClaimPlaceholder: "粘贴声明",
     selectClaimPlaceholder: "选择声明",
     existingClaimsWrapperLabel: "或从TabFact数据集中选择一个现有声明：",
-    includeTableTitleInPrompt: "在提示中包含表格标题",
     runLiveCheckBtn: "运行实时检查",
     statusMessage: "实时检查已取消。",
     answerLabel: "答案",
@@ -272,11 +278,12 @@ window.translationDict = {
     mayTakeSeconds: "قد يستغرق هذا بضع ثوانٍ حسب حجم الجدول ومحرك التعرف الضوئي الذي حددته.",
     tables_loaded: "تم تحميل الجداول",
     table_title: "عنوان الجدول",
+    passTableTitleToModel: "تمرير عنوان الجدول إلى النموذج:", // Updated key and text
+    tableTitlePlaceholder: "أدخل عنوان الجدول (اختياري)", // New key for placeholder
     enterClaim: "أدخل الادعاء:",
     inputClaimPlaceholder: "ألصق الادعاء هنا",
     selectClaimPlaceholder: "اختر ادعاءً",
     existingClaimsWrapperLabel: "أو اختر ادعاءً موجودًا لهذا الجدول من مجموعة بيانات TabFact:",
-    includeTableTitleInPrompt: "تضمين عنوان الجدول في الاستعلام",
     runLiveCheckBtn: "تشغيل الفحص المباشر",
     statusMessage: "تم إلغاء الفحص المباشر.",
     answerLabel: "الإجابة",
@@ -314,11 +321,12 @@ window.translationDict = {
     mayTakeSeconds: "Это может занять несколько секунд в зависимости от размера таблицы и выбранного OCR-движка.",
     tables_loaded: "таблиц загружено",
     table_title: "Заголовок таблицы",
+    passTableTitleToModel: "Передать заголовок таблицы модели:", // Updated key and text
+    tableTitlePlaceholder: "Введите заголовок таблицы (необязательно)", // New key for placeholder
     enterClaim: "Введите утверждение:",
     inputClaimPlaceholder: "Вставьте утверждение здесь",
     selectClaimPlaceholder: "Выберите утверждение",
     existingClaimsWrapperLabel: "или выберите существующее для этой таблицы из набора данных TabFact:",
-    includeTableTitleInPrompt: "Включить заголовок таблицы в запрос",
     runLiveCheckBtn: "Запустить проверку в реальном времени",
     statusMessage: "Проверка в реальном времени отменена.",
     answerLabel: "Ответ",

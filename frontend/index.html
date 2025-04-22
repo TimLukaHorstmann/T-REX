@@ -219,13 +219,14 @@
               <option value="">-- Select a Claim --</option>
             </select>
           </div>
-          <div class="inline-checkbox" id="includeTableNameOption" style="display: none;">
+          <div class="inline-checkbox" id="includeTableNameOption" style="display: flex;"> <!-- Changed display to flex -->
             <input type="checkbox" id="includeTableNameCheck" />
-            <span id="includeTableTitleInPrompt" >Include table title in prompt</span>
-          </div>          
+            <label for="includeTableNameCheck" id="includeTableTitleInPromptLabel">Pass table title to model:</label> <!-- Updated default text -->
+            <input type="text" id="tableTitleInput" placeholder="Enter table title (optional)"> <!-- Updated default placeholder -->
+          </div>
           <textarea id="inputClaim" rows="3" placeholder="Paste claim here"></textarea>
         </div>
-
+        
         <!-- Run and Stop buttons -->
         <div class="button-group">
           <button id="runLiveCheck" class="btn-primary">Run Live Check</button>

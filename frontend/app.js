@@ -1340,19 +1340,26 @@ async function fetchAndFillTable(tableId) {
   const previewContainer = document.getElementById("livePreviewTable");
   const liveTableMetaInfo = document.getElementById("liveTableMetaInfo");
   const includeTableNameOption = document.getElementById("includeTableNameOption");
+  const tableTitleInput = document.getElementById("tableTitleInput"); // Get the input element
+  const includeTableNameCheck = document.getElementById("includeTableNameCheck"); // Get the checkbox
 
   inputTableEl.value = "";
   previewContainer.innerHTML = "";
+  tableTitleInput.value = ""; // Clear the title input initially
+  includeTableNameCheck.checked = false; // Uncheck the box initially
   if (liveTableMetaInfo) {
     liveTableMetaInfo.style.display = "none";
     liveTableMetaInfo.innerHTML = "";
   }
-  includeTableNameOption.style.display = "none";
+  // Make the include title option always visible
+  includeTableNameOption.style.display = "flex"; // Use flex as per CSS
 
   const csvUrl = CSV_BASE_PATH + tableId;
   try {
     const response = await fetch(csvUrl);
-    if (!response.ok) throw new Error(`Failed to fetch CSV: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const csvText = await response.text();
     inputTableEl.value = csvText;
     renderLivePreviewTable(csvText, []);
@@ -1362,46 +1369,64 @@ async function fetchAndFillTable(tableId) {
       const [tableTitle, wikipediaUrl] = meta;
       const lang = document.getElementById("liveLanguageSelect").value;
       const translation = translationDict[lang] || translationDict["en"];
+      const tableTitleLabel = translation.table_title || "Table Title";
       const langCode = lang === "en" ? "" : lang + ".";
       const newWikipediaUrl = wikipediaUrl.replace(/https:\/\/en\./, `https://${langCode}`);
-      tableTitleLabel = translationDict[lang] ? translationDict[lang].table_title : "Table Title";
+
       if (liveTableMetaInfo) {
-        liveTableMetaInfo.style.display = "block";
         liveTableMetaInfo.innerHTML = `
           <div class="meta-info-box">
-            <p><strong id="tableTitleLabel">${tableTitleLabel}</strong> ${tableTitle}</p>
-            <p><strong>Wikipedia Link:</strong> 
-              <a href="${newWikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" data-wp-lang="${lang}" target="_blank">
-                ${newWikipediaUrl}
-              </a>
-            </p>
+            <p><strong id="tableTitleLabel">${tableTitleLabel}:</strong> ${tableTitle}</p>
+            <p><strong>Wikipedia Link:</strong> <a href="${newWikipediaUrl}" data-wikipedia-preview data-wp-title="${tableTitle}" data-wp-lang="${lang}" target="_blank">${newWikipediaUrl}</a></p>
           </div>
         `;
-        const toggleMetaBtn = document.getElementById("toggleLiveMetaInfoBtn");
-        if (toggleMetaBtn) {
-          toggleMetaBtn.style.display = "inline-block";
-          toggleMetaBtn.textContent = "▼ " + translation.tableDetails;
+        liveTableMetaInfo.style.display = "block";
+        // Ensure it's expanded if previously collapsed
+        liveTableMetaInfo.classList.remove("collapsed");
+        const toggleBtn = document.getElementById("toggleLiveMetaInfoBtn");
+        if (toggleBtn) {
+          toggleBtn.textContent = toggleBtn.textContent.replace("►", "▼");
+          toggleBtn.style.display = "inline-block";
         }
-        wikipediaPreview.init({
-          root: liveTableMetaInfo,
-          lang: lang,
-          detectLinks: true,
-          onFail: function(element, wikiData) {
-            console.log("onFail triggered:", element, wikiData);
-            const translation = translationDict[lang] || translationDict["en"];
-            return `<p>${translation.wikipediaNoSummary}</p>`;
-          }
-        });
-        setTimeout(() => {
-          patchWikipediaPreviewErrors(liveTableMetaInfo, lang);
-        }, 1000);
       }
-      includeTableNameOption.style.display = "block";
+
+      wikipediaPreview.init({
+        root: liveTableMetaInfo,
+        lang: lang,
+        detectLinks: true,
+        onFail: function(element, wikiData) {
+          console.log("onFail triggered:", element, wikiData);
+          const translation = translationDict[lang] || translationDict["en"];
+          return `<p>${translation.wikipediaNoSummary}</p>`;
+        }
+      });
+      setTimeout(() => {
+        patchWikipediaPreviewErrors(liveTableMetaInfo, lang);
+      }, 1000);
+
+      // Populate the input field with the fetched title
+      tableTitleInput.value = tableTitle;
+      // Optionally check the box by default when a title is present
+      // includeTableNameCheck.checked = true;
+    } else {
+       // Hide meta info section if no meta found
+       if (liveTableMetaInfo) liveTableMetaInfo.style.display = "none";
+       const toggleBtn = document.getElementById("toggleLiveMetaInfoBtn");
+       if (toggleBtn) toggleBtn.style.display = "none";
+       // Keep the title input empty (placeholder will show)
+       tableTitleInput.value = "";
     }
+    // Auto-adjust height might be needed after content change
     inputTableEl.style.height = "auto";
+    inputTableEl.style.height = (inputTableEl.scrollHeight) + "px";
+    populateClaimsDropdown(tableId); // Populate claims dropdown for this table
+    selectedTableId = tableId; // Store the selected table ID
   } catch (error) {
     console.error("Error loading table CSV:", error);
     alert("Failed to load table from dataset.");
+    selectedTableId = null; // Reset selected table ID on error
+    // Hide claims dropdown if table load fails
+    document.getElementById("existingClaimsWrapper").style.display = "none";
   }
 }
 
@@ -1539,15 +1564,33 @@ function setupLiveCheckEvents() {
   const inputTableEl = document.getElementById("inputTable");
   const inputClaimEl = document.getElementById("inputClaim");
   const runLiveCheckBtn = document.getElementById("runLiveCheck");
+  const includeTableNameOption = document.getElementById("includeTableNameOption"); // Get the container
+  const tableTitleInput = document.getElementById("tableTitleInput"); // Get the input
+
+  // Ensure the include title option is visible on load
+  includeTableNameOption.style.display = "flex";
 
   inputTableEl.addEventListener("input", () => {
     const csvText = inputTableEl.value;
     renderLivePreviewTable(csvText, []);
     validateLiveCheckInputs();
+    // When user manually edits the table, clear the TabFact ID and related fields
+    selectedTableId = null;
+    document.getElementById("existingClaimsWrapper").style.display = "none";
+    document.getElementById("existingClaimsSelect").value = "";
+    // Keep the title input as is, or clear it if desired:
+    // tableTitleInput.value = "";
+    // document.getElementById("includeTableNameCheck").checked = false;
+    const liveTableMetaInfo = document.getElementById("liveTableMetaInfo");
+    if (liveTableMetaInfo) liveTableMetaInfo.style.display = "none";
+    const toggleBtn = document.getElementById("toggleLiveMetaInfoBtn");
+    if (toggleBtn) toggleBtn.style.display = "none";
   });
 
   inputClaimEl.addEventListener("input", () => {
     validateLiveCheckInputs();
+    // Clear selected claim from dropdown if user types manually
+    document.getElementById("existingClaimsSelect").value = "";
   });
 
   inputClaimEl.addEventListener("keypress", (event) => {
@@ -1615,10 +1658,13 @@ function setupLiveCheckEvents() {
 
     const tableText = document.getElementById("inputTable").value;
     const claimText = document.getElementById("inputClaim").value;
-    const includeTitle = document.getElementById("includeTableNameCheck").checked;
-    let tableTitle = "";
-    if (includeTitle && selectedTableId && tableToPageMap[selectedTableId]) {
-      tableTitle = tableToPageMap[selectedTableId][0];
+    const includeTitleCheck = document.getElementById("includeTableNameCheck").checked;
+    const tableTitleInput = document.getElementById("tableTitleInput").value.trim(); // Get value from input
+    let tableTitleToSend = "";
+
+    // Use the input field's value if the checkbox is checked and the input is not empty
+    if (includeTitleCheck && tableTitleInput) {
+      tableTitleToSend = tableTitleInput;
     }
     const includeThinking = (
       document.getElementById("enableThinkingCheck").checked && model === "cogito"
@@ -1629,8 +1675,8 @@ function setupLiveCheckEvents() {
       claimText,
       language: selectedLanguage,
       model,
-      includeTitle,
-      tableTitle,
+      includeTitle: includeTitleCheck,
+      tableTitle: tableTitleToSend,
       includeThinking,
       max_tokens: 2048,
       keep_alive: 0,
@@ -2537,9 +2583,17 @@ function updateTranslations() {
   const existingClaimsWrapperLabel = document.querySelector("#existingClaimsWrapper label");
   if (existingClaimsWrapperLabel) existingClaimsWrapperLabel.textContent = translationDict[lang].existingClaimsWrapperLabel;
 
-  const includeTableTitleInPrompt = document.getElementById("includeTableTitleInPrompt");
-  if (includeTableTitleInPrompt) includeTableTitleInPrompt.textContent = translationDict[lang].includeTableTitleInPrompt;
+  // Update the label for passing the table title
+  const passTableTitleLabel = document.getElementById("includeTableTitleInPromptLabel"); // Correct ID for the label
+  if (passTableTitleLabel) {
+    passTableTitleLabel.textContent = translation.passTableTitleToModel; // Use updated translation key
+  }
 
+  // Update the placeholder for the table title input
+  const tableTitleInput = document.getElementById("tableTitleInput");
+  if (tableTitleInput) {
+    tableTitleInput.placeholder = translation.tableTitlePlaceholder; // Use new translation key
+  }
   // Live Check Section
   const runLiveCheckBtn = document.getElementById("runLiveCheck");
   if (runLiveCheckBtn) runLiveCheckBtn.textContent = translationDict[lang].runLiveCheckBtn;
