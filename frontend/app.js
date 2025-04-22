@@ -160,6 +160,68 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.warn("Failed to fetch or parse manifest.json. Continuing without manifest.", manifestError);
     }
 
+    // SETUP MODEL SELECTOR
+    // grab our new elements
+    const modelSelectorBtn = document.getElementById("modelSelectorBtn");
+    const modelModal       = document.getElementById("modelModal");
+    const closeModelModal  = document.getElementById("closeModelModal");
+    const modelOptions    = document.querySelectorAll(".model-option");
+    const liveModelSelect = document.getElementById("liveModelSelect");
+    const currentModelName= document.getElementById("currentModelName");
+    const thinkingOptionDiv = document.getElementById("thinkingOption");
+
+    // Toggle the dropdown when you click the model‑selector button
+    modelSelectorBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      modelModal.style.display = modelModal.style.display === "block" ? "none" : "block";
+    });
+
+    // Anywhere else on the page closes it
+    document.addEventListener("click", e => {
+      if (!modelModal.contains(e.target) && e.target !== modelSelectorBtn) {
+        modelModal.style.display = "none";
+      }
+    });
+
+    // pick a model
+    modelOptions.forEach(opt => {
+      opt.addEventListener("click", () => {
+        // Check if the option is disabled
+        if (opt.classList.contains('disabled')) {
+          return; // Do nothing if disabled
+        }
+        const modelValue = opt.getAttribute("data-model");
+        const modelText = opt.querySelector(".model-option-header").textContent;
+
+        // Update hidden select
+        liveModelSelect.value = modelValue;
+
+        // Update button text
+        currentModelName.textContent = modelText;
+
+        // Close modal
+        modelModal.style.display = "none";
+
+        // Trigger change event on hidden select for compatibility (e.g., thinking option)
+        liveModelSelect.dispatchEvent(new Event('change'));
+        validateLiveCheckInputs(); // Re-validate inputs
+      });
+    });
+
+    // reuse your existing change‑handler to toggle deep thinking
+    liveModelSelect.addEventListener("change", () => {
+      if (liveModelSelect.value === "cogito") {
+        thinkingOptionDiv.style.display = "flex";
+      } else {
+        thinkingOptionDiv.style.display = "none";
+        document.getElementById("enableThinkingCheck").checked = false;
+      }
+    });
+
+    // initialize: hide deep‑thinking if not cogito
+    if (liveModelSelect.value !== "cogito")
+      thinkingOptionDiv.style.display = "none";
+
     await fetchTotalExamplesClaims();
     await fetchFullCleaned();
     addLoadButtonListener();
@@ -205,21 +267,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Language selection
     const languageSelect = document.getElementById("liveLanguageSelect");
-    const lang = document.getElementById("liveLanguageSelect").value;
-    const translation = translationDict[lang] || translationDict["en"];
+    // const lang = document.getElementById("liveLanguageSelect").value; // Get initial lang - Not needed here
+    // const translation = translationDict[lang] || translationDict["en"]; // Keep this if used elsewhere
     if (languageSelect) {
       languageSelect.addEventListener("change", () => {
-        updateModelOptionsBasedOnLanguage();
-        updateTranslations();
-        if (globalCSVId) {
-          populateClaimsDropdown(globalCSVId);
-        }
-        if (document.getElementById("tableTitleLabel")) {
-          document.getElementById("tableTitleLabel").textContent = translation.table_title;
-        }
+        updateTranslations(); // Update text first
+        updateModelOptionsBasedOnLanguage(); // Then handle model enabling/disabling
       });
-      updateModelOptionsBasedOnLanguage();
-      updateTranslations();
+      // Initial calls
+      updateTranslations(); // Call on init
+      updateModelOptionsBasedOnLanguage(); // Call on init AFTER translations
     }
 
     // Handle paste events in the table textarea
@@ -2087,26 +2144,70 @@ function updateModelOptionsBasedOnLanguage() {
   const languageSelect = document.getElementById("liveLanguageSelect");
   const selectedLanguage = languageSelect.value;
   const modelSelect = document.getElementById("liveModelSelect");
-  const allowedModels = ["llama3.2", "gemma3", "cogito"];
+  const modelOptions = document.querySelectorAll(".model-option"); // Get visible options
+  const currentModelNameEl = document.getElementById("currentModelName");
+  const thinkingOptionDiv = document.getElementById("thinkingOption");
 
+  // Define models that support multiple languages
+  const multilingualModels = ["cogito", "gemma3"];
+  let firstAvailableModelValue = null;
+  let currentSelectionDisabled = false;
+  const currentSelectedValue = modelSelect.value; // Store current value before loop
+
+  // --- 1. Update hidden select and check current selection ---
   for (const option of modelSelect.options) {
-    if (selectedLanguage !== "en") {
-      option.disabled = !allowedModels.includes(option.value);
+    const isMultilingual = multilingualModels.includes(option.value);
+    if (selectedLanguage !== "en" && !isMultilingual) {
+      option.disabled = true;
+      if (option.value === currentSelectedValue) { // Check against stored value
+        currentSelectionDisabled = true;
+      }
     } else {
       option.disabled = false;
-    }
-  }
-  if (modelSelect.selectedOptions.length > 0) {
-    const selectedOption = modelSelect.selectedOptions[0];
-    if (selectedOption.disabled) {
-      for (const option of modelSelect.options) {
-        if (!option.disabled) {
-          modelSelect.value = option.value;
-          break;
-        }
+      if (firstAvailableModelValue === null) {
+        firstAvailableModelValue = option.value; // Track the first available model
       }
     }
   }
+
+  // --- 2. Update visible modal options ---
+  modelOptions.forEach(opt => {
+    const modelValue = opt.getAttribute("data-model");
+    const isMultilingual = multilingualModels.includes(modelValue);
+    if (selectedLanguage !== "en" && !isMultilingual) {
+      opt.classList.add('disabled');
+    } else {
+      opt.classList.remove('disabled');
+    }
+  });
+
+  // --- 3. Handle case where current selection becomes disabled ---
+  if (currentSelectionDisabled && firstAvailableModelValue) {
+    modelSelect.value = firstAvailableModelValue; // Switch to the first available model
+    // Update the button text to match the new selection
+    const newSelectedOption = modelSelect.options[modelSelect.selectedIndex];
+    if (newSelectedOption) {
+      // Find the corresponding visible option text
+       const visibleOption = document.querySelector(`.model-option[data-model="${newSelectedOption.value}"] .model-option-header`);
+       if (visibleOption) {
+           currentModelNameEl.textContent = visibleOption.textContent;
+       } else {
+           currentModelNameEl.textContent = newSelectedOption.text; // Fallback
+       }
+    }
+    // Manually trigger change to update thinking option visibility etc.
+     liveModelSelect.dispatchEvent(new Event('change'));
+  } else {
+    // Ensure thinking option visibility is correct even if selection didn't change
+     if (modelSelect.value === "cogito") {
+       thinkingOptionDiv.style.display = "flex";
+     } else {
+       thinkingOptionDiv.style.display = "none";
+       // document.getElementById("enableThinkingCheck").checked = false; // Keep existing logic if needed
+     }
+  }
+
+   validateLiveCheckInputs(); // Re-validate after potential changes
 }
 
 async function processImageViaBackend(file) {

@@ -120,17 +120,54 @@
     <!-- Live Check Section -->
     <section id="liveCheckSection" class="results-section">
       <div class="live-input-section">
+        <!-- MODEL CHOOSER -->
         <div class="model-chooser">
-          <select id="liveModelSelect" class="styled-select">
+          <!-- hidden select for backwards-compatibility -->
+          <select id="liveModelSelect" style="display:none">
             <option value="phi4">Phi4 (14b)</option>
             <option value="deepseek-r1:latest">DeepSeek‑R1 (7b)</option>
             <option value="cogito">Cogito (8b)</option>
             <option value="gemma3">Gemma3 (4b)</option>
-            <!--<option value="exaone-deep">EXAONE Deep (7.8b)</option> -->
-            <!-- <option value="phi3">Phi3 (3.8b)</option> -->
-            <!-- <option value="llama3.2">Llama3.2 (3b)</option> -->
           </select>
-        </div>        
+
+          <!-- visible button to open modal -->
+          <button id="modelSelectorBtn" class="model-selector-btn">
+            <span id="currentModelName">Phi4 (14b)</span>
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+
+          <!-- the modal -->
+          <div id="modelModal" class="model-modal">
+            <div class="model-modal-content">
+              <h3>Select Model</h3>
+              <div class="model-options">
+                <div class="model-option" data-model="phi4">
+                  <div class="model-option-header">Phi4 (14b)</div>
+                  <div class="model-option-desc">Great at table fact-checking</div>
+                </div>
+                <div class="model-option" data-model="deepseek-r1:latest">
+                  <div class="model-option-header">DeepSeek‑R1 (7b)</div>
+                  <div class="model-option-desc">Advanced reasoning (deep‑thinking)</div>
+                </div>
+                <div class="model-option" data-model="cogito">
+                  <div class="model-option-header">Cogito (8b)</div>
+                  <div class="model-option-desc">Advanced reasoning (deep‑thinking)</div>
+                </div>
+                <div class="model-option" data-model="gemma3">
+                  <div class="model-option-header">Gemma3 (4b)</div>
+                  <div class="model-option-desc">Lightweight &amp; fast</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cogito: enable deep thinking (hidden by default) -->
+          <div id="thinkingOption" class="thinking-option">
+            <input type="checkbox" id="enableThinkingCheck" />
+            <label for="enableThinkingCheck">Enable deep thinking</label>
+          </div>
+        </div>
+  
 
         <!-- Live Check Section – CSV input + live preview -->
         <div class="input-group table-input-group">
@@ -213,11 +250,6 @@
             <option value="zh">中文</option>
             <option value="ar">العربية</option>
           </select>
-        </div>
-        <!-- Cogito: enable deep thinking -->
-        <div id="thinkingOption" class="inline-checkbox" style="display:none; align-items:center; margin-top:8px;">
-          <input type="checkbox" id="enableThinkingCheck" />
-          <label for="enableThinkingCheck" class="thinking-label-small">Enable deep thinking</label>
         </div>
       </div>
 
