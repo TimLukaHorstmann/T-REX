@@ -1208,6 +1208,11 @@ body.dark-mode .language-option:hover {
   #existingClaimsSelect {
     width: 100%;
     max-width: 100%;
+    font-size: 0.8rem;
+  }
+
+  #existingClaimsSelectLabel {
+    font-size: 0.8rem;
   }
   #includeTableNameOption {
     margin-bottom: 1rem;
