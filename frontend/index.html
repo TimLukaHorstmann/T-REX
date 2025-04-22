@@ -49,7 +49,6 @@
     </nav>
   </header>
   
-
   <main class="container">
     <!-- Mode Tabs -->
     <div class="mode-tabs">
@@ -132,8 +131,8 @@
 
           <!-- visible button to open modal -->
           <button id="modelSelectorBtn" class="model-selector-btn">
-            <span id="currentModelName">Phi4</span> <!-- Removed (14b) -->
-            <span class="model-param-bubble">14b</span> <!-- Added bubble -->
+            <span id="currentModelName">Phi4</span>
+            <span class="model-param-bubble">14b</span>
             <i class="fa-solid fa-chevron-right"></i>
           </button>
 
@@ -156,19 +155,60 @@
                 </div>
                 <div class="model-option" data-model="gemma3">
                   <div class="model-option-header">Gemma3 <span class="model-param-bubble">4b</span></div>
-                  <div class="model-option-desc">Lightweight &amp; fast</div>
+                  <div class="model-option-desc">Lightweight & fast</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Cogito: enable deep thinking (hidden by default) -->
-          <div id="thinkingOption" class="thinking-option">
-            <input type="checkbox" id="enableThinkingCheck" />
-            <label for="enableThinkingCheck">Enable deep thinking</label>
-          </div>
+          <!-- Cogito: enable deep thinking toggle (hidden by default) -->
+          <button id="thinkingToggleButton" class="thinking-toggle-button" style="display: none;">
+            <svg id="bulb-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="24px" viewBox="0 0 196 196" enable-background="new 0 0 196 196" xml:space="preserve">
+              <g id="bulb">
+                <path id="bulb_body" fill="#FFFFFF" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M138,86.465
+                  c0-22.284-18.131-40.348-40.5-40.348c-22.367,0-40.5,18.064-40.5,40.348c0,13.2,6.363,24.918,16.201,32.279v12.91
+                  c0,1.781,1.449,3.229,3.238,3.229h42.12c1.789,0,3.24-1.445,3.24-3.229v-12.91C131.637,111.384,138,99.665,138,86.465z"/>
+                <g id="sockel">
+                  <path fill="#96BF1F" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M119.013,139.598
+                    c0,1.803-1.468,3.266-3.276,3.266H79.689c-1.81,0-3.276-1.463-3.276-3.266l0,0c0-1.805,1.468-3.267,3.276-3.267h36.046
+                    C117.545,136.331,119.013,137.793,119.013,139.598L119.013,139.598z"/>
+                  <path fill="#96BF1F" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M119.013,146.128
+                    c0,1.804-1.468,3.267-3.276,3.267H79.689c-1.81,0-3.276-1.463-3.276-3.267l0,0c0-1.804,1.468-3.267,3.276-3.267h36.046
+                    C117.545,142.861,119.013,144.324,119.013,146.128L119.013,146.128z"/>
+                  <path fill="#96BF1F" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M119.013,152.659
+                    c0,1.804-1.468,3.267-3.276,3.267H79.689c-1.81,0-3.276-1.463-3.276-3.267l0,0c0-1.804,1.468-3.267,3.276-3.267h36.046
+                    C117.545,149.395,119.013,150.855,119.013,152.659L119.013,152.659z"/>
+                  <path fill="#96BF1F" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M119.013,159.191
+                    c0,1.803-1.468,3.266-3.276,3.266H79.689c-1.81,0-3.276-1.463-3.276-3.266l0,0c0-1.805,1.468-3.267,3.276-3.267h36.046
+                    C117.545,155.926,119.013,157.389,119.013,159.191L119.013,159.191z"/>
+                  <path fill="none" stroke="#3D3D3D" stroke-width="3" stroke-miterlimit="10" d="M89.111,168.988c0,4.093,3.851,7.41,8.602,7.41
+                    c4.75,0,8.603-3.317,8.603-7.41"/>
+                  <path fill="none" stroke="#3D3D3D" stroke-width="3" stroke-miterlimit="10" d="M81.116,162.457v3.266
+                    c0,1.805,1.467,3.267,3.275,3.267h4.72h17.203h4.293c1.809,0,3.275-1.464,3.275-3.267v-3.266"/>
+                </g>
+                <path fill="none" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M75,89.781v2.427v6.953
+                  l13,12.769v22.75"/>
+                <path fill="none" stroke="#3D3D3D" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M107,134.68v-22.75
+                  l13-12.769v-6.953v-2.427"/>
+                <path id="glow" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" d="M120,89.802
+                  c0,3.003-2.52,5.438-5.625,5.438c-3.107,0-5.625-2.435-5.625-5.438c0,3.003-2.52,5.438-5.625,5.438
+                  c-3.107,0-5.625-2.435-5.625-5.438c0,3.003-2.519,5.438-5.625,5.438s-5.625-2.435-5.625-5.438c0,3.003-2.519,5.438-5.625,5.438
+                  c-3.105,0-5.625-2.435-5.625-5.438"/>
+              </g>
+              <g id="licht" style="opacity:0">
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="151.088" y1="90.5" x2="170" y2="90.5"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="25" y1="90.5" x2="43.912" y2="90.5"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="135.392" y1="128.327" x2="148.765" y2="141.677"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="46.234" y1="39.322" x2="59.607" y2="52.673"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" stroke-opacity="0" x1="97.5" y1="143.996" x2="97.5" y2="162.876"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="97.5" y1="18.124" x2="97.5" y2="37.004"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="59.607" y1="128.327" x2="46.234" y2="141.677"/>
+                <line fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="square" stroke-miterlimit="10" x1="148.765" y1="39.322" x2="135.392" y2="52.672"/>
+              </g>
+            </svg>
+            <span id="thinkingToggleText">Enable deep thinking</span>
+          </button>
         </div>
-  
 
         <!-- Live Check Section – CSV input + live preview -->
         <div class="input-group table-input-group">
@@ -176,7 +216,7 @@
           <div class="textarea-container">
             <textarea id="inputTable" rows="6" placeholder="Paste table (CSV format)"></textarea>
             <div id="imagePreview" class="image-preview" style="display: none;">
-              <span class="close-preview">&times;</span>
+              <span class="close-preview">×</span>
             </div>            
             <button id="tableOptionsBtn" class="btn-icon">+</button>
             <div id="tableOptionsDropdown" class="options-dropdown" style="display: none;">
@@ -208,8 +248,6 @@
           </div>
         </div>
 
-
-
         <!-- Claim input -->
         <div class="input-group claim-input-group">
           <h3>Enter Claim:</h3>
@@ -219,10 +257,10 @@
               <option value="">-- Select a Claim --</option>
             </select>
           </div>
-          <div class="inline-checkbox" id="includeTableNameOption" style="display: flex;"> <!-- Changed display to flex -->
+          <div class="inline-checkbox" id="includeTableNameOption" style="display: flex;">
             <input type="checkbox" id="includeTableNameCheck" />
-            <label for="includeTableNameCheck" id="includeTableTitleInPromptLabel">Pass table title to model:</label> <!-- Updated default text -->
-            <input type="text" id="tableTitleInput" placeholder="Enter table title (optional)"> <!-- Updated default placeholder -->
+            <label for="includeTableNameCheck" id="includeTableTitleInPromptLabel">Pass table title to model:</label>
+            <input type="text" id="tableTitleInput" placeholder="Enter table title (optional)">
           </div>
           <textarea id="inputClaim" rows="3" placeholder="Paste claim here"></textarea>
         </div>
@@ -310,7 +348,6 @@
       <div id="statusMessage"></div>
       <p id="aiDisclaimer" class="disclaimer">AI-generated, for reference only</p>
       <p id="liveCheckInfo" class="disclaimer">Live check uses our backend inference service.</p>
-
     </section>
 
     <!-- Report Section -->
@@ -354,14 +391,13 @@
 
   <div id="loadingModal" class="loading-modal" style="display: none;">
     <div class="loading-content">
-      <span class="close-modal">&times;</span>
+      <span class="close-modal">×</span>
       <div id="imageSpinner" class="spinner"></div>
       <p id="processingImage">Processing image, please wait...</p>
       <p id="mayTakeSeconds" style="font-size: small;">This may take a few seconds depending on the table size and OCR engine you selected.</p>
     </div>
   </div>
   
-
   <!-- External libraries -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.10/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -384,11 +420,8 @@
       }
     };
   </script>
-  <script id="MathJax-script" async
-   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   
-
   <!-- Main app logic -->
   <script src="translations.js"></script>
   <script src="wikipedia-preview.umd.js"></script>

@@ -46,7 +46,7 @@
     --color-dark-input-bg: #2a2a2a;
     --color-dark-border: #444;
     --color-dark-language-chooser-bg: rgba(34, 34, 34, 0.85);
-
+  
     --plotly-light-bg: #fff;
     --plotly-dark-bg: #333;
   }
@@ -74,7 +74,6 @@
   /* ======================================================
      DARK MODE STYLES
      ====================================================== */
-
   .dark-mode-label {
     font-size: 0.8rem;
     color: #90caf9;
@@ -161,11 +160,9 @@
     background-color: var(--color-dark-info-panel-bg);
     color: var(--color-dark-text);
   }
-
   body.dark-mode .toggle-btn {
     color: var(--color-correct);
   }
-  
   body.dark-mode .meta-info-box a {
     color: var(--color-btn-primary-bg);
   }
@@ -178,20 +175,17 @@
     border-color: var(--color-dark-border);
     color: var(--color-dark-text);
   }
-
   body.dark-mode .answer-overlay,
   body.dark-mode .thinking-overlay {
     color: var(--color-dark-text);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
-
   body.dark-mode .json-container {
     background-color: var(--color-dark-info-panel-bg);
     border: 1px solid var(--color-dark-border);
     color: var(--color-dark-text);
     box-shadow: none;
   }
-
   body.dark-mode .json-header {
     border-color: var(--color-dark-border);
     color: var(--color-dark-text);
@@ -211,26 +205,21 @@
   body.dark-mode .modelLoadingText {
     color: white;
   }
-
   body.dark-mode .dataset-loading-message {
     color: var(--color-dark-text);
   }
-
   body.dark-mode .status-message {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--color-dark-text);
     border-left-color: var(--color-correct);
   }
-
   body.dark-mode .github-logo {
     filter: invert(1);
   }
-
   .dark-mode .scroll-to-bottom {
     background-color: #333;
     border-color: #555;
   }
-  
   .dark-mode .scroll-to-bottom svg {
     color: #fff;
   }
@@ -257,21 +246,17 @@
   body.dark-mode .styled-table tbody tr:hover {
     background-color: #444;
   }
-
   body.dark-mode .highlight {
     background-color: var(--color-verdict-true-text);
     border: 2px solid var(--color-correct);
   }
-  
   body.dark-mode .styled-table td.highlight {
     background-color: var(--color-verdict-true-text);
     border: 2px solid var(--color-correct);
   }
-
   body.dark-mode .highlight-legend {
     background-color: var(--color-verdict-true-text);
   }
-
   body.dark-mode .entity-highlight {
     border: none;
     text-decoration: underline dashed var(--color-correct);
@@ -279,19 +264,15 @@
   body.dark-mode .entity-highlight-legend {
     border-bottom: 2px dashed var(--color-correct);
   }
-  
   body.dark-mode .copy-btn {
     color: var(--color-correct);
   }
   .body.dark-mode copy-btn:hover {
     color: var(--color-verdict-true-text);
   }
-
   body.dark-mode .spinner-overlay::after {
     border-top: 3px solid var(--color-correct);
   }
-
-
   body.dark-mode .metrics-toggle {
     color: var(--color-dark-text);
     border-top: 1px solid #444;
@@ -299,6 +280,7 @@
   body.dark-mode .metrics-toggle:hover {
     background-color: #555;
   }
+  
   /* ======================================================
      DARK MODE TOGGLE SWITCH
      ====================================================== */
@@ -792,10 +774,9 @@
      LIVE INPUT SECTION & LANGUAGE CHOOSER
      ====================================================== */
   .live-input-section {
-    position: relative; /* Ensure this is relative for absolute positioning of children */
-    padding-top: 0px; /* Adjust as needed if elements overlap */
+    position: relative;
+    padding-top: 0px;
     margin-bottom: 20px;
-    /* display: flex; justify-content: space-between; */ /* REMOVE - Keep block layout */
   }
   .styled-select {
     -webkit-appearance: none;
@@ -814,428 +795,411 @@
     background-size: 1.5rem;
     background-clip: padding-box;
   }
-/* ----- model selector button ----- */
-.model-chooser {
-  position: relative;      /* Keep relative positioning for the modal */
-  display: inline-block; /* Change to inline-block */
-  /* Remove border and padding from the container */
-  /* border: 1px solid #ccc; */ /* REMOVE */
-  /* padding: 0.5em 0.8em; */ /* REMOVE */
-  vertical-align: top; /* Align with other elements if needed */
-}
-.model-selector-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  padding: 0.5em 0.8em;
-  /* border: 1px solid #ccc;
-  border-radius: 6px; */
-  border: none; /* Remove border */
-  background: var(--color-controls-bg); /* Use variable for background */
-  cursor: pointer;
-  font-size: 0.9rem; /* Slightly smaller font */
-  /* transition: box-shadow 0.2s, border-color 0.2s; */
-  color: var(--color-text); /* Use variable for text color */
-}
-.model-selector-btn:hover {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  border-color: #aaa;
-}
-.model-selector-btn i {
-  font-size: 0.7em; /* Smaller icon */
-}
-
-/* ----- Dropdown-style modal ----- */
-.model-modal {
-  position: absolute;
-  top: calc(100% + 8px); /* Position below button with small gap */
-  left: 0; /* Align to the left edge of the chooser */
-  transform: translateY(-10px); /* Start slightly up */
-  min-width: 250px; /* Set a minimum width */
-  background: var(--color-modal-bg); /* Use variable */
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Slightly stronger shadow */
-  padding: 0.5rem;
-  z-index: 1000;
-  /* display: none; */ /* Hidden by default - controlled by opacity/visibility */
-  opacity: 0; /* Start hidden */
-  visibility: hidden; /* Start hidden */
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s; /* Add transitions */
-}
-
-/* Add .visible class for showing the modal */
-.model-modal.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0); /* End at final position */
-}
-
-
-/* Arrow pointing up */
-.model-modal::before {
-  content: "";
-  position: absolute;
-  bottom: 100%; /* Position it above the modal */
-  left: 15px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid var(--color-modal-bg); /* Arrow color matches modal */
-  /* Add a border below the arrow to blend with modal border */
-  filter: drop-shadow(0 -1px 0px #ccc); /* Match border color */
-  transition: opacity 0.2s ease-out; /* Add transition for arrow */
-  opacity: 0; /* Hide arrow initially */
-}
-
-.model-modal.visible::before {
-  opacity: 1; /* Show arrow when modal is visible */
-}
-
-
-/* make sure the inner content just flows */
-.model-modal-content {
-  max-width: none;
-  padding: 0;
-}
-
-/* More subtle heading */
-.model-modal-content h3 {
-  margin-bottom: 0.8em;
-  font-size: 0.8rem; /* Smaller font size */
-  font-weight: 600; /* Slightly less bold */
-  color: #666; /* Grey color */
-  text-align: center;
-  padding-bottom: 0.5em;
-  border-bottom: 1px solid #eee;
-}
-
-/* ----- model option cards ----- */
-.model-options {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5em; /* Smaller gap */
-}
-.model-option {
-  padding: 0.6em 0.8em; /* Slightly smaller padding */
-  border: 1px solid transparent; /* Transparent border initially */
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.model-option:not(.disabled):hover { /* Only apply hover to non-disabled */
-  background: #f5f5f5;
-  border-color: #ddd;
-}
-.model-option-header {
-  font-weight: 500; /* Less bold */
-  margin-bottom: 0.2em;
-  font-size: 0.9rem; /* Slightly smaller */
-  display: flex; /* Use flexbox to align header and bubble */
-  align-items: center; /* Vertically align items */
-}
-
-.model-param-bubble {
-  display: inline-block;
-  margin-left: 0.5em; /* Space between name and bubble */
-  padding: 0.1em 0.4em;
-  font-size: 0.7rem; /* Smaller font size */
-  font-weight: normal; /* Normal weight */
-  color: #888; /* Subtle gray text */
-  background-color: #eee; /* Light gray background */
-  border-radius: 4px; /* Rounded corners */
-  vertical-align: middle; /* Align with text */
-  line-height: 1; /* Adjust line height if needed */
-}
-
-/* Add bubble to the main selector button as well */
-.model-selector-btn .model-param-bubble {
-  margin-left: 0.3em; /* Adjust spacing if needed */
-}
-
-.model-option-desc {
-  font-size: 0.75rem; /* Smaller description */
-  color: #777;
-}
-
-/* Disabled state for model options */
-.model-option.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: transparent !important; /* Ensure no background on hover, use !important if needed */
-}
-.model-option.disabled:hover {
-  background: transparent; /* Override hover background */
-  border-color: transparent;
-}
-
-
-/* ----- deep‑thinking toggle ----- */
-.thinking-option {
-  /* display: none; */ /* Keep JS control */
-  align-items: center;
-  margin-top: 0.8em; /* Add some space above */
-  padding-top: 0.6em; /* Add padding top */
-  border-top: 1px solid #eee; /* Separator line */
-  font-size: 0.85rem; /* Smaller font */
-  color: var(--color-text);
-}
-/* ... rest of thinking-option styles ... */
-
-/* ----- Language Chooser ----- */
-.language-chooser {
-  /* position: relative; */      /* REMOVE - Keep relative positioning for the modal */
-  /* display: inline-block; */ /* REMOVE - Change to inline-block */
-  /* vertical-align: top; */     /* REMOVE - Align with model chooser */
-  position: absolute;      /* Position absolutely in the top-right */
-  top: 0;                  /* Align to the top */
-  right: 0;                 /* Align to the right */
-  display: inline-block;   /* Needed for relative positioning of its modal */
-  z-index: 10;             /* Ensure it's above other elements if needed */
-}
-
-.language-selector-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  padding: 0.5em 0.8em;
-  /* border: 1px solid #ccc;
-  border-radius: 6px; */
-  border: none; /* Remove border */
-  background: var(--color-controls-bg);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: box-shadow 0.2s, border-color 0.2s;
-  color: var(--color-text);
-}
-
-.language-selector-btn:hover {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  border-color: #aaa;
-}
-
-.language-selector-btn i {
-  font-size: 0.7em;
-}
-
-/* ----- Language Dropdown Modal ----- */
-.language-modal {
-  position: absolute;
-  top: calc(100% + 8px); /* Position below button */
-  right: 0; /* Align modal to the right edge of the chooser */
-  min-width: 180px; /* Adjust width as needed */
-  background: var(--color-modal-bg);
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  padding: 0.5rem;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px); /* Start slightly up for animation */
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
-}
-
-.language-modal.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0); /* End at final position */
-}
-
-/* Arrow pointing up for language modal */
-.language-modal::before {
-  content: "";
-  position: absolute;
-  bottom: 100%; /* Position above the modal */
-  right: 15px; /* Position arrow near the right edge */
-  /* Adjust 'right' value if needed to center under the button */
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid var(--color-modal-bg); /* Arrow color matches modal */
-  filter: drop-shadow(0 -1px 0px #ccc); /* Match border color */
-  transition: opacity 0.2s ease-out;
-  opacity: 0; /* Hide arrow initially */
-}
-
-.language-modal.visible::before {
-  opacity: 1; /* Show arrow when modal is visible */
-}
-
-/* ----- Language Modal Content & Options ----- */
-.language-modal-content {
-  max-width: none;
-  padding: 0;
-}
-
-.language-modal-content h3 {
-  margin-bottom: 0.8em;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #666;
-  text-align: center;
-  padding-bottom: 0.5em;
-  border-bottom: 1px solid #eee;
-}
-
-.language-options {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5em;
-}
-
-.language-option {
-  padding: 0.6em 0.8em;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.language-option:hover {
-  background: #f5f5f5;
-  border-color: #ddd;
-}
-
-.language-option-header {
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-/* Remove old floating style if present */
-/* #languageChooserFloating { ... } */
-
-/* ======================================================
-   DARK MODE STYLES
-   ====================================================== */
-
-body.dark-mode .model-selector-btn {
-  background: var(--color-dark-controls-bg);
-  border-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-body.dark-mode .model-selector-btn:hover {
-  border-color: #777;
-}
-
-body.dark-mode .model-modal {
-  background: var(--color-dark-info-panel-bg);
-  border-color: var(--color-dark-border);
-}
-
-body.dark-mode .model-modal::before {
-  border-bottom-color: var(--color-dark-info-panel-bg);
-  filter: drop-shadow(0 -1px 0px var(--color-dark-border));
-}
-
-body.dark-mode .model-modal-content h3 {
-  color: #aaa;
-  border-bottom-color: var(--color-dark-border);
-}
-
-body.dark-mode .model-option:not(.disabled):hover {
-  background: #3a3a3a;
-  border-color: #555;
-}
-
-body.dark-mode .model-param-bubble {
-  color: #bbb; /* Lighter gray for dark mode */
-  background-color: #555; /* Darker background for dark mode */
-}
-
-body.dark-mode .model-option-desc {
-  color: #bbb;
-}
-
-body.dark-mode .thinking-option {
-  border-top-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-
-/* ... rest of dark mode styles ... */
-
-body.dark-mode .language-selector-btn {
-  background: var(--color-dark-controls-bg);
-  border-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-body.dark-mode .language-selector-btn:hover {
-  border-color: #777;
-}
-
-body.dark-mode .language-modal {
-  background: var(--color-dark-info-panel-bg);
-  border-color: var(--color-dark-border);
-}
-
-body.dark-mode .language-modal::before {
-  border-bottom-color: var(--color-dark-info-panel-bg);
-  filter: drop-shadow(0 -1px 0px var(--color-dark-border));
-}
-
-body.dark-mode .language-modal-content h3 {
-  color: #aaa;
-  border-bottom-color: var(--color-dark-border);
-}
-
-body.dark-mode .language-option:hover {
-  background: #3a3a3a;
-  border-color: #555;
-}
-
+  
+  /* ----- Model Selector Button ----- */
+  .model-chooser {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    vertical-align: top;
+  }
+  .model-selector-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.5em 0.8em;
+    border: none;
+    background: var(--color-controls-bg);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+  .model-selector-btn:hover {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .model-selector-btn i {
+    font-size: 0.7em;
+  }
+  
+  /* ----- Dropdown-style Modal ----- */
+  .model-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    transform: translateY(-10px);
+    min-width: 250px;
+    background: var(--color-modal-bg);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 0.5rem;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
+  }
+  .model-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .model-modal::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 15px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--color-modal-bg);
+    filter: drop-shadow(0 -1px 0px #ccc);
+    transition: opacity 0.2s ease-out;
+    opacity: 0;
+  }
+  .model-modal.visible::before {
+    opacity: 1;
+  }
+  .model-modal-content {
+    max-width: none;
+    padding: 0;
+  }
+  .model-modal-content h3 {
+    margin-bottom: 0.8em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    text-align: center;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid #eee;
+  }
+  .model-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5em;
+  }
+  .model-option {
+    padding: 0.6em 0.8em;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .model-option:not(.disabled):hover {
+    background: #f5f5f5;
+    border-color: #ddd;
+  }
+  .model-option-header {
+    font-weight: 500;
+    margin-bottom: 0.2em;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+  }
+  .model-param-bubble {
+    display: inline-block;
+    margin-left: 0.5em;
+    padding: 0.1em 0.4em;
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: #888;
+    background-color: #eee;
+    border-radius: 4px;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .model-selector-btn .model-param-bubble {
+    margin-left: 0.3em;
+  }
+  .model-option-desc {
+    font-size: 0.75rem;
+    color: #777;
+  }
+  .model-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: transparent !important;
+  }
+  .model-option.disabled:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+  
+  /* ----- Thinking Toggle Button ----- */
+  .thinking-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3em 0.6em;
+    margin-top: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: var(--color-controls-bg);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .thinking-toggle-button:hover {
+    background-color: #f9f9f9;
+    border-color: #aaa;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .thinking-toggle-button.active {
+    background-color: #fef8e8;
+    border-color: #fad980;
+  }
+  .thinking-toggle-button svg {
+    width: 28px;
+    height: 28px;
+  }
+  .thinking-toggle-button svg #bulb_body {
+    fill: #FFFFFF;
+    transition: fill 0.3s ease-in-out;
+  }
+  .thinking-toggle-button.active svg #bulb_body {
+    fill: #FFD700;
+  }
+  .thinking-toggle-button svg #licht {
+    opacity: 0;
+    transform: scale(0.6);
+    transform-origin: 50% 50%;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  .thinking-toggle-button.active svg #licht {
+    opacity: 1;
+    transform: scale(1);
+    animation: pulse 1.5s infinite alternate;
+  }
+  @keyframes pulse {
+    from { opacity: 0.7; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1.05); }
+  }
+  .thinking-toggle-button svg #glow {
+    stroke: #3D3D3D;
+    transition: stroke 0.3s ease-in-out;
+  }
+  .thinking-toggle-button.active svg #glow {
+    stroke: #FFFFFF;
+  }
+  
+  /* Dark Mode for Thinking Toggle */
+  body.dark-mode .thinking-toggle-button {
+    background-color: var(--color-dark-controls-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .thinking-toggle-button:hover {
+    background-color: #3a3a3a;
+    border-color: #555;
+  }
+  body.dark-mode .thinking-toggle-button.active {
+    background-color: #332c1f;
+    border-color: #8b7733;
+  }
+  body.dark-mode .thinking-toggle-button svg #bulb_body {
+    fill: var(--color-dark-text);
+  }
+  body.dark-mode .thinking-toggle-button.active svg #bulb_body {
+    fill: #FFD700;
+  }
+  body.dark-mode .thinking-toggle-button svg #glow {
+    stroke: var(--color-dark-text);
+  }
+  body.dark-mode .thinking-toggle-button.active svg #glow {
+    stroke: #FFFFFF;
+  }
+  
+  /* ----- Language Chooser ----- */
+  .language-chooser {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-block;
+    z-index: 10;
+  }
+  .language-selector-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.5em 0.8em;
+    border: none;
+    background: var(--color-controls-bg);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    color: var(--color-text);
+  }
+  .language-selector-btn:hover {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    border-color: #aaa;
+  }
+  .language-selector-btn i {
+    font-size: 0.7em;
+  }
+  
+  /* ----- Language Dropdown Modal ----- */
+  .language-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 180px;
+    background: var(--color-modal-bg);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 0.5rem;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s;
+  }
+  .language-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .language-modal::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    right: 15px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--color-modal-bg);
+    filter: drop-shadow(0 -1px 0px #ccc);
+    transition: opacity 0.2s ease-out;
+    opacity: 0;
+  }
+  .language-modal.visible::before {
+    opacity: 1;
+  }
+  .language-modal-content {
+    max-width: none;
+    padding: 0;
+  }
+  .language-modal-content h3 {
+    margin-bottom: 0.8em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    text-align: center;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid #eee;
+  }
+  .language-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5em;
+  }
+  .language-option {
+    padding: 0.6em 0.8em;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .language-option:hover {
+    background: #f5f5f5;
+    border-color: #ddd;
+  }
+  .language-option-header {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  
+  /* ======================================================
+     DARK MODE STYLES
+     ====================================================== */
+  body.dark-mode .model-selector-btn {
+    background: var(--color-dark-controls-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .model-selector-btn:hover {
+    border-color: #777;
+  }
+  body.dark-mode .model-modal {
+    background: var(--color-dark-info-panel-bg);
+    border-color: var(--color-dark-border);
+  }
+  body.dark-mode .model-modal::before {
+    border-bottom-color: var(--color-dark-info-panel-bg);
+    filter: drop-shadow(0 -1px 0px var(--color-dark-border));
+  }
+  body.dark-mode .model-modal-content h3 {
+    color: #aaa;
+    border-bottom-color: var(--color-dark-border);
+  }
+  body.dark-mode .model-option:not(.disabled):hover {
+    background: #3a3a3a;
+    border-color: #555;
+  }
+  body.dark-mode .model-param-bubble {
+    color: #bbb;
+    background-color: #555;
+  }
+  body.dark-mode .model-option-desc {
+    color: #bbb;
+  }
+  body.dark-mode .language-selector-btn {
+    background: var(--color-dark-controls-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .language-selector-btn:hover {
+    border-color: #777;
+  }
+  body.dark-mode .language-modal {
+    background: var(--color-dark-info-panel-bg);
+    border-color: var(--color-dark-border);
+  }
+  body.dark-mode .language-modal::before {
+    border-bottom-color: var(--color-dark-info-panel-bg);
+    filter: drop-shadow(0 -1px 0px var(--color-dark-border));
+  }
+  body.dark-mode .language-modal-content h3 {
+    color: #aaa;
+    border-bottom-color: var(--color-dark-border);
+  }
+  body.dark-mode .language-option:hover {
+    background: #3a3a3a;
+    border-color: #555;
+  }
+  
   select#liveModelSelect option:disabled {
     color: #999;
   }
-  .thinking-label-small {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    cursor: pointer;
-    margin-left: 4px;
-  }
-  #thinkingOption {
-    display: none;
-    gap: 4px;
-  }
-  #languageChooserFloating {
-    position: absolute;
-    top: 0px;
-    right: 0px;
-    z-index: 5;
-  }
-
   #existingClaimsSelect {
     width: 100%;
     max-width: 100%;
     font-size: 0.8rem;
   }
-
   #existingClaimsSelectLabel {
     font-size: 0.8rem;
   }
   #includeTableNameOption {
     margin-bottom: 1rem;
-    display: flex; /* Use flexbox for alignment */
-    align-items: center; /* Vertically align items */
-    gap: 0.5rem; /* Add space between checkbox, label, and input */
-    font-size: 0.8rem; /* Apply smaller font size to the container */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
   }
-  
-  #includeTableNameOption label { /* Style the label specifically if needed */
-    margin-bottom: 0; /* Remove default margin */
-    white-space: nowrap; /* Prevent label text wrapping */
+  #includeTableNameOption label {
+    margin-bottom: 0;
+    white-space: nowrap;
   }
-  
   #tableTitleInput {
-    flex-grow: 1; /* Allow input to take remaining space */
+    flex-grow: 1;
     padding: 0.2rem 0.4rem;
-    font-size: 0.8rem; /* Match font size */
+    font-size: 0.8rem;
     border: 1px solid #ccc;
     border-radius: 4px;
   }
-  
-  /* Dark mode for the new input */
   body.dark-mode #tableTitleInput {
     background-color: var(--color-dark-input-bg);
     border-color: var(--color-dark-border);
@@ -1490,7 +1454,6 @@ body.dark-mode .language-option:hover {
     margin-left: 0px;
     padding: 0.2rem 0.5rem;
   }
-
   .scroll-to-bottom {
     position: fixed;
     bottom: 20px;
@@ -1510,11 +1473,9 @@ body.dark-mode .language-option:hover {
     opacity: 0.8;
     transition: opacity 0.3s ease;
   }
-  
   .scroll-to-bottom:hover {
     opacity: 1;
   }
-  
   .scroll-to-bottom svg {
     width: 20px;
     height: 20px;
@@ -1537,49 +1498,33 @@ body.dark-mode .language-option:hover {
   #toggleLiveMetaInfoBtn, #toggleLivePreviewTableBtn {
     margin-bottom: 0.5rem;
   }
-
-  /* Update the live preview container styles */
-#livePreviewTableContainer {
-  /* Existing styles */
-  overflow: hidden;
-  transition: max-height 0.5s ease, padding 0.5s ease;
-  /* Add these styles for better scrolling */
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-#livePreviewTableContainer:not(.collapsed) {
-  /* When not collapsed, set reasonable max height with scrolling */
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-#livePreviewTable {
-  /* Add horizontal scrolling for wide tables */
-  overflow-x: auto;
-  /* Ensure enough padding around the table */
-  padding: 5px;
-}
-
-/* Make dark mode consistent with these changes */
-body.dark-mode #livePreviewTableContainer {
-  border-color: var(--color-dark-border);
-}
-
-/* Update mobile device styles */
-@media (max-width: 600px) {
+  #livePreviewTableContainer {
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
   #livePreviewTableContainer:not(.collapsed) {
-    /* Slightly smaller max height on mobile */
-    max-height: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  #livePreviewTable {
+    overflow-x: auto;
+    padding: 5px;
+  }
+  body.dark-mode #livePreviewTableContainer {
+    border-color: var(--color-dark-border);
+  }
+  @media (max-width: 600px) {
+    #livePreviewTableContainer:not(.collapsed) {
+      max-height: 400px;
+    }
+    #livePreviewTable {
+      -webkit-overflow-scrolling: touch;
+    }
   }
   
-  #livePreviewTable {
-    /* Ensure touch scrolling works well on mobile */
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
   /* ======================================================
      JSON CONTAINER
      ====================================================== */
@@ -1699,9 +1644,8 @@ body.dark-mode #livePreviewTableContainer {
     border: 1px solid red;
     border-radius: 4px;
   }
-
   #retryBtn {
-    margin-left: 0.5rem; 
+    margin-left: 0.5rem;
   }
   
   /* ======================================================
@@ -1743,21 +1687,17 @@ body.dark-mode #livePreviewTableContainer {
     margin-top: 0.5rem;
     text-align: center;
   }
-  /* GitHub Logo in Footer */
   .github-link {
     margin-top: 0.5rem;
   }
-  
   .github-link a {
     text-decoration: none;
     color: inherit;
     transition: opacity 0.2s;
   }
-  
   .github-link a:hover {
     opacity: 0.8;
   }
-  
   .github-link .fa-github {
     font-size: 1.2rem;
     vertical-align: middle;
@@ -2010,7 +1950,7 @@ body.dark-mode #livePreviewTableContainer {
       font-size: 0.8rem;
     }
     .choices {
-        width: 100%;
+      width: 100%;
     }
     .table-container {
       overflow-x: auto;
@@ -2027,19 +1967,19 @@ body.dark-mode #livePreviewTableContainer {
       padding: 0.5rem;
     }
     .container {
-        padding: 0.5rem;
+      padding: 0.5rem;
     }
     .select-group {
-        min-width: 100%;
+      min-width: 100%;
     }
     .mode-tabs {
-        flex-direction: column;
+      flex-direction: column;
     }
     .button-group {
-        flex-direction: column;
+      flex-direction: column;
     }
     #runLiveCheck {
-        width: 100%;
+      width: 100%;
     }
     .hamburger-menu {
       display: none;
@@ -2050,43 +1990,37 @@ body.dark-mode #livePreviewTableContainer {
       display: none !important;
     }
   }
-
-/* ======================================================
-   DARK MODE - CHOICES.JS (TABLE SELECT) IMPROVEMENTS
-   ====================================================== */
-body.dark-mode .choices {
-  background-color: var(--color-dark-input-bg);
-}
-
-body.dark-mode .choices__inner {
-  background-color: var(--color-dark-input-bg);
-  border-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-
-body.dark-mode .choices__list--dropdown {
-  background-color: var(--color-dark-info-panel-bg);
-  border-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-
-body.dark-mode .choices__list--dropdown .choices__item,
-body.dark-mode .choices__list--dropdown .choices__item--choice {
-  color: var(--color-dark-text);
-  background-color: var(--color-dark-info-panel-bg);
-}
-
-body.dark-mode .choices__list--dropdown .choices__item--choice.is-highlighted,
-body.dark-mode .choices__list--dropdown .choices__item--choice.is-selected {
-  background-color: var(--color-dark-border);
-  color: var(--color-dark-text);
-}
-
-body.dark-mode .choices__placeholder {
-  color: #aaa;
-}
-
-body.dark-mode .choices__input {
-  background-color: var(--color-dark-input-bg);
-  color: var(--color-dark-text);
-}
+  
+  /* ======================================================
+     DARK MODE - CHOICES.JS (TABLE SELECT) IMPROVEMENTS
+     ====================================================== */
+  body.dark-mode .choices {
+    background-color: var(--color-dark-input-bg);
+  }
+  body.dark-mode .choices__inner {
+    background-color: var(--color-dark-input-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .choices__list--dropdown {
+    background-color: var(--color-dark-info-panel-bg);
+    border-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .choices__list--dropdown .choices__item,
+  body.dark-mode .choices__list--dropdown .choices__item--choice {
+    color: var(--color-dark-text);
+    background-color: var(--color-dark-info-panel-bg);
+  }
+  body.dark-mode .choices__list--dropdown .choices__item--choice.is-highlighted,
+  body.dark-mode .choices__list--dropdown .choices__item--choice.is-selected {
+    background-color: var(--color-dark-border);
+    color: var(--color-dark-text);
+  }
+  body.dark-mode .choices__placeholder {
+    color: #aaa;
+  }
+  body.dark-mode .choices__input {
+    background-color: var(--color-dark-input-bg);
+    color: var(--color-dark-text);
+  }

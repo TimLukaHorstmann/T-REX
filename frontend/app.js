@@ -255,14 +255,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Handle thinking option visibility on model change
     liveModelSelect.addEventListener("change", () => {
-        thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
-        if (liveModelSelect.value !== "cogito") {
-            document.getElementById("enableThinkingCheck").checked = false;
+        const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+        
+        // Show/hide the thinking toggle based on model selection
+        if (liveModelSelect.value === "cogito") {
+            thinkingToggleButton.style.display = "flex";
+        } else {
+            thinkingToggleButton.style.display = "none";
+            // Reset button state if model changes and button was active
+            thinkingToggleButton.classList.remove("active");
         }
+        
         validateLiveCheckInputs();
     });
+
     // Initial check for thinking option
-    thinkingOptionDiv.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
+    const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+    thinkingToggleButton.style.display = liveModelSelect.value === "cogito" ? "flex" : "none";
 
 
     // SETUP LANGUAGE SELECTOR
@@ -506,6 +515,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Setup thinking toggle button
+    const thinkingToggleText = document.getElementById("thinkingToggleText");
+    
+    if (thinkingToggleButton) {
+      thinkingToggleButton.addEventListener("click", function() {
+        this.classList.toggle("active");
+      });
+    }
+    liveModelSelect.addEventListener("change", () => {
+      const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+      
+      // Show/hide the thinking toggle based on model selection
+      if (liveModelSelect.value === "cogito") {
+          thinkingToggleButton.style.display = "flex";
+      } else {
+          thinkingToggleButton.style.display = "none";
+          thinkingToggleButton.classList.remove("active");
+          const lang = document.getElementById("liveLanguageSelect").value;
+          const translation = window.translationDict[lang] || window.translationDict["en"];
+          document.getElementById("thinkingToggleText").textContent = translation.enableThinkingLabel || "Enable deep thinking";
+      }
+      
+      validateLiveCheckInputs();
+    });
 
   } catch (error) {
     console.error("Initialization failed:", error);
@@ -1667,7 +1701,8 @@ function setupLiveCheckEvents() {
       tableTitleToSend = tableTitleInput;
     }
     const includeThinking = (
-      document.getElementById("enableThinkingCheck").checked && model === "cogito"
+      document.getElementById("thinkingToggleButton").classList.contains("active") && 
+      model === "cogito"
     );
 
     const requestBody = {
@@ -2505,8 +2540,6 @@ function updateTranslations() {
     }
   });
 
-
-  // ... rest of updateTranslations function updating other elements ...
   // Table Section
   const tableHeading = document.querySelector(".table-input-group h3");
   if (tableHeading) tableHeading.textContent = translationDict[lang].enterTable;
@@ -2604,6 +2637,11 @@ function updateTranslations() {
   const liveCheckInfo = document.querySelector("#liveCheckInfo");
   if (liveCheckInfo) liveCheckInfo.textContent = translationDict[lang].liveCheckInfo;
 
-  const enableThinkingLabel = document.querySelector('#thinkingOption label[for="enableThinkingCheck"]');
-  if (enableThinkingLabel) enableThinkingLabel.textContent = translation.enableThinkingLabel;
+  // Update thinking toggle button text
+  const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+  const thinkingToggleText = document.getElementById("thinkingToggleText");
+  
+  if (thinkingToggleButton && thinkingToggleText) {
+    thinkingToggleText.textContent = translation.enableThinkingLabel || "Enable deep thinking";
+  }
 }
