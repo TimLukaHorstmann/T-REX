@@ -13,20 +13,37 @@
 ## 🚀 Key Features
 
 - **Live Fact-Checking**: Paste or upload your own tables in CSV format, upload images, or select tables directly from the TabFact dataset.
-- **Multiple LLM Backends:** Support for multiple models including DeepSeek-R1, Gemma, Phi3, and Llama3.
+- **Multiple LLM Backends:** Support for multiple models including Phi-4, Cogito, DeepSeek-R1, and Gemma3.
 - **Visual Explainability:** Highlights cells identified by the model and entity-linked cells from the original TabFact dataset.
 - **Precomputed Results Exploration:** Explore results from various LLMs on the TabFact benchmark dataset with performance metrics and intuitive visualizations.
 - **Multilingual Support:** Fact-check in English, French, and German.
 
 ## 🖥️ Demo
 
-T-REX is presented as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/), showcasing its effectiveness and utility in practical NLP-driven applications.
+T-REX is presented as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
 
 **Experience the live demo here: [https://t-rex.r2.enst.fr/](https://t-rex.r2.enst.fr/)**
 
 ## 🎯 Motivation
 
 Existing table fact-checking solutions often lack intuitive interaction and transparency regarding their internal reasoning. T-REX addresses this gap by providing users immediate, explainable insights into why a claim is entailed or refuted by tabular data, facilitating both trust and usability in practical scenarios.
+
+## 🔍 How does T-REX compare?
+
+Here's a comparison of T-REX with some other comparable table fact-checking and question-answering tools:
+
+| Tool (link) | Live UI | Real-time* | Table Upload | OCR / Image | Evidence Viz† | Uses Open-source LLMs | Code Open? |
+|-------------|:------:|:----------:|:------------:|:-----------:|:-------------:|:---------------------:|:----------:|
+| **T-REX (ours)** <br>[[demo]](https://t-rex.r2.enst.fr/) | ✅ | ✅ stream | ✅ CSV / text | ✅ | ✅ cell highlight | ✅ Phi-4, DeepSeek-R, … | ✅ |
+| OpenTFV [[Paper]](https://dl.acm.org/doi/10.1145/3514221.3520163) | ✅ | ⚠️ batch | ⚠️ only Wiki tables | ❌ | ⚠️ text rationale | ❌ BERT family | ⚠️ code TBD |
+| Aletheia [[Paper]](https://arxiv.org/abs/2409.10713) | ✅ | ⚠️ async | ❌ (fixed datasets) | ❌ | ✅ charts/tables | ❌ GPT-3.5/4 (proprietary) | ⚠️ research code |
+| HF Space (J. Simon) [[report]](https://julsimon.medium.com/demo-question-answering-on-tabular-data-6f57d2db95d4)[[demo]](https://huggingface.co/spaces/juliensimon/table_questions) | ✅ | ✅ | ✅ CSV | ❌ | ❌ (text answer only) | ✅ TAPAS | ✅ |
+| RePanda [[Paper]](https://arxiv.org/abs/2503.11921) | ❌ CLI | ❌ offline | ✅ | ❌ | ✅ executable code | ✅ (7 B) | ✅ |
+| TabVer [[Paper]](https://arxiv.org/abs/2411.01093) | ❌ | ❌ | ✅ | ❌ | ✅ formal proof | ✅ calls tools | ✅ |
+| TART [[Paper]](https://arxiv.org/abs/2306.07536) | ❌ | ❌ | ✅ | ❌ | ✅ tool-aug. explain | ✅ plug-in | ✅ |
+
+\* **Real-time** = immediate verdict; “stream” means token-level reasoning stream.  
+† **Evidence Viz** = visual or structured justification beyond a plain label.
 
 ## 📋 Usage
 
@@ -51,12 +68,14 @@ T-REX offers three primary interaction modes:
 3. **Report View:**
    - View in-depth project insights and methodology explanations via a built-in PDF viewer.
 
-## 🔧 Technology
+## 🔧 Technology Stack
 
 - **Frontend:** HTML, CSS, JavaScript, Plotly.js, Chart.js, Choices.js
-- **Backend:** Ollama API for inference
-- **OCR:** Tesseract.js, Ollama OCR
-- **Models Supported:** DeepSeek-R1, Gemma3, Phi3, Llama3.2
+- **Backend:** Python, FastAPI, Uvicorn
+- **Inference Engine:** Ollama
+- **LLMs:** phi4, deepseek-r1, gemma3, cogito
+- **OCR:** Tesseract, Ollama (Granite Vision)
+- **Dataset:** TabFact
 
 ## 📚 Dataset & Credits
 
@@ -66,42 +85,73 @@ T-REX is built upon the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Ch
 > Wenhuchen et al., ICLR 2020.  
 > [https://github.com/wenhuchen/Table-Fact-Checking](https://github.com/wenhuchen/Table-Fact-Checking)
 
-## 📖 Installation & Usage
+## 🚀 Getting Started
 
-### Installation
+### Prerequisites
+1.  **Python:** Version 3.8+ recommended (we use python=3.10.16).
+2.  **Ollama:** Install Ollama from [https://ollama.com/](https://ollama.com/).
+    - Pull the required models:
+      ```bash
+      ollama pull phi4
+      ollama pull deepseek-r1:latest
+      ollama pull gemma3
+      ollama pull cogito
+      ollama pull granite3.2-vision # For Ollama OCR
+      ```
+    - Ensure the Ollama service is running.
 
-Clone the repository:
 
-```bash
-git clone https://github.com/YourUsername/T-REX.git
-cd T-REX
-```
+### Installation & Local Setup
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/TimLukaHorstmann/T-REX.git
+    cd T-REX
+    ```
+2.  **Create and activate Conda environment:**
+    *   Ensure you have Conda installed ([Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/products/distribution)).
+    *   Create the environment from the provided file:
+        ```bash
+        conda env create -f environment.yml 
+        ```
+    *   Activate the new environment (likely named `trex-env` as defined in `environment.yml`):
+        ```bash
+        conda activate trex-env 
+        ```
 
-Install dependencies (if applicable):
+3.  **Run the Backend (Local Development):**
+    *   Ensure your Conda environment is active and the Ollama service (with required models) is running (see Prerequisites).
+    *   Navigate to the backend directory:
+        ```bash
+        cd backend/api
+        ```
+    *   Start the FastAPI development server:
+        ```bash
+        uvicorn main:app --reload --host 0.0.0.0 --port 8000 
+        ```
+        *(This server is suitable for development. It will automatically reload when code changes.)*
 
-```bash
-npm install
-# or using yarn
-yarn install
-```
+4.  **Serve the Frontend (Local Development):**
+    *   Open a ***new terminal***.
+    *   Navigate to the frontend directory from the project root:
+        ```bash
+        cd frontend 
+        ```
+    *   Start a simple Python HTTP server:
+        ```bash
+        python3 -m http.server 8080 
+        ```
+        *(This serves the static HTML, CSS, and JS files.)*
 
-Launch the application (local):
+5.  **Access the App:** Open your browser to `http://localhost:8080`. The frontend will make requests to the backend running on port 8000.
 
-```bash
-python -m http.server
-# or
-open index.html
-```
+**Note on Deployment:**
+The steps above describe a basic local development setup. For deploying T-REX to a server (like the live demo at `t-rex.r2.enst.fr`), you would typically:
+*   Run the FastAPI backend using a production-grade ASGI server like `uvicorn` with `gunicorn` workers.
+*   Set up a reverse proxy (e.g., Nginx or Caddy) to handle HTTPS, serve static frontend files efficiently, and forward API requests to the backend application.
+*   Manage the backend process using a process manager (e.g., `systemd`, `supervisor`) to ensure it runs reliably.
+*   Ensure the Ollama service is appropriately configured and accessible by the backend on the server.
 
-For best results, use a modern web browser (Chrome recommended).
-
-## 📝 How to Use
-
-### Live Fact-Checking
-1. Select an LLM model.
-2. Enter your table data (via paste, upload, or OCR).
-3. Enter your claim or choose from existing examples.
-4. Click **Run Live Check** to obtain instant verdicts and visual explanations.
+These production deployment steps are environment-specific and beyond the scope of this basic setup guide.
 
 ## 📄 Citation
 
@@ -115,7 +165,6 @@ If you use this project, please cite our demo paper (submitted to ECML-PKDD 2025
   year={2025}
 }
 ```
-
 
 ## 📄 License
 
@@ -148,7 +197,7 @@ Institut Polytechnique de Paris
 
 ---
 
-### 📊 Model Performance Overview
+## 📊 Model Performance Overview
 
 Performance comparison of different models on the TabFact dataset as reported by [Chen, 2025](https://github.com/wenhuchen/Table-Fact-Checking) and [Meta AI](https://paperswithcode.com/sota/table-based-fact-verification-on-tabfact) or evaluated as part of this work.
 
