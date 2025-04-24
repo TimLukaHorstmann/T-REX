@@ -32,17 +32,17 @@ Existing table fact-checking solutions often lack intuitive interaction and tran
 
 Here's a comparison of T-REX with some other comparable table fact-checking and question-answering tools:
 
-| Tool (link) | Live UI | Real-time* | Table Upload | OCR / Image | Evidence Viz† | Uses Open-source LLMs | Code Open? |
-|-------------|:------:|:----------:|:------------:|:-----------:|:-------------:|:---------------------:|:----------:|
-| **T-REX (ours)** <br>[[demo]](https://t-rex.r2.enst.fr/) | ✅ | ✅ stream | ✅ CSV / text | ✅ | ✅ cell highlight | ✅ Phi-4, DeepSeek-R, … | ✅ |
-| OpenTFV [[Paper]](https://dl.acm.org/doi/10.1145/3514221.3520163) | ✅ | ⚠️ batch | ⚠️ only Wiki tables | ❌ | ⚠️ text rationale | ❌ BERT family | ⚠️ code TBD |
-| Aletheia [[Paper]](https://arxiv.org/abs/2409.10713) | ✅ | ⚠️ async | ❌ (fixed datasets) | ❌ | ✅ charts/tables | ❌ GPT-3.5/4 (proprietary) | ⚠️ research code |
-| HF Space (J. Simon) [[report]](https://julsimon.medium.com/demo-question-answering-on-tabular-data-6f57d2db95d4)[[demo]](https://huggingface.co/spaces/juliensimon/table_questions) | ✅ | ✅ | ✅ CSV | ❌ | ❌ (text answer only) | ✅ TAPAS | ✅ |
-| RePanda [[Paper]](https://arxiv.org/abs/2503.11921) | ❌ CLI | ❌ offline | ✅ | ❌ | ✅ executable code | ✅ (7 B) | ✅ |
-| TabVer [[Paper]](https://arxiv.org/abs/2411.01093) | ❌ | ❌ | ✅ | ❌ | ✅ formal proof | ✅ calls tools | ✅ |
-| TART [[Paper]](https://arxiv.org/abs/2306.07536) | ❌ | ❌ | ✅ | ❌ | ✅ tool-aug. explain | ✅ plug-in | ✅ |
+| Tool (link) | Year | Live Demo / UI | Real-time* | Table Upload | OCR / Image | Evidence Viz† | LLM Backend | Code Open? |
+|-------------|:----:|:--------------:|:----------:|:------------:|:-----------:|:-------------:|:-----------:|:----------:|
+| **T-REX (ours)**<br>[Demo](https://t-rex.r2.enst.fr/) | 2025 | ✅ [Live](https://t-rex.r2.enst.fr/) | ✅ stream | ✅ CSV / text / image (OCR) | ✅ Tesseract & Granite 3.2 | ✅ cell highlighting & reasoning stream | Phi-4, DeepSeek-R1, Cogito v1, Gemma3 | ✅ |
+| **OpenTFV**<br>[Paper](https://doi.org/10.1145/3514221.3520163) | 2022 | ⚠️ Video demos only (no public UI) | ⚠️ async | ✅ CSV, JSON, PDF | ❌ | ✅ NL interp. & entity linking | BERT, TAPAS | ❌ |
+| **Aletheia**<br>[Paper](https://doi.org/10.1145/3654777.3676359) | 2024 | ⚠️ No public demo available | ⚠️ async | ❌ fixed datasets only | ❌ | ✅ interactive tables & D3 viz | Proprietary GPT-3.5/4  | ❌ |
+| **HF Space (J. Simon)**<br>[Demo](https://huggingface.co/spaces/juliensimon/table_questions) | 2023 | ⚠️ Hosted on HF Spaces but not working | ✅ immediate | ✅ CSV upload | ❌ | ❌ | TAPAS (open-source) | ✅ |
+| **RePanda**<br>[Paper](https://arxiv.org/abs/2503.11921) | 2025 | ❌ CLI only | ❌ offline | ✅ via Pandas API | ❌ | ✅ executable query scripts | Distilled Llama-7B | ✅ |
+| **TabVer**<br>[Paper](https://arxiv.org/abs/2411.01093) | 2024 | ❌ CLI only | ❌ offline | ✅ | ❌ | ✅ natural-logic proofs | LLM-generated expressions | ✅ |
+| **TART**<br>[Paper](https://arxiv.org/abs/2306.07536) | 2023 | ❌ CLI only | ❌ offline | ✅ | ❌ | ❌ | Plugin-based reasoning | ✅ |
 
-\* **Real-time** = immediate verdict; “stream” means token-level reasoning stream.  
+\* **Real-time** = immediate verdict; “stream” means token-level reasoning.  
 † **Evidence Viz** = visual or structured justification beyond a plain label.
 
 ## 📋 Usage
