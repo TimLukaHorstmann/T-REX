@@ -244,10 +244,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Hide modal
             modelModal.classList.remove("visible");
 
-            // Update thinking option visibility
-            thinkingOptionDiv.style.display = modelValue === "cogito" ? "flex" : "none";
-            if (modelValue !== "cogito") {
-                document.getElementById("enableThinkingCheck").checked = false;
+            // Update thinking button visibility instead of thinkingOptionDiv
+            const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+            if (thinkingToggleButton) {
+                thinkingToggleButton.style.display = modelValue === "cogito" ? "flex" : "none";
+                if (modelValue !== "cogito") {
+                    thinkingToggleButton.classList.remove("active");
+                }
             }
             validateLiveCheckInputs(); // Re-validate inputs after model change
         });
@@ -547,17 +550,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-  // --- COGITO deep‑thinking toggle ---
-  const liveModelSelect = document.getElementById("liveModelSelect");
-  const thinkingOptionDiv = document.getElementById("thinkingOption");
-  liveModelSelect.addEventListener("change", () => {
-    if (liveModelSelect.value === "cogito") {
-      thinkingOptionDiv.style.display = "flex";
-    } else {
-      thinkingOptionDiv.style.display = "none";
-      document.getElementById("enableThinkingCheck").checked = false;
+// --- COGITO deep‑thinking toggle ---
+const liveModelSelect = document.getElementById("liveModelSelect");
+liveModelSelect.addEventListener("change", () => {
+    const thinkingToggleButton = document.getElementById("thinkingToggleButton");
+    
+    // Show/hide the thinking toggle based on model selection
+    if (thinkingToggleButton) {
+        if (liveModelSelect.value === "cogito") {
+            thinkingToggleButton.style.display = "flex";
+        } else {
+            thinkingToggleButton.style.display = "none";
+            thinkingToggleButton.classList.remove("active");
+            const lang = document.getElementById("liveLanguageSelect").value;
+            const translation = window.translationDict[lang] || window.translationDict["en"];
+            const thinkingToggleText = document.getElementById("thinkingToggleText");
+            if (thinkingToggleText) {
+                thinkingToggleText.textContent = translation.enableThinkingLabel || "Enable deep thinking";
+            }
+        }
     }
-  });
+    
+    validateLiveCheckInputs();
+});
+
 async function fetchTableToPage() {
   const response = await fetch(TABLE_TO_PAGE_JSON_PATH);
   if (!response.ok) {
@@ -1947,18 +1963,7 @@ function setupLiveCheckEvents() {
         const cleanedResponse = finalText.replace(/```(json)?/gi, "").trim();
         const parsedJson = extractJsonFromResponse(cleanedResponse);
         const formattedJson = JSON.stringify(parsedJson, null, 2);
-        const jsonContainerHtml = `
-          <div class="json-container">
-            <div class="json-header">
-              <span>JSON</span>
-              <button class="copy-btn" onclick="copyToClipboard(this)">
-                <img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy
-              </button>
-            </div>
-            <pre class="json-content"><code class="json hljs">${formattedJson}</code></pre>
-          </div>
-        `;
-
+        const jsonContainer = createJSONContainer(formattedJson, "JSON");
         liveStreamOutputEl.innerHTML = `
           <div class="answer-overlay">
             <span id="answer-label">${translation.answerLabel}</span>
@@ -1967,10 +1972,16 @@ function setupLiveCheckEvents() {
           <div id="answerContent" class="collapsible"></div>
         `;
         const answerContentDiv = document.getElementById("answerContent");
+
+        // 1) Render the markdown part
         renderMarkdownAndMath(cleanedResponse.trim(), answerContentDiv);
-        answerContentDiv.innerHTML += jsonContainerHtml;
+
+        // 2) Append the JSON container **as a DOM node** (so its buttons still work)
+        answerContentDiv.appendChild(jsonContainer);
+
+        // 3) Attach the collapse toggle
         document.getElementById("toggleAnswerBtn").addEventListener("click", function() {
-          const content = document.getElementById("answerContent");
+          const content = answerContentDiv;
           if (content.classList.contains("collapsed")) {
             content.classList.remove("collapsed");
             this.textContent = "▲";
@@ -1980,9 +1991,9 @@ function setupLiveCheckEvents() {
           }
         });
 
-        scrollToBottomBtn.style.display = "none";
-        liveResultsEl.style.display = "block";
-        document.querySelectorAll('code.json.hljs').forEach(block => hljs.highlightElement(block));
+        // 4) Highlight just that JSON block
+        const jsonCode = jsonContainer.querySelector('code');
+        if (jsonCode) hljs.highlightElement(jsonCode);
         displayLiveResults(tableText, claimText, parsedJson.answer, parsedJson.relevant_cells);
 
         // Collapse panels by default
@@ -2316,20 +2327,109 @@ function getThinkingTagsForModel(model) {
 }
 
 function copyToClipboard(btn) {
-  const codeBlock = btn.parentNode.nextElementSibling.querySelector('code');
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+  
+  const jsonContainer = btn.closest('.json-container');
+  const codeBlock = jsonContainer.querySelector('code');
   const codeText = codeBlock.textContent;
 
   navigator.clipboard.writeText(codeText)
     .then(() => {
-      btn.innerHTML = `<img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copied!`;
-      setTimeout(() => { 
-        btn.innerHTML = `<img src="images/copy_paste_symbol.svg" alt="copy" class="copy-icon"> Copy`;
+      btn.innerHTML = `<i class="fas fa-copy"></i> ${translation.copiedText}`;
+      setTimeout(() => {
+        btn.innerHTML = `<i class="fas fa-copy"></i> ${translation.copyText}`;
       }, 1500);
     })
     .catch(err => {
       console.error("Failed to copy: ", err);
-      alert("Failed to copy code.");
+      alert(translation.failedToCopy);
     });
+}
+
+// Add this new function to download JSON
+function downloadJSON(btn) {
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+  
+  const jsonContainer = btn.closest('.json-container');
+  const codeBlock = jsonContainer.querySelector('code');
+  const jsonText = codeBlock.textContent;
+  
+  // Create a blob with the JSON data
+  const blob = new Blob([jsonText], { type: 'application/json' });
+  
+  // Create a temporary download link
+  const url = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  
+  // Set a default filename with timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  downloadLink.download = `table-check-result-${timestamp}.json`;
+  
+  // Append to body, click, and remove
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+function createJSONContainer(jsonContent, title = "JSON Result") {
+  // Pull in translations
+  const lang = document.getElementById("liveLanguageSelect").value;
+  const translation = translationDict[lang] || translationDict["en"];
+
+  // Outer container
+  const container = document.createElement('div');
+  container.className = 'json-container';
+
+  // Header with title + buttons
+  const header = document.createElement('div');
+  header.className = 'json-header';
+
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = title;
+
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.className = 'json-buttons';
+
+  // Copy button: use Font Awesome fa-copy
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'json-btn copy-btn';
+  copyBtn.innerHTML = `<i class="fas fa-copy"></i> ${translation.copyText}`;
+  copyBtn.addEventListener('click', () => copyToClipboard(copyBtn));
+
+  // Download button (unchanged)
+  const downloadBtn = document.createElement('button');
+  downloadBtn.className = 'json-btn download-btn';
+  downloadBtn.innerHTML = `<i class="fas fa-download"></i> ${translation.downloadJSON}`;
+  downloadBtn.addEventListener('click', () => downloadJSON(downloadBtn));
+
+  buttonsContainer.appendChild(copyBtn);
+  buttonsContainer.appendChild(downloadBtn);
+  header.appendChild(titleSpan);
+  header.appendChild(buttonsContainer);
+
+  // Pre/code block
+  const pre = document.createElement('pre');
+  pre.className = 'json-content';
+
+  const code = document.createElement('code');
+  code.textContent = jsonContent;
+  // Tell highlight.js it’s JSON
+  code.classList.add('json', 'hljs');
+
+  pre.appendChild(code);
+
+  // Assemble full container
+  container.appendChild(header);
+  container.appendChild(pre);
+  return container;
 }
 
 function updateModelOptionsBasedOnLanguage() {
@@ -2644,4 +2744,20 @@ function updateTranslations() {
   if (thinkingToggleButton && thinkingToggleText) {
     thinkingToggleText.textContent = translation.enableThinkingLabel || "Enable deep thinking";
   }
+
+  // Update copy and download button text
+  const copyButtons = document.querySelectorAll('.copy-btn');
+  copyButtons.forEach(btn => {
+    // don’t overwrite the “Copied!” feedback
+    if (!btn.textContent.includes('Copied')) {
+      btn.innerHTML = `<i class="fas fa-copy"></i> ${translation.copyText}`;
+    }
+  });
+
+
+  const downloadButtons = document.querySelectorAll('.download-btn');
+  downloadButtons.forEach(btn => {
+    btn.innerHTML = `<i class="fas fa-download"></i> ${translation.downloadJSON}`;
+  });
+
 }

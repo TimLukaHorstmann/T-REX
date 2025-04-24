@@ -43,7 +43,11 @@ window.translationDict = {
     phi4Desc: "Great for table fact-checking",
     cogitoDesc: "Strong hybrid reasoning model",
     deepseekDesc: "Uses advanced reasoning",
-    gemma3Desc: "Lightweight & fast"
+    gemma3Desc: "Lightweight & fast",
+    copyText: "Copy",
+    copiedText: "Copied!",
+    downloadJSON: "Download JSON",
+    failedToCopy: "Failed to copy code."
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -86,7 +90,11 @@ window.translationDict = {
     phi4Desc: "Idéal pour la vérification des faits dans les tableaux",
     cogitoDesc: "Modèle de raisonnement hybride puissant",
     deepseekDesc: "Utilise un raisonnement avancé",
-    gemma3Desc: "Léger et rapide"
+    gemma3Desc: "Léger et rapide",
+    copyText: "Copier",
+    copiedText: "Copié !",
+    downloadJSON: "Télécharger JSON",
+    failedToCopy: "Échec de la copie du code."
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -129,7 +137,11 @@ window.translationDict = {
     phi4Desc: "Hervorragend für die Faktenprüfung von Tabellen",
     cogitoDesc: "Starkes hybrides Reasoning-Modell",
     deepseekDesc: "Nutzt fortgeschrittenes Reasoning",
-    gemma3Desc: "Leichtgewichtig & schnell"
+    gemma3Desc: "Leichtgewichtig & schnell",
+    copyText: "Kopieren",
+    copiedText: "Kopiert!",
+    downloadJSON: "JSON herunterladen",
+    failedToCopy: "Fehler beim Kopieren des Codes."
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -172,7 +184,11 @@ window.translationDict = {
     phi4Desc: "Excelente para la verificación de hechos en tablas",
     cogitoDesc: "Modelo de razonamiento híbrido fuerte",
     deepseekDesc: "Utiliza razonamiento avanzado",
-    gemma3Desc: "Ligero y rápido"
+    gemma3Desc: "Ligero y rápido",
+    copyText: "Copiar",
+    copiedText: "Copiado!",
+    downloadJSON: "Descargar JSON",
+    failedToCopy: "Error al copiar el código."
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -215,7 +231,11 @@ window.translationDict = {
     phi4Desc: "Ótimo para verificação de fatos em tabelas",
     cogitoDesc: "Modelo de raciocínio híbrido forte",
     deepseekDesc: "Usa raciocínio avançado",
-    gemma3Desc: "Leve e rápido"
+    gemma3Desc: "Leve e rápido",
+    copyText: "Copiar",
+    copiedText: "Copiado!",
+    downloadJSON: "Baixar JSON",
+    failedToCopy: "Falha ao copiar o código."
   },
   zh: {
     enterTable: "输入表格：",
@@ -258,7 +278,11 @@ window.translationDict = {
     phi4Desc: "非常适合表格事实核查",
     cogitoDesc: "强大的混合推理模型",
     deepseekDesc: "使用高级推理",
-    gemma3Desc: "轻量级且快速"
+    gemma3Desc: "轻量级且快速",
+    copyText: "复制",
+    copiedText: "已复制！",
+    downloadJSON: "下载 JSON",
+    failedToCopy: "复制代码失败。"
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -301,7 +325,11 @@ window.translationDict = {
     phi4Desc: "رائع للتحقق من صحة الحقائق في الجداول",
     cogitoDesc: "نموذج استدلال هجين قوي",
     deepseekDesc: "يستخدم الاستدلال المتقدم",
-    gemma3Desc: "خفيف الوزن وسريع"
+    gemma3Desc: "خفيف الوزن وسريع",
+    copyText: "نسخ",
+    copiedText: "تم النسخ!",
+    downloadJSON: "تنزيل JSON",
+    failedToCopy: "فشل في نسخ الكود."
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -344,6 +372,10 @@ window.translationDict = {
     phi4Desc: "Отлично подходит для проверки фактов в таблицах",
     cogitoDesc: "Сильная гибридная модель рассуждений",
     deepseekDesc: "Использует продвинутые рассуждения",
-    gemma3Desc: "Легковесный и быстрый"
+    gemma3Desc: "Легковесный и быстрый",
+    copyText: "Копировать",
+    copiedText: "Скопировано!",
+    downloadJSON: "Скачать JSON",
+    failedToCopy: "Не удалось скопировать код."
   }
 };

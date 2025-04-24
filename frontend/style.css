@@ -1223,7 +1223,7 @@
     padding: 10px 10px 60px 10px;
     border: 1px solid #ccc;
     transition: border-color 0.3s;
-    min-height: 150px;
+    /* min-height: 150px; */
     box-sizing: border-box;
   }
   textarea:focus {
@@ -1570,7 +1570,53 @@
     height: 14px;
   }
   
-  /* ======================================================
+  /* Add these styles for the JSON buttons */
+
+.json-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.json-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-small);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.copy-btn {
+  color: var(--color-btn-primary-bg);
+}
+
+.download-btn {
+  color: var(--color-btn-primary-bg);
+}
+
+.json-btn:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.copy-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Dark mode styles for JSON buttons */
+body.dark-mode .json-btn {
+  color: var(--color-correct);
+}
+
+body.dark-mode .json-btn:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+/* ======================================================
      LIVE RESULTS & FINAL VERDICT
      ====================================================== */
   #liveResults {
