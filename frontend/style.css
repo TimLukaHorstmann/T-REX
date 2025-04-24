@@ -445,6 +445,14 @@
     background: #e0e0e0;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-decoration: none;
+    color: var(--color-text);
+    display: inline-block;
+    font-size: var(--font-size-small);
+    font-family: Arial;
+    font-weight: 400;
+    line-height: normal;
+    text-align: center;
   }
   .mode-tab:first-child {
     border-left: 1px solid #ccc;
@@ -457,7 +465,7 @@
   }
   .mode-tab.active {
     background: var(--color-btn-primary-bg);
-    color: var(--color-header-text);
+    color: var(--color-btn-primary-text);
     border-color: var(--color-btn-primary-bg);
   }
   

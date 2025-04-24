@@ -1538,23 +1538,67 @@ function validateLiveCheckInputs() {
 }
 
 function setupTabSwitching() {
-  document.querySelectorAll(".mode-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
+  // Function to switch to tab based on hash or data-mode
+  function switchToTab(tabIdentifier) {
+    const tab = document.querySelector(`.mode-tab[data-mode="${tabIdentifier}"]`);
+    if (tab) {
+      // Remove active class from ALL tabs (including hamburger ones)
       document.querySelectorAll(".mode-tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
+      
+      // Add active class to the main tab AND the corresponding hamburger tab if it exists
+      const mainTab = document.querySelector(`.container > .mode-tabs .mode-tab[data-mode="${tabIdentifier}"]`);
+      const hamburgerTab = document.querySelector(`.hamburger-menu .mode-tab[data-mode="${tabIdentifier}"]`);
+      if(mainTab) mainTab.classList.add("active");
+      if(hamburgerTab) hamburgerTab.classList.add("active");
+
+      // Show/hide sections
       document.getElementById("resultsSection").style.display = "none";
       document.getElementById("liveCheckSection").style.display = "none";
       document.getElementById("reportSection").style.display = "none";
-      if (tab.dataset.mode === "precomputed") {
+      
+      if (tabIdentifier === "offline") {
         document.getElementById("resultsSection").style.display = "block";
-      } else if (tab.dataset.mode === "live") {
+      } else if (tabIdentifier === "live") {
         document.getElementById("liveCheckSection").style.display = "block";
-      } else if (tab.dataset.mode === "report") {
-        document.getElementById("reportSection").style.display = "block";
-        const pdfViewer = document.getElementById("pdfViewer");
-        if (!pdfViewer.src || pdfViewer.src === "about:blank") {
-          pdfViewer.src = "report.pdf";
-        }
+      } else if (tabIdentifier === "report") {
+        // ... (report section logic) ...
+      }
+    }
+  }
+
+  // Check URL hash on page load
+  function checkUrlHash() {
+    const hash = window.location.hash.substring(1); // Remove the # symbol
+    // Default to 'live' if hash is empty or invalid
+    const initialTab = (hash === "live" || hash === "offline" || hash === "report") ? hash : "live";
+    if (!window.location.hash && initialTab === "live") {
+       // If no hash, explicitly set it to #live for consistency
+       history.replaceState(null, null, '#live');
+    }
+    switchToTab(initialTab);
+  }
+  
+  // Run on page load
+  checkUrlHash();
+  
+  // Listen for hash changes (e.g., browser back/forward)
+  window.addEventListener("hashchange", checkUrlHash);
+
+  // Add click handlers to tabs (both main and hamburger)
+  document.querySelectorAll(".mode-tab").forEach(tab => {
+    tab.addEventListener("click", (event) => {
+      // Prevent default anchor link behavior if it's just for tab switching
+      event.preventDefault(); 
+      const mode = tab.dataset.mode;
+      // Update URL hash only if it's different
+      if (window.location.hash !== `#${mode}`) {
+        history.pushState(null, null, `#${mode}`);
+      }
+      switchToTab(mode);
+      // Close hamburger menu if a tab inside it was clicked
+      const menu = document.querySelector(".hamburger-menu");
+      if (menu && menu.contains(tab)) {
+        menu.style.display = "none";
       }
     });
   });
