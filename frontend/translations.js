@@ -47,7 +47,9 @@ window.translationDict = {
     copyText: "Copy",
     copiedText: "Copied!",
     downloadJSON: "Download JSON",
-    failedToCopy: "Failed to copy code."
+    failedToCopy: "Failed to copy code.",
+    selectModelHeader: "Select Model",
+    selectLanguageHeader: "Select Language"
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -94,7 +96,9 @@ window.translationDict = {
     copyText: "Copier",
     copiedText: "Copié !",
     downloadJSON: "Télécharger JSON",
-    failedToCopy: "Échec de la copie du code."
+    failedToCopy: "Échec de la copie du code.",
+    selectModelHeader: "Sélectionner le modèle",
+    selectLanguageHeader: "Sélectionner la langue"
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -141,7 +145,9 @@ window.translationDict = {
     copyText: "Kopieren",
     copiedText: "Kopiert!",
     downloadJSON: "JSON herunterladen",
-    failedToCopy: "Fehler beim Kopieren des Codes."
+    failedToCopy: "Fehler beim Kopieren des Codes.",
+    selectModelHeader: "Modell auswählen",
+    selectLanguageHeader: "Sprache auswählen"
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -188,7 +194,9 @@ window.translationDict = {
     copyText: "Copiar",
     copiedText: "Copiado!",
     downloadJSON: "Descargar JSON",
-    failedToCopy: "Error al copiar el código."
+    failedToCopy: "Error al copiar el código.",
+    selectModelHeader: "Seleccionar modelo",
+    selectLanguageHeader: "Seleccionar idioma"
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -235,7 +243,9 @@ window.translationDict = {
     copyText: "Copiar",
     copiedText: "Copiado!",
     downloadJSON: "Baixar JSON",
-    failedToCopy: "Falha ao copiar o código."
+    failedToCopy: "Falha ao copiar o código.",
+    selectModelHeader: "Selecionar Modelo",
+    selectLanguageHeader: "Selecionar Idioma"
   },
   zh: {
     enterTable: "输入表格：",
@@ -282,7 +292,9 @@ window.translationDict = {
     copyText: "复制",
     copiedText: "已复制！",
     downloadJSON: "下载 JSON",
-    failedToCopy: "复制代码失败。"
+    failedToCopy: "复制代码失败。",
+    selectModelHeader: "选择模型",
+    selectLanguageHeader: "选择语言"
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -329,7 +341,9 @@ window.translationDict = {
     copyText: "نسخ",
     copiedText: "تم النسخ!",
     downloadJSON: "تنزيل JSON",
-    failedToCopy: "فشل في نسخ الكود."
+    failedToCopy: "فشل في نسخ الكود.",
+    selectModelHeader: "حدد النموذج",
+    selectLanguageHeader: "حدد اللغة"
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -376,6 +390,8 @@ window.translationDict = {
     copyText: "Копировать",
     copiedText: "Скопировано!",
     downloadJSON: "Скачать JSON",
-    failedToCopy: "Не удалось скопировать код."
+    failedToCopy: "Не удалось скопировать код.",
+    selectModelHeader: "Выберите модель",
+    selectLanguageHeader: "Выберите язык"
   }
 };

@@ -2684,6 +2684,16 @@ function updateTranslations() {
     }
   });
 
+  // Update modal headers
+  const modelModalHeader = document.querySelector("#modelModal .model-modal-content h3");
+  if (modelModalHeader) {
+    modelModalHeader.textContent = translation.selectModelHeader;
+  }
+  const languageModalHeader = document.querySelector("#languageModal .language-modal-content h3");
+  if (languageModalHeader) {
+    languageModalHeader.textContent = translation.selectLanguageHeader;
+  }
+
   // Table Section
   const tableHeading = document.querySelector(".table-input-group h3");
   if (tableHeading) tableHeading.textContent = translationDict[lang].enterTable;
