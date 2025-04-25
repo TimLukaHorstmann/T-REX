@@ -3,7 +3,7 @@ import json
 import httpx
 from fastapi import HTTPException
 from schemas import GenerateRequest
-from utils import csv_to_markdown
+from utils import csv_to_naturalized
 import re
 
 # Map language codes to full names for better model understanding
@@ -55,18 +55,18 @@ def build_prompt(req: GenerateRequest) -> str:
     headers = ["row_index"] + table_data[0]
     indexed_rows = [headers] + [[str(i)] + row for i, row in enumerate(table_data[1:])]
 
-    # Joining the rows
+    # Joining the rows for naturalization
     indexed_csv = "\n".join(delimiter.join(row) for row in indexed_rows)
-    table_md = csv_to_markdown(indexed_csv)
+    table_description = csv_to_naturalized(indexed_csv)
 
-    prompt += f"#### Table (Markdown):\n{table_md}\n\n"
+    prompt += f"#### Table (Naturalized):\n{table_description}\n\n"
     prompt += f"#### Claim:\n\"{req.claimText}\"\n\n"
     prompt += "Instructions:\n"
     prompt += "- Use the 'row_index' column (starting at 0 for the first data row, excluding header) to identify rows.\n"
     prompt += "- Match column names exactly as they appear in the table, including case and spacing.\n"
     prompt += f"- Provide your explanation and reasoning in {language_name}.\n"
     prompt += "- When writing mathematical expressions, always enclose them in dollar signs ($) for inline math (e.g., $x^2 + y^2$) or double dollar signs ($$) for display math (e.g., $$\\frac{a}{b}$$).\n"
-    prompt += f"- After your explanation, output a final answer in valid JSON format:\n"
+    prompt += "- After your explanation, output a final answer in valid JSON format:\n"
     prompt += '{"answer": "TRUE" or "FALSE", "relevant_cells": [{"row_index": int, "column_name": "str"}]}\n'
     prompt += "- Ensure row_index corresponds to the 'row_index' column value, not the physical row number in the table.\n"
     

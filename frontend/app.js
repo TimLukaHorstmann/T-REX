@@ -520,8 +520,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Setup thinking toggle button
-    const thinkingToggleText = document.getElementById("thinkingToggleText");
-    
     if (thinkingToggleButton) {
       thinkingToggleButton.addEventListener("click", function() {
         this.classList.toggle("active");
