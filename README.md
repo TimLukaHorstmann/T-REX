@@ -28,23 +28,6 @@ T-REX is presented as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpk
 
 Existing table fact-checking solutions often lack intuitive interaction and transparency regarding their internal reasoning. T-REX addresses this gap by providing users immediate, explainable insights into why a claim is entailed or refuted by tabular data, facilitating both trust and usability in practical scenarios.
 
-## 🔍 How does T-REX compare?
-
-Here's a comparison of T-REX with some other comparable table fact-checking and question-answering tools:
-
-| Tool (link) | Year | Live Demo / UI | Real-time* | Table Upload | OCR / Image | Evidence Viz† | LLM Backend | Code Open? |
-|-------------|:----:|:--------------:|:----------:|:------------:|:-----------:|:-------------:|:-----------:|:----------:|
-| **T-REX (ours)**<br>[Demo](https://t-rex.r2.enst.fr/) | 2025 | ✅ [Live](https://t-rex.r2.enst.fr/) | ✅ stream | ✅ CSV / text / image (OCR) | ✅ Tesseract & Granite 3.2 | ✅ cell highlighting & reasoning stream | Phi-4, DeepSeek-R1, Cogito v1, Gemma3 | ✅ |
-| **OpenTFV**<br>[Paper](https://doi.org/10.1145/3514221.3520163) | 2022 | ⚠️ Video demos only (no public UI) | ⚠️ async | ✅ CSV, JSON, PDF | ❌ | ✅ NL interp. & entity linking | BERT, TAPAS | ❌ |
-| **Aletheia**<br>[Paper](https://doi.org/10.1145/3654777.3676359) | 2024 | ⚠️ No public demo available | ⚠️ async | ❌ fixed datasets only | ❌ | ✅ interactive tables & D3 viz | Proprietary GPT-3.5/4  | ❌ |
-| **HF Space (J. Simon)**<br>[Demo](https://huggingface.co/spaces/juliensimon/table_questions) | 2023 | ⚠️ Hosted on HF Spaces but not working | ✅ immediate | ✅ CSV upload | ❌ | ❌ | TAPAS (open-source) | ✅ |
-| **RePanda**<br>[Paper](https://arxiv.org/abs/2503.11921) | 2025 | ❌ CLI only | ❌ offline | ✅ via Pandas API | ❌ | ✅ executable query scripts | Distilled Llama-7B | ✅ |
-| **TabVer**<br>[Paper](https://arxiv.org/abs/2411.01093) | 2024 | ❌ CLI only | ❌ offline | ✅ | ❌ | ✅ natural-logic proofs | LLM-generated expressions | ✅ |
-| **TART**<br>[Paper](https://arxiv.org/abs/2306.07536) | 2023 | ❌ CLI only | ❌ offline | ✅ | ❌ | ❌ | Plugin-based reasoning | ✅ |
-
-\* **Real-time** = immediate verdict; “stream” means token-level reasoning.  
-† **Evidence Viz** = visual or structured justification beyond a plain label.
-
 ## 📋 Usage
 
 ### Live Fact-Checking
@@ -192,8 +175,25 @@ Institut Polytechnique de Paris
 
 <br>
 <br>
-<br>
-<br>
+
+---
+
+## 🔍 How does T-REX compare?
+
+Here's a comparison of T-REX with some other comparable table fact-checking and question-answering tools:
+
+| Tool (link) | Year | Live Demo / UI | Real-time* | Table Upload | OCR / Image | Evidence Viz† | LLM Backend | Code Open? |
+|-------------|:----:|:--------------:|:----------:|:------------:|:-----------:|:-------------:|:-----------:|:----------:|
+| **T-REX (ours)**<br>[Demo](https://t-rex.r2.enst.fr/) | 2025 | ✅ [Live](https://t-rex.r2.enst.fr/) | ✅ streaming | ✅ CSV / text / image (OCR) | ✅ Tesseract & Granite 3.2 | ✅ cell highlighting & reasoning stream | Phi-4, DeepSeek-R1, Cogito v1, Gemma3 | ✅ |
+| **OpenTFV**<br>[Paper](https://doi.org/10.1145/3514221.3520163) | 2022 | ⚠️ Prototype UI (conference demo; no public deployment) | ✅ immediate synchronous | ✅ CSV, JSON, PDF | ❌ | ✅ NL interp. & entity linking | TAPAS & LPA | ❌ |
+| **Aletheia**<br>[Paper](https://doi.org/10.1145/3654777.3676359) | 2024 | ⚠️ No public demo available | ⚠️ async | ❌ fixed datasets only | ❌ | ✅ interactive tables & visualizations | Proprietary LLMs GPT-3.5/4  | ❌ |
+| **HF Space (J. Simon)**<br>[Demo](https://huggingface.co/spaces/juliensimon/table_questions) | 2023 | ⚠️ HF Space (runtime errors) | ✅ immediate | ✅ CSV upload | ❌ | ❌ | TAPAS | ✅ |
+| **RePanda**<br>[Paper](https://arxiv.org/abs/2503.11921) | 2025 | ❌ CLI only | ❌ offline | ✅ via Pandas API | ❌ | ✅ executable query scripts | Llama-7B | ✅ |
+| **TabVer**<br>[Paper](https://arxiv.org/abs/2411.01093) | 2024 | ❌ CLI only | ❌ offline | ✅ code-based ingestion | ❌ | ✅ natural-logic proofs | LLM-generated expressions | ✅ |
+| **TART**<br>[Paper](https://arxiv.org/abs/2306.07536) | 2023 | ❌ CLI only | ❌ offline | ✅ | ❌ | ❌ | Plugin-based reasoning | ✅ |
+
+\* **Real-time** = immediate verdict; “stream” means token-level reasoning.  
+† **Evidence Viz** = visual or structured justification beyond a plain label.
 
 ---
 
@@ -207,18 +207,18 @@ Performance comparison of different models on the TabFact dataset as reported by
 | Dater [Ye et al., 2023](http://arxiv.org/abs/2301.13808) | 93.0 | - | 2023 |
 *Human Performance: ≈ 92% [Chen et al., 2020](https://openreview.net/forum?id=rkeJRhNYDH)*
 | PASTA [Gu et al., 2022](https://aclanthology.org/2022.emnlp-main.331) | 89.3 | 89.2 | 2022 |
-| Phi4 (Zero Shot) [Abdin et al., 2024](http://arxiv.org/abs/2412.08905) | 88.9 | - | 2024 |
+| Phi4 (Zero Shot) (Ours) | 88.9 | - | 2024 |
 | UL-20B [Tay et al., 2023](http://arxiv.org/abs/2205.05131) | 87.1 |  | 2022 |
 | Chain-of-Table [Wang et al., 2024](http://arxiv.org/abs/2401.04398) | 86.6 | - | 2024 |
 | Binder [Cheng et al., 2023](http://arxiv.org/abs/2210.02875) | 86.0 | - | 2022 |
 | Tab-PoT [Xiao et al., 2024](http://arxiv.org/abs/2406.10382) | 85.8 | - | 2024 |
-| Phi4 (RAG Approach) [Abdin et al., 2024](http://arxiv.org/abs/2412.08905) | 85.7 | - | 2024 |
+| Phi4 (RAG Approach) (Ours) | 85.7 | - | 2024 |
 | ReasTAP-Large [Zhao et al., 2022](http://arxiv.org/abs/2210.12374) | 84.9 | 84.6 | 2022 |
 | TAPEX-Large [Liu et al., 2022](http://arxiv.org/abs/2107.07653) | 84.2 | 84.6 | 2021 |
 | T5-3b (UnifiedSKG) [Xie et al., 2022](http://arxiv.org/abs/2201.05966) | 83.7 | 84.0 | 2022 |
 | DecompTAPAS [Yang et al., 2021](https://aclanthology.org/2021.findings-emnlp.90/) | 82.7 | 82.7 | 2021 |
 | Salience-aware TAPAS [Wang et al., 2021](https://arxiv.org/abs/2109.04053) | 82.1 | 82.7 | 2021 |
-| Phi4 (Code Generation) [Abdin et al., 2024](http://arxiv.org/abs/2412.08905) | 81.9 | - | 2024 |
+| Phi4 (Code Generation) (Ours) | 81.9 | - | 2024 |
 | TAPAS-Large classifier with Counterfactual + Synthetic pre-training [Eisenschlos et al., 2020](http://arxiv.org/abs/2010.00571) | 81.0 | 81.0 | 2020 |
 | ProgVGAT [Yang et al., 2021](http://arxiv.org/abs/2010.03084) | 74.4 | 74.9 | 2020 |
 | SAT [Zhang et al., 2020](https://aclanthology.org/2020.emnlp-main.126) | 73.2 | 73.3 | 2020 |
