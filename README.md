@@ -203,7 +203,7 @@ Performance comparison of different models on the TabFact dataset as reported by
 
 | Model | Test Accuracy (%) | Validation Accuracy (%) | Year |
 |-------|-------------------|-------------------------|------|
-| ARTEMIS-DA [Hussain et al., 2024](http://arxiv.org/abs/2412.14146) | 93.1 | - | 2024 |
+| ARTEMIS-DA [Hussain et al., 2024](http://arxiv.org/abs/2412.14146) | 93.1 (on test-small) | - | 2024 |
 | Dater [Ye et al., 2023](http://arxiv.org/abs/2301.13808) | 93.0 | - | 2023 |
 *Human Performance: ≈ 92% [Chen et al., 2020](https://openreview.net/forum?id=rkeJRhNYDH)*
 | PASTA [Gu et al., 2022](https://aclanthology.org/2022.emnlp-main.331) | 89.3 | 89.2 | 2022 |
