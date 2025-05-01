@@ -4,19 +4,19 @@
 </h1>
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit-blue.svg)](https://t-rex.r2.enst.fr/)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/naptha/tesseract.js/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/TimLukaHorstmann/T-REX/graphs/commit-activity) 
 [![License: Custom NC](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE)
 
 
-**T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging state-of-the-art instruction-tuned reasoning Large Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant table cells.
+**T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging state-of-the-art instruction-tuned reasoning Large Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant tble cells.
 
 ## 🚀 Key Features
 
-- **Live Fact-Checking**: Paste or upload your own tables in CSV format, paste or upload images, or select tables directly from the TabFact dataset.
+- **Live Fact-Checking**: Paste or upload CSV tables or images (OCR), or select from the TabFact dataset.
 - **Multiple LLMs:** Support for multiple models including Phi-4, Cogito, DeepSeek-R1, and Gemma3.
 - **Visual Explainability:** Highlights cells identified by the model as relevant for the verification.
 - **Precomputed Results Exploration:** Explore results from various LLMs on the TabFact benchmark dataset with performance metrics and intuitive visualizations.
-- **Multilingual Support:** Fact-check in eight different languages: 
+- **Multilingual Support:** English, French, German, Spanish, Portuguese, Chinese, Arabic, Russian  
 
 ## 🖥️ Demo
 
@@ -27,45 +27,28 @@ T-REX is submitted as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpk
 🎬 **Watch the video demo:**  
 [![Watch the video](https://img.youtube.com/vi/HHIxVCOT8X0/0.jpg)](https://www.youtube.com/watch?v=HHIxVCOT8X0)
 
-## 🎯 Motivation
-
-Existing table fact-checking solutions often lack intuitive interaction and transparency regarding their internal reasoning. T-REX addresses this gap by providing users immediate, explainable insights into why a claim is entailed or refuted by tabular data, facilitating both trust and usability in practical scenarios.
-
 ## 📋 Usage
 
-### Live Fact-Checking
-
-- Select from multiple LLMs, input or upload a CSV table (or image for OCR), and submit your claim.
-- Receive live results and visual explanations indicating entailment or refutation.
-
-## 🖥 Demo
-
-T-REX offers three primary interaction modes:
-
-1. **Live Table Fact-Checking:**
+### Live Table Fact-Checking:
    - Input custom CSV-formatted tables directly or via file/image upload (with OCR support).
    - Enter custom claims or select pre-existing claims from the TabFact dataset.
    - Real-time inference with streaming outputs from supported LLMs.
 
-2. **Precomputed Results:**
+### Precomputed Results:
    - Analyze comprehensive benchmark results from various models (e.g., DeepSeek‑R1, Gemma3, Llama, etc.) on the TabFact dataset.
    - Detailed visual analytics, including confusion matrices and performance summaries.
-
-3. **Report View:**
-   - View in-depth project insights and methodology explanations via a built-in PDF viewer.
 
 ## 🔧 Technology Stack
 
 - **Frontend:** HTML, CSS, JavaScript, Plotly.js, Chart.js, Choices.js
 - **Backend:** Python, FastAPI, Uvicorn
 - **Inference Engine:** Ollama
-- **LLMs:** phi4, deepseek-r1, gemma3, cogito
-- **OCR:** Tesseract, Ollama (Granite Vision)
-- **Dataset:** TabFact
+- **LLMs:** Phi-4 (14B), Cogito v1 Preview (8B), DeepSeek-R1-Distill-Qwen-7B (7B), and Gemma 3 (4B)
+- **OCR:** Tesseract, Granite3.2-vision (Ollama) 
 
 ## 📚 Dataset & Credits
 
-T-REX is built upon the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) dataset and benchmark by Wenhuchen et al. For more details, please refer to the original paper:
+T-REX uses the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) dataset by Wenhuchen et al. For more details, please refer to the original paper:
 
 > **TabFact: A Large-scale Dataset for Table-based Fact Verification**  
 > Wenhuchen et al., ICLR 2020.  

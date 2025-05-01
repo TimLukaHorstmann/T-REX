@@ -331,11 +331,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-
+    setupTabSwitching();
     await fetchTotalExamplesClaims();
     await fetchFullCleaned();
     addLoadButtonListener();
-    setupTabSwitching();
     setupLiveCheckEvents();
 
     const fileUpload = document.getElementById("fileUpload");
