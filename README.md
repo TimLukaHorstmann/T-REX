@@ -20,9 +20,12 @@
 
 ## 🖥️ Demo
 
-T-REX is presented as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
+T-REX is submitted as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
 
 **Experience the live demo here: [https://t-rex.r2.enst.fr/](https://t-rex.r2.enst.fr/)**
+
+🎬 **Watch the video demo:**  
+[![Watch the video](https://img.youtube.com/vi/HHIxVCOT8X0/0.jpg)](https://www.youtube.com/watch?v=HHIxVCOT8X0)
 
 ## 🎯 Motivation
 
