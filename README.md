@@ -8,15 +8,15 @@
 [![License: Custom NC](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE)
 
 
-**T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging advanced Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant table cells.
+**T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging state-of-the-art instruction-tuned reasoning Large Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant table cells.
 
 ## 🚀 Key Features
 
-- **Live Fact-Checking**: Paste or upload your own tables in CSV format, upload images, or select tables directly from the TabFact dataset.
-- **Multiple LLM Backends:** Support for multiple models including Phi-4, Cogito, DeepSeek-R1, and Gemma3.
-- **Visual Explainability:** Highlights cells identified by the model and entity-linked cells from the original TabFact dataset.
+- **Live Fact-Checking**: Paste or upload your own tables in CSV format, paste or upload images, or select tables directly from the TabFact dataset.
+- **Multiple LLMs:** Support for multiple models including Phi-4, Cogito, DeepSeek-R1, and Gemma3.
+- **Visual Explainability:** Highlights cells identified by the model as relevant for the verification.
 - **Precomputed Results Exploration:** Explore results from various LLMs on the TabFact benchmark dataset with performance metrics and intuitive visualizations.
-- **Multilingual Support:** Fact-check in English, French, and German.
+- **Multilingual Support:** Fact-check in eight different languages: 
 
 ## 🖥️ Demo
 
