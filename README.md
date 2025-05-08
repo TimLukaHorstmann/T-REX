@@ -122,19 +122,6 @@ The steps above describe a basic local development setup. For deploying T-REX to
 
 These production deployment steps are environment-specific and beyond the scope of this basic setup guide.
 
-## 📄 Citation
-
-If you use this project, please cite our demo paper (submitted to ECML-PKDD 2025):
-
-```bibtex
-@inproceedings{horstmann2025trex,
-  title={T-REX: Table - Refute or Entail eXplainer},
-  author={Horstmann, Tim Luka and Geisenberger, Baptiste and Alam, Mehwish},
-  booktitle={Proceedings of the ECML-PKDD Demo Track},
-  year={2025}
-}
-```
-
 ## 📄 License
 
 This software is released under a **Custom Non-Commercial License**.  
