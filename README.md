@@ -20,7 +20,7 @@
 
 ## 🖥️ Demo
 
-T-REX is submitted as a demo paper at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
+T-REX got accepted at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
 
 **Experience the live demo here: [https://t-rex.r2.enst.fr/](https://t-rex.r2.enst.fr/)**
 
