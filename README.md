@@ -122,6 +122,28 @@ The steps above describe a basic local development setup. For deploying T-REX to
 
 These production deployment steps are environment-specific and beyond the scope of this basic setup guide.
 
+## 📖 Citation
+
+If you use **T-REX** in academic work, please cite our ECML-PKDD 2025 demo paper:
+
+```bibtex
+@inproceedings{Horstmann2025TREX,
+  author    = {Tim~Luka Horstmann and Baptiste Geisenberger
+               and Mehwish Alam},
+  title     = {{T\mbox{-}REX}: Table - Refute or Entail eXplainer},
+  booktitle = {Machine Learning and Knowledge Discovery in Databases.
+               Demo Track, European Conference, ECML~PKDD 2025, Porto,
+               Portugal, September 15–19 2025, Proceedings},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {**to appear**},
+  year      = {2025},
+  publisher = {Springer, Cham},
+  pages     = {**to appear**},
+  doi       = {**to appear**},
+  url       = {**to appear**}
+}
+```
+
 ## 📄 License
 
 This software is released under a **Custom Non-Commercial License**.  
