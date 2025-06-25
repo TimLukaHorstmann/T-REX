@@ -1599,6 +1599,26 @@ function setupTabSwitching() {
       }
     });
   });
+
+  // Hamburger menu toggle
+  const hamburgerBtn = document.querySelector(".hamburger");
+  const hamburgerMenu = document.querySelector(".hamburger-menu");
+  
+  if (hamburgerBtn && hamburgerMenu) {
+    hamburgerBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isVisible = hamburgerMenu.style.display === "block";
+      hamburgerMenu.style.display = isVisible ? "none" : "block";
+    });
+
+    // Close hamburger menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!hamburgerBtn.contains(e.target) && !hamburgerMenu.contains(e.target)) {
+        hamburgerMenu.style.display = "none";
+      }
+    });
+  }
 }
 
 function renderMarkdownAndMath(markdownText, containerElement) {

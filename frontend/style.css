@@ -373,30 +373,42 @@
      ====================================================== */
   .hamburger-menu {
     display: none;
-    background: #2c3e50;
+    background: var(--color-controls-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
     position: absolute;
     top: 100%;
     right: 0;
-    width: 200px;
+    width: 250px;
     padding: 1rem;
     z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   .hamburger-menu .mode-tabs {
     flex-direction: column;
     margin-bottom: 1rem;
   }
   .hamburger-menu .mode-tab {
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-surface);
+    transition: background-color 0.2s ease;
+  }
+  .hamburger-menu .mode-tab:hover {
+    background: var(--color-controls-bg);
+  }
+  .hamburger-menu .mode-tab.active {
+    background: var(--color-primary);
+    color: white;
   }
   .hamburger-menu .mode-tab.how-to-use-mobile {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    color: white;
-    text-decoration: none;
   }
   .hamburger-menu .mode-tab.how-to-use-mobile i {
     font-size: 1rem;
@@ -1911,6 +1923,25 @@ body.dark-mode .json-btn:hover {
   /* ======================================================
      MEDIA QUERIES
      ====================================================== */
+  @media (max-width: 768px) {
+    .header-right .hamburger {
+      display: block !important;
+    }
+    .header-right .how-to-use-btn {
+      display: none !important;
+    }
+    .mode-tabs:not(.hamburger-menu .mode-tabs) {
+      display: none;
+    }
+    .mode-tabs {
+      display: none;
+    }
+    .hamburger-menu .mode-tabs {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
   @media (max-width: 600px) {
     header {
       padding: 0.8rem;
@@ -1949,22 +1980,6 @@ body.dark-mode .json-btn:hover {
       right: 0%;
       top: 50%;
       transform: translateY(-50%);
-    }
-    .hamburger {
-      display: block;
-    }
-    .how-to-use-btn {
-      display: none;
-    }
-    .mode-tabs:not(.hamburger-menu .mode-tabs) {
-      display: none;
-    }
-    .mode-tabs {
-      display: none;
-    }
-    .hamburger-menu .mode-tabs {
-      display: flex;
-      flex-direction: column;
     }
     .hamburger-menu .dark-mode-switch label {
       width: 50px;
@@ -2141,7 +2156,7 @@ font-size: 1rem;
 }
 
 @media (max-width: 768px) {
-.how-to-use-text {
+.how-to-use-btn {
 display: none;
 }
 }
@@ -2156,6 +2171,13 @@ display: none;
   color: var(--color-header-text);
   font-size: 1.5rem;
   cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ======================================================
@@ -2204,4 +2226,17 @@ display: none;
 
 body.dark-mode .report-header {
   background: var(--color-dark-controls-bg);
+}
+
+/* Force hamburger visibility on mobile screens */
+@media screen and (max-width: 768px) {
+  .header-right .hamburger {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .header-right .how-to-use-btn {
+    display: none !important;
+  }
 }
