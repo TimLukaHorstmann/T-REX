@@ -36,14 +36,24 @@
         </div>
       </div>
   
-      <!-- Right: Hamburger menu -->
-      <button class="hamburger" aria-label="Menu">☰</button>
+      <!-- Right: How to Use button and Hamburger menu -->
+      <div class="header-right">
+        <a href="https://www.youtube.com/watch?v=HHIxVCOT8X0" target="_blank" class="how-to-use-btn" title="How to Use T-REX">
+          <i class="fa-solid fa-question-circle"></i>
+          <span class="how-to-use-text">How to Use</span>
+        </a>
+        <button class="hamburger" aria-label="Menu">☰</button>
+      </div>
     </div>
     <nav class="hamburger-menu" style="display: none;">
       <div class="mode-tabs">
         <a href="#live" class="mode-tab" data-mode="live">Live Table Fact-Checking</a>
         <a href="#offline" class="mode-tab" data-mode="offline">Precomputed Table Fact-Checking Results</a>
-        <!-- <a href="#report" class="mode-tab" data-mode="report">Report</a> -->
+        <a href="#report" class="mode-tab" data-mode="report">Research Paper</a>
+        <a href="https://www.youtube.com/watch?v=HHIxVCOT8X0" target="_blank" class="mode-tab how-to-use-mobile">
+          <i class="fa-solid fa-question-circle"></i>
+          How to Use
+        </a>
       </div>
     </nav>
   </header>
@@ -53,7 +63,7 @@
     <div class="mode-tabs">
       <a href="#live" class="mode-tab" data-mode="live">Live Table Fact-Checking</a>
       <a href="#offline" class="mode-tab" data-mode="offline">Precomputed Table Fact-Checking Results</a>
-      <!-- <a href="#report" class="mode-tab" data-mode="report">Report</a> -->
+      <a href="#report" class="mode-tab" data-mode="report">Research Paper</a>
     </div>
 
     <!-- Precomputed Results Section -->
@@ -228,6 +238,9 @@
                   <option id="tesseractEngine" value="tesseract">Tesseract OCR</option>
                 </select>
               </div>
+              <div class="file-size-note">
+                <span id="fileSizeText">CSV max file size: 2MB</span>
+              </div>
               <input type="file" id="imageUpload" accept="image/*" style="display:none;">
             </div>
           </div>
@@ -345,14 +358,24 @@
         </svg>
       </button>
       <div id="statusMessage"></div>
-      <p id="aiDisclaimer" class="disclaimer">AI-generated, for reference only</p>
+      <p id="aiDisclaimer" class="disclaimer">T-REX provides automated claim verification and may oversimplify complex or sensitive claims. Please interpret the results with care.</p>
       <p id="liveCheckInfo" class="disclaimer">Live check uses our backend inference service.</p>
     </section>
 
     <!-- Report Section -->
     <section id="reportSection" class="results-section" style="display: none;">
+      <div class="report-header">
+        <h2>Research Paper</h2>
+        <p>T-REX: Table - Refute or Entail eXplainer</p>
+        <div class="paper-links">
+          <a href="https://arxiv.org/abs/YOUR_ARXIV_ID" target="_blank" class="btn-primary">
+            <i class="fa-solid fa-external-link-alt"></i>
+            View on ArXiv
+          </a>
+        </div>
+      </div>
       <div class="pdf-container">
-        <iframe id="pdfViewer" width="100%" height="800px"></iframe>
+        <iframe id="pdfViewer" src="documents/paper.pdf" width="100%" height="800px"></iframe>
       </div>
     </section>
   </main>
@@ -370,6 +393,9 @@
       <p class="github-link">
         <a href="https://github.com/TimLukaHorstmann/T-REX" target="_blank" title="View source on GitHub">
           <i class="fab fa-github"></i>
+        </a>
+        <a href="https://www.youtube.com/watch?v=HHIxVCOT8X0" target="_blank" title="Watch demo video">
+          <i class="fab fa-youtube"></i>
         </a>
       </p>
     </div>

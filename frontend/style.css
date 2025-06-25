@@ -371,18 +371,6 @@
   /* ======================================================
      HAMBURGER MENU
      ====================================================== */
-  .hamburger {
-    position: absolute;
-    display: none;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--color-header-text);
-    font-size: 1.5rem;
-    cursor: pointer;
-  }
   .hamburger-menu {
     display: none;
     background: #2c3e50;
@@ -401,6 +389,17 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     margin-bottom: 0.5rem;
+  }
+  .hamburger-menu .mode-tab.how-to-use-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: white;
+    text-decoration: none;
+  }
+  .hamburger-menu .mode-tab.how-to-use-mobile i {
+    font-size: 1rem;
   }
   .hamburger-menu .dark-mode-switch {
     position: static;
@@ -1345,6 +1344,16 @@
     font-size: 0.6rem;
     border: none;
   }
+  .file-size-note {
+    font-size: 0.6rem;
+    color: #666;
+    margin-top: 0.3rem;
+    text-align: left;
+  }
+  
+  body.dark-mode .file-size-note {
+    color: #bbb;
+  }
   
   /* ======================================================
      LIVE STREAM OUTPUT
@@ -1751,14 +1760,20 @@ body.dark-mode .json-btn:hover {
     text-decoration: none;
     color: inherit;
     transition: opacity 0.2s;
+    margin: 0 0.3rem;
   }
   .github-link a:hover {
     opacity: 0.8;
   }
-  .github-link .fa-github {
+  .github-link .fa-github,
+  .github-link .fa-youtube {
     font-size: 1.2rem;
     vertical-align: middle;
   }
+  
+  /* ======================================================
+     PDF CONTAINER STYLES
+     ====================================================== */
   .pdf-container {
     width: 100%;
     height: 800px;
@@ -1937,7 +1952,9 @@ body.dark-mode .json-btn:hover {
     }
     .hamburger {
       display: block;
-      justify-self: end;
+    }
+    .how-to-use-btn {
+      display: none;
     }
     .mode-tabs:not(.hamburger-menu .mode-tabs) {
       display: none;
@@ -2091,3 +2108,100 @@ body.dark-mode .json-btn:hover {
     background-color: var(--color-dark-input-bg);
     color: var(--color-dark-text);
   }
+  
+  /* ======================================================
+   HEADER STYLES - How to Use Button
+   ====================================================== */
+.header-right {
+  position: absolute;
+right: 10px;
+top: 50%;
+transform: translateY(-50%);
+display: flex;
+align-items: center;
+gap: 1rem;
+}
+
+.how-to-use-btn {
+display: flex;
+align-items: center;
+gap: 0.4rem;
+text-decoration: none;
+color: var(--color-header-text);
+font-size: 0.85rem;
+transition: opacity 0.2s;
+}
+
+.how-to-use-btn:hover {
+opacity: 0.8;
+}
+
+.how-to-use-btn i {
+font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+.how-to-use-text {
+display: none;
+}
+}
+
+/* ======================================================
+   HAMBURGER MENU
+   ====================================================== */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-header-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* ======================================================
+   REPORT SECTION STYLES
+   ====================================================== */
+.report-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--color-controls-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.report-header h2 {
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.report-header p {
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.paper-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.paper-links .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.paper-links .btn-primary i {
+  font-size: 1rem;
+}
+
+body.dark-mode .report-header {
+  background: var(--color-dark-controls-bg);
+}

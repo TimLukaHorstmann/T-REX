@@ -31,7 +31,8 @@ window.translationDict = {
     answerLabel: "Answer",
     trueLabel: "True",
     falseLabel: "False",
-    aiDisclaimer: "AI-generated, for reference only",
+    aiDisclaimer: "T-REX provides automated claim verification and may oversimplify complex or sensitive claims. Please interpret the results with care.",
+    fileSizeText: "CSV max file size: 2MB",
     liveCheckInfo: "Live check uses our backend inference service. Translations were generated automatically and may contain errors.",
     queuedMessage: "Your request is queued, please wait...",
     networkError: "Network error:",
@@ -49,7 +50,8 @@ window.translationDict = {
     downloadJSON: "Download JSON",
     failedToCopy: "Failed to copy code.",
     selectModelHeader: "Select Model",
-    selectLanguageHeader: "Select Language"
+    selectLanguageHeader: "Select Language",
+    researchPaperTab: "Research Paper"
   },
   fr: {
     enterTable: "Entrez le tableau :",
@@ -80,7 +82,8 @@ window.translationDict = {
     answerLabel: "Réponse",
     trueLabel: "Vrai",
     falseLabel: "Faux",
-    aiDisclaimer: "Généré par l'IA, à titre de référence uniquement",
+    aiDisclaimer: "T-REX fournit une vérification automatisée des réclamations et peut simplifier à l'excès les réclamations complexes ou sensibles. Veuillez interpréter les résultats avec prudence.",
+    fileSizeText: "Taille maximale fichier CSV : 2 Mo",
     liveCheckInfo: "La vérification en direct utilise notre service d'inférence backend. Les traductions ont été générées automatiquement et peuvent contenir des erreurs.",
     queuedMessage: "Votre demande est en file d'attente, veuillez patienter...",
     networkError: "Erreur réseau:",
@@ -98,7 +101,8 @@ window.translationDict = {
     downloadJSON: "Télécharger JSON",
     failedToCopy: "Échec de la copie du code.",
     selectModelHeader: "Sélectionner le modèle",
-    selectLanguageHeader: "Sélectionner la langue"
+    selectLanguageHeader: "Sélectionner la langue",
+    researchPaperTab: "Article de Recherche"
   },
   de: {
     enterTable: "Tabelle eingeben:",
@@ -129,7 +133,8 @@ window.translationDict = {
     answerLabel: "Antwort",
     trueLabel: "Wahr",
     falseLabel: "Falsch",
-    aiDisclaimer: "Von KI generiert, nur zur Orientierung",
+    aiDisclaimer: "T-REX bietet automatisierte Behauptungsverifikation und kann komplexe oder sensible Behauptungen zu stark vereinfachen. Bitte interpretieren Sie die Ergebnisse mit Vorsicht.",
+    fileSizeText: "Maximale CSV-Dateigröße: 2 MB",
     liveCheckInfo: "Die Live-Überprüfung verwendet unseren Backend-Inferenzdienst. Übersetzungen wurden automatisch generiert und können Fehler enthalten.",
     queuedMessage: "Ihre Anfrage befindet sich in der Warteschlange, bitte warten...",
     networkError: "Netzwerkfehler:",
@@ -147,7 +152,8 @@ window.translationDict = {
     downloadJSON: "JSON herunterladen",
     failedToCopy: "Fehler beim Kopieren des Codes.",
     selectModelHeader: "Modell auswählen",
-    selectLanguageHeader: "Sprache auswählen"
+    selectLanguageHeader: "Sprache auswählen",
+    researchPaperTab: "Forschungsarbeit"
   },
   es: {
     enterTable: "Ingresar tabla:",
@@ -178,7 +184,8 @@ window.translationDict = {
     answerLabel: "Respuesta",
     trueLabel: "Verdadero",
     falseLabel: "Falso",
-    aiDisclaimer: "Generado por IA, solo como referencia",
+    aiDisclaimer: "T-REX proporciona verificación automatizada de reclamaciones y puede simplificar demasiado las reclamaciones complejas o sensibles. Por favor, interprete los resultados con cuidado.",
+    fileSizeText: "Tamaño máximo archivo CSV: 2MB",
     liveCheckInfo: "La verificación en vivo utiliza nuestro servicio de inferencia backend. Las traducciones se generaron automáticamente y pueden contener errores.",
     queuedMessage: "Tu solicitud está en cola, por favor espera...",
     networkError: "Error de red:",
@@ -196,7 +203,8 @@ window.translationDict = {
     downloadJSON: "Descargar JSON",
     failedToCopy: "Error al copiar el código.",
     selectModelHeader: "Seleccionar modelo",
-    selectLanguageHeader: "Seleccionar idioma"
+    selectLanguageHeader: "Seleccionar idioma",
+    researchPaperTab: "Artículo de Investigación"
   },
   pt: {
     enterTable: "Inserir Tabela:",
@@ -227,7 +235,8 @@ window.translationDict = {
     answerLabel: "Resposta",
     trueLabel: "Verdadeiro",
     falseLabel: "Falso",
-    aiDisclaimer: "Gerado por IA, apenas para referência",
+    aiDisclaimer: "T-REX fornece verificação automatizada de alegações e pode simplificar demais alegações complexas ou sensíveis. Por favor, interprete os resultados com cuidado.",
+    fileSizeText: "Tamanho máximo arquivo CSV: 2MB",
     liveCheckInfo: "A verificação ao vivo usa nosso serviço de inferência backend. As traduções foram geradas automaticamente e podem conter erros.",
     queuedMessage: "Sua solicitação está na fila, por favor aguarde...",
     networkError: "Erro de rede:",
@@ -245,7 +254,8 @@ window.translationDict = {
     downloadJSON: "Baixar JSON",
     failedToCopy: "Falha ao copiar o código.",
     selectModelHeader: "Selecionar Modelo",
-    selectLanguageHeader: "Selecionar Idioma"
+    selectLanguageHeader: "Selecionar Idioma",
+    researchPaperTab: "Artigo de Pesquisa"
   },
   zh: {
     enterTable: "输入表格：",
@@ -276,7 +286,8 @@ window.translationDict = {
     answerLabel: "答案",
     trueLabel: "真",
     falseLabel: "假",
-    aiDisclaimer: "AI生成，仅供参考",
+    aiDisclaimer: "T-REX提供自动化声明验证，可能会过度简化复杂或敏感的声明。请谨慎解释结果。",
+    fileSizeText: "CSV文件最大大小：2MB",
     liveCheckInfo: "实时检查使用我们的后端推理服务。翻译是自动生成的，可能包含错误。",
     queuedMessage: "您的请求已排队，请稍候...",
     networkError: "网络错误：",
@@ -294,7 +305,8 @@ window.translationDict = {
     downloadJSON: "下载 JSON",
     failedToCopy: "复制代码失败。",
     selectModelHeader: "选择模型",
-    selectLanguageHeader: "选择语言"
+    selectLanguageHeader: "选择语言",
+    researchPaperTab: "研究论文"
   },
   ar: {
     enterTable: "أدخل الجدول:",
@@ -325,7 +337,8 @@ window.translationDict = {
     answerLabel: "الإجابة",
     trueLabel: "صحيح",
     falseLabel: "خطأ",
-    aiDisclaimer: "تم إنشاؤه بواسطة الذكاء الاصطناعي، للاستخدام المرجعي فقط",
+    aiDisclaimer: "يوفر T-REX التحقق التلقائي من الادعاءات وقد يفرط في تبسيط الادعاءات المعقدة أو الحساسة. يرجى تفسير النتائج بحذر.",
+    fileSizeText: "الحد الأقصى لحجم ملف CSV: 2 ميجابايت",
     liveCheckInfo: "يستخدم الفحص المباشر خدمة الاستدلال الخلفية لدينا. تم إنشاء الترجمات تلقائيًا وقد تحتوي على أخطاء.",
     queuedMessage: "تم وضع طلبك في قائمة الانتظار، يرجى الانتظار...",
     networkError: "خطأ في الشبكة:",
@@ -343,7 +356,8 @@ window.translationDict = {
     downloadJSON: "تنزيل JSON",
     failedToCopy: "فشل في نسخ الكود.",
     selectModelHeader: "حدد النموذج",
-    selectLanguageHeader: "حدد اللغة"
+    selectLanguageHeader: "حدد اللغة",
+    researchPaperTab: "البحث العلمي"
   },
   ru: {
     enterTable: "Введите таблицу:",
@@ -374,7 +388,8 @@ window.translationDict = {
     answerLabel: "Ответ",
     trueLabel: "Истина",
     falseLabel: "Ложь",
-    aiDisclaimer: "Сгенерировано ИИ, только для справки",
+    aiDisclaimer: "T-REX предоставляет автоматизированную проверку утверждений и может чрезмерно упрощать сложные или деликатные утверждения. Пожалуйста, интерпретируйте результаты с осторожностью.",
+    fileSizeText: "Максимальный размер CSV-файла: 2МБ",
     liveCheckInfo: "Проверка в реальном времени использует нашу сервисную инфраструктуру. Переводы были созданы автоматически и могут содержать ошибки.",
     queuedMessage: "Ваш запрос поставлен в очередь, пожалуйста, подождите...",
     networkError: "Ошибка сети:",
@@ -392,6 +407,7 @@ window.translationDict = {
     downloadJSON: "Скачать JSON",
     failedToCopy: "Не удалось скопировать код.",
     selectModelHeader: "Выберите модель",
-    selectLanguageHeader: "Выберите язык"
+    selectLanguageHeader: "Выберите язык",
+    researchPaperTab: "Научная статья"
   }
 };

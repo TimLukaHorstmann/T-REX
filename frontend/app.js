@@ -1558,7 +1558,7 @@ function setupTabSwitching() {
       } else if (tabIdentifier === "live") {
         document.getElementById("liveCheckSection").style.display = "block";
       } else if (tabIdentifier === "report") {
-        // ... (report section logic) ...
+        document.getElementById("reportSection").style.display = "block";
       }
     }
   }
