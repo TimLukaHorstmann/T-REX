@@ -1584,6 +1584,11 @@ function setupTabSwitching() {
   // Add click handlers to tabs (both main and hamburger)
   document.querySelectorAll(".mode-tab").forEach(tab => {
     tab.addEventListener("click", (event) => {
+      // Don't prevent default for external links (like "How to Use")
+      if (tab.getAttribute('target') === '_blank' || tab.href.startsWith('http')) {
+        return; // Let the browser handle the link normally
+      }
+      
       // Prevent default anchor link behavior if it's just for tab switching
       event.preventDefault(); 
       const mode = tab.dataset.mode;

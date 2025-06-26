@@ -374,40 +374,50 @@
   .hamburger-menu {
     display: none;
     background: var(--color-controls-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid #ccc;
     border-radius: 8px;
     position: absolute;
     top: 100%;
     right: 0;
-    width: 250px;
+    width: 280px;
     padding: 1rem;
-    z-index: 1000;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 999999;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   }
   .hamburger-menu .mode-tabs {
     flex-direction: column;
     margin-bottom: 1rem;
+    border-radius: 0;
+    overflow: visible;
   }
   .hamburger-menu .mode-tab {
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
     margin-bottom: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1.2rem;
     color: var(--color-text);
     text-decoration: none;
-    background: var(--color-surface);
-    transition: background-color 0.2s ease;
+    background: #e0e0e0;
+    transition: all 0.3s ease;
+    font-size: var(--font-size-small);
+    font-family: Arial;
+    font-weight: 400;
+    text-align: center;
+    display: block;
   }
   .hamburger-menu .mode-tab:hover {
-    background: var(--color-controls-bg);
+    background: #d0d0d0;
+    transform: translateY(-1px);
   }
   .hamburger-menu .mode-tab.active {
-    background: var(--color-primary);
-    color: white;
+    background: var(--color-btn-primary-bg);
+    color: var(--color-btn-primary-text);
+    border-color: var(--color-btn-primary-bg);
   }
   .hamburger-menu .mode-tab.how-to-use-mobile {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
   }
   .hamburger-menu .mode-tab.how-to-use-mobile i {
@@ -429,6 +439,26 @@
   }
   .hamburger-menu .dark-mode-switch input:checked + label:after {
     left: 47px;
+  }
+
+  /* Dark mode styles for hamburger menu */
+  body.dark-mode .hamburger-menu {
+    background: var(--color-dark-controls-bg);
+    border-color: var(--color-dark-border);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+  body.dark-mode .hamburger-menu .mode-tab {
+    background: var(--color-dark-input-bg);
+    color: var(--color-dark-text);
+    border-color: var(--color-dark-border);
+  }
+  body.dark-mode .hamburger-menu .mode-tab:hover {
+    background: #3a3a3a;
+  }
+  body.dark-mode .hamburger-menu .mode-tab.active {
+    background: var(--color-btn-primary-bg);
+    color: var(--color-btn-primary-text);
+    border-color: var(--color-btn-primary-bg);
   }
   
   /* ======================================================
@@ -2129,12 +2159,13 @@ body.dark-mode .json-btn:hover {
    ====================================================== */
 .header-right {
   position: absolute;
-right: 10px;
-top: 50%;
-transform: translateY(-50%);
-display: flex;
-align-items: center;
-gap: 1rem;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 999998;
 }
 
 .how-to-use-btn {
@@ -2174,6 +2205,8 @@ display: none;
   padding: 0.5rem;
   border-radius: 4px;
   transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 999999;
 }
 
 .hamburger:hover {
@@ -2228,15 +2261,18 @@ body.dark-mode .report-header {
   background: var(--color-dark-controls-bg);
 }
 
-/* Force hamburger visibility on mobile screens */
-@media screen and (max-width: 768px) {
-  .header-right .hamburger {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-  
-  .header-right .how-to-use-btn {
-    display: none !important;
-  }
+body.dark-mode .report-header h2 {
+  color: var(--color-dark-text);
+}
+
+body.dark-mode .report-header p {
+  color: var(--color-dark-text);
+}
+
+/* Show hamburger menu when open class is toggled on header-right */
+.header-right.open .hamburger-menu {
+  display: block !important;
+  position: fixed !important;
+  top: 80px !important;
+  right: 10px !important;
 }

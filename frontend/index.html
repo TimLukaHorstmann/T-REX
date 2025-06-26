@@ -43,19 +43,19 @@
           <span class="how-to-use-text">How to Use</span>
         </a>
         <button class="hamburger" aria-label="Menu">☰</button>
+        <nav class="hamburger-menu" style="display: none;">
+          <div class="mode-tabs">
+            <a href="#live" class="mode-tab" data-mode="live">Live Table Fact-Checking</a>
+            <a href="#offline" class="mode-tab" data-mode="offline">Precomputed Table Fact-Checking Results</a>
+            <a href="#report" class="mode-tab" data-mode="report">Research Paper</a>
+            <a href="https://www.youtube.com/watch?v=HHIxVCOT8X0" target="_blank" class="mode-tab how-to-use-mobile">
+              <i class="fa-solid fa-question-circle"></i>
+              How to Use
+            </a>
+          </div>
+        </nav>
       </div>
     </div>
-    <nav class="hamburger-menu" style="display: none;">
-      <div class="mode-tabs">
-        <a href="#live" class="mode-tab" data-mode="live">Live Table Fact-Checking</a>
-        <a href="#offline" class="mode-tab" data-mode="offline">Precomputed Table Fact-Checking Results</a>
-        <a href="#report" class="mode-tab" data-mode="report">Research Paper</a>
-        <a href="https://www.youtube.com/watch?v=HHIxVCOT8X0" target="_blank" class="mode-tab how-to-use-mobile">
-          <i class="fa-solid fa-question-circle"></i>
-          How to Use
-        </a>
-      </div>
-    </nav>
   </header>
   
   <main class="container">
@@ -464,10 +464,27 @@
     }
 
     // Hamburger menu toggle
-    const hamburger = document.querySelector(".hamburger");
-    const menu = document.querySelector(".hamburger-menu");
-    hamburger.addEventListener("click", () => {
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    const hamburger = document.querySelector('.hamburger');
+    const headerRight = document.querySelector('.header-right');
+
+    // Toggle open class on header-right
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      headerRight.classList.toggle('open');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!headerRight.contains(e.target)) {
+        headerRight.classList.remove('open');
+      }
+    });
+
+    // Close menu when pressing Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        headerRight.classList.remove('open');
+      }
     });
   </script>
 </body>
