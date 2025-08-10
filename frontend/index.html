@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
   <link rel="icon" href="images/favicon_io/favicon.ico" type="image/x-icon"> 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.css" />
 </head>
 <body>
   <!-- Dark Mode Toggle as a switch -->
@@ -21,8 +22,8 @@
     <div class="header-container">
       <!-- Left: IP Paris logo -->
       <a href="https://www.ip-paris.fr/" target="_blank" class="logo-link">
-        <img src="images/ipp.png" alt="IP Paris Logo" class="logo desktop-logo" loading="lazy">
-        <img src="images/ipp-circle.png" alt="IP Paris Circle Logo" class="logo mobile-logo" loading="lazy">
+  <img src="images/ipp.png" alt="IP Paris Logo" class="logo desktop-logo" loading="lazy" height="50">
+  <img src="images/ipp-circle.png" alt="IP Paris Circle Logo" class="logo mobile-logo" loading="lazy" height="40">
       </a>
   
       <!-- Center: T‑REX text and logo (centered absolutely) -->
@@ -32,7 +33,7 @@
             <h1>T‑REX</h1>
             <p><strong>T</strong>able – <strong>R</strong>efute or <strong>E</strong>ntail e<strong>X</strong>plainer</p>
           </div>
-          <img src="images/t-rex_logo.png" alt="T‑REx Logo" id="toolLogo" loading="lazy">
+          <img src="images/t-rex_logo.png" alt="T‑REx Logo" id="toolLogo" height="90" fetchpriority="high">
         </div>
       </div>
   
@@ -367,16 +368,24 @@
       <div class="report-header">
         <h2>Research Paper</h2>
         <p>T-REX: Table - Refute or Entail eXplainer</p>
+        <p class="acceptance-info">Accepted at ECML PKDD 2025 (Demo Track)</p>
         <div class="paper-links">
-          <a href="https://arxiv.org/abs/YOUR_ARXIV_ID" target="_blank" class="btn-primary">
+          <a href="https://hal.science/hal-05132379/" target="_blank" class="btn-primary">
             <i class="fa-solid fa-external-link-alt"></i>
-            View on ArXiv
+            View on HAL
           </a>
         </div>
       </div>
-      <div class="pdf-container">
+      <!-- <div class="pdf-container">
         <iframe id="pdfViewer" src="documents/paper.pdf" width="100%" height="800px"></iframe>
-      </div>
+      </div> -->
+      <iframe allowfullscreen="allowfullscreen"
+          allow="clipboard-write"
+          scrolling="no"
+          class="fp-iframe"
+          src="https://heyzine.com/flip-book/86164bed2b.html">
+      </iframe>
+      
     </section>
   </main>
 
@@ -430,7 +439,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.15.3/tingle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/string-similarity@4.0.4/umd/string-similarity.min.js"></script>
