@@ -2512,7 +2512,7 @@ function updateModelOptionsBasedOnLanguage() {
   const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble'); // Get the bubble in the button
 
   // Define models that support multiple languages
-  const multilingualModels = ["cogito", "gemma3", "qwen3:8b"];
+  const multilingualModels = ["cogito", "gemma3", "qwen3:8b", "gpt-oss:20b"];
   let firstAvailableModelValue = null;
   let currentSelectionDisabled = false;
   const currentSelectedValue = modelSelect.value;
@@ -2688,6 +2688,9 @@ function updateTranslations() {
     if (descEl) {
       let translationKey;
       switch (modelValue) {
+        case "gpt-oss:20b":
+          translationKey = "gptOss20bDesc";
+          break;
         case "phi4":
           translationKey = "phi4Desc";
           break;

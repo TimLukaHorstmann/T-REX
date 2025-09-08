@@ -89,24 +89,133 @@ async def stream_inference(prompt: str, req: GenerateRequest, OLLAMA_API_URL: st
     # Define a regex pattern to match tokens like <|...|>
     unwanted_token_pattern = re.compile(r'\s*<\|[^>]+>\|\s*')
 
+    # Track Harmony-style thinking block state for gpt-oss models
+    thinking_open = False
+
+    def emit_response(text: str):
+        # Frontend expects JSON lines with a 'response' field
+        return json.dumps({"response": text}, ensure_ascii=False)
+
     async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
         try:
             async with client.stream("POST", OLLAMA_API_URL, json=payload) as response:
                 response.raise_for_status()
-                async for chunk in response.aiter_lines():
-                    if chunk:
-                        # Clean the chunk by removing unwanted tokens
-                        cleaned_chunk = unwanted_token_pattern.sub('', chunk)
-                        if cleaned_chunk: # Only yield if something remains after cleaning
-                            yield cleaned_chunk + "\n"
-                        try:
-                            # Still parse the original chunk for control data like "done"
-                            data = json.loads(chunk)
-                            if data.get("done", False):
-                                break
-                        except json.JSONDecodeError:
-                            # If the original chunk wasn't JSON, continue (it was likely just text)
+                async for raw_line in response.aiter_lines():
+                    if not raw_line:
+                        continue
+
+                    # Try to parse JSON; Harmony/openai-responses-like events are JSON
+                    try:
+                        evt = json.loads(raw_line)
+                    except json.JSONDecodeError:
+                        # Not JSON (unlikely for Ollama); forward as-is after cleanup
+                        cleaned_text = unwanted_token_pattern.sub('', raw_line)
+                        if cleaned_text:
+                            yield emit_response(cleaned_text) + "\n"
+                        continue
+
+                    # Stop condition (Ollama)
+                    if evt.get("done", False):
+                        break
+
+                    # gpt-oss: prioritize Harmony-style keys exposed by Ollama: 'thinking' and 'response'
+                    if req.model.startswith("gpt-oss"):
+                        # Direct fields observed from Ollama: { response: "", thinking: "...", done: false }
+                        thinking_text = evt.get("thinking")
+                        response_text = evt.get("response")
+                        emitted_any = False
+                        if isinstance(thinking_text, str) and thinking_text:
+                            cleaned = unwanted_token_pattern.sub('', thinking_text)
+                            if cleaned:
+                                if not thinking_open:
+                                    yield emit_response("<think>") + "\n"
+                                    thinking_open = True
+                                yield emit_response(cleaned) + "\n"
+                                emitted_any = True
+                        if isinstance(response_text, str) and response_text:
+                            cleaned_r = unwanted_token_pattern.sub('', response_text)
+                            if cleaned_r:
+                                if thinking_open:
+                                    yield emit_response("</think>") + "\n"
+                                    thinking_open = False
+                                yield emit_response(cleaned_r) + "\n"
+                                emitted_any = True
+                        if emitted_any:
                             continue
+
+                    # Standard Ollama streaming token
+                    if "response" in evt and isinstance(evt["response"], str):
+                        text = unwanted_token_pattern.sub('', evt["response"])
+                        if text:
+                            # If we were in a thinking block for any reason, close it when normal response starts
+                            if thinking_open:
+                                yield emit_response("</think>") + "\n"
+                                thinking_open = False
+                            yield emit_response(text) + "\n"
+                        continue
+
+                    # Harmony-style handling for gpt-oss:20b (other event shapes)
+                    if req.model.startswith("gpt-oss"):
+                        # Several possible shapes; try common ones
+                        text_piece = None
+                        evt_type = evt.get("type") or evt.get("event")
+                        channel = evt.get("channel") or evt.get("role")
+
+                        # OpenAI Responses API-like
+                        if evt_type in ("response.thinking.delta", "reasoning.delta", "thinking.delta"):
+                            text_piece = (evt.get("delta") or evt.get("content") or "")
+                        elif evt_type in ("response.output_text.delta", "output_text.delta", "message.delta"):
+                            text_piece = (evt.get("delta") or evt.get("content") or "")
+                            # Close a thinking block if it was open and we switched to output
+                            if thinking_open:
+                                yield emit_response("</think>") + "\n"
+                                thinking_open = False
+                        # Channel-based
+                        elif channel in ("thinking", "reasoning"):
+                            text_piece = (evt.get("delta") or evt.get("content") or evt.get("text") or "")
+                        elif channel in ("assistant", "output"):
+                            text_piece = (evt.get("delta") or evt.get("content") or evt.get("text") or "")
+                            if thinking_open:
+                                yield emit_response("</think>") + "\n"
+                                thinking_open = False
+
+                        # Nested message formats (e.g., { message: { content: [{type, text}] } })
+                        if text_piece is None and isinstance(evt.get("message"), dict):
+                            parts = evt["message"].get("content")
+                            if isinstance(parts, list) and parts:
+                                part = parts[0]
+                                ptype = part.get("type")
+                                ptext = part.get("text") or part.get("content")
+                                if ptype in ("thinking", "reasoning"):
+                                    text_piece = ptext or ""
+                                elif ptype in ("output_text", "text"):
+                                    text_piece = ptext or ""
+                                    if thinking_open:
+                                        yield emit_response("</think>") + "\n"
+                                        thinking_open = False
+
+                        if text_piece is not None:
+                            text_piece = unwanted_token_pattern.sub('', str(text_piece))
+                            if not text_piece:
+                                continue
+                            # If this is a thinking piece, open block once
+                            if evt_type in ("response.thinking.delta", "reasoning.delta", "thinking.delta") or channel in ("thinking", "reasoning"):
+                                if not thinking_open:
+                                    yield emit_response("<think>") + "\n"
+                                    thinking_open = True
+                                yield emit_response(text_piece) + "\n"
+                            else:
+                                yield emit_response(text_piece) + "\n"
+                            continue
+
+                    # Fallback: if unknown JSON shape, try stringifying a 'response' if present-like
+                    for key in ("text", "delta", "content"):
+                        if isinstance(evt.get(key), str) and evt.get(key):
+                            yield emit_response(unwanted_token_pattern.sub('', evt[key])) + "\n"
+                            break
+                # Ensure we close any open thinking block
+                if thinking_open:
+                    yield emit_response("</think>") + "\n"
                 yield ""  # Signal end of stream
         except httpx.RequestError as e:
             raise HTTPException(status_code=500, detail=f"Ollama API error: {str(e)}")
