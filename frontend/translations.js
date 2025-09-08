@@ -41,7 +41,7 @@ window.translationDict = {
     thinkingLabel: "Thinking...", 
     thoughtDurationLabel: "Thought for {duration}s.", 
     enableThinkingLabel: "Enable deep thinking",
-    gptOss20bDesc: "OpenAI's open-source 20B model (superior performance)",
+    gptOss20bDesc: "OpenAI's open-source 20B model",
     phi4Desc: "Great for table fact-checking",
     qwen3Desc: "Multilingual generalist",
     cogitoDesc: "Strong hybrid reasoning model",
