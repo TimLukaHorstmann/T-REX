@@ -6,6 +6,9 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit-blue.svg)](https://t-rex.r2.enst.fr/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/TimLukaHorstmann/T-REX/graphs/commit-activity) 
 [![License: Custom NC](https://img.shields.io/badge/License-Non--Commercial-blue.svg)](LICENSE)
+[![Ollama](https://img.shields.io/badge/Ollama-14a06f?logo=ollama&logoColor=white)](https://ollama.com/)
+[![uv](https://img.shields.io/badge/uv-000000)](https://github.com/astral-sh/uv)
+[![arXiv](https://img.shields.io/badge/arXiv-2508.14055-b31b1b.svg)](https://arxiv.org/abs/2508.14055)
 
 
 **T-REX** (**T**able - **R**efute or **E**ntail e**X**plainer) is an interactive tool designed for intuitive, transparent, and live fact-checking of tabular data. Leveraging state-of-the-art instruction-tuned reasoning Large Language Models (LLMs), T-REX dynamically analyzes claims against tables, clearly indicating entailment or refutation, along with visual explanations highlighting relevant tble cells.
@@ -20,7 +23,7 @@
 
 ## 🖥️ Demo
 
-T-REX got accepted at [ECML-PKDD 2025 Demo Track](https://ecmlpkdd.org/2025/submissions-demo-track/).
+T-REX got accepted at [ECML-PKDD 2025](https://ecmlpkdd-storage.s3.eu-central-1.amazonaws.com/preprints/2025/demos/preprint_ecml_pkdd_2025_demos_1689.pdf).
 
 **Experience the live demo here: [https://t-rex.r2.enst.fr/](https://t-rex.r2.enst.fr/)**
 
@@ -57,8 +60,15 @@ T-REX uses the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) d
 ## 🚀 Getting Started
 
 ### Prerequisites
-1.  **Python:** Version 3.8+ recommended (we use python=3.10.16).
-2.  **Ollama:** Install Ollama from [https://ollama.com/](https://ollama.com/).
+1.  **Python:** 3.10+ recommended.
+2.  **uv:** Fast Python package manager and runner.
+    - Install with pipx or Homebrew:
+      ```bash
+      pipx install uv
+      # or
+      brew install uv
+      ```
+3.  **Ollama:** Install from [https://ollama.com/](https://ollama.com/).
     - Pull the required models:
       ```bash
       ollama pull phi4
@@ -68,6 +78,11 @@ T-REX uses the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) d
       ollama pull granite3.2-vision # For Ollama OCR
       ```
     - Ensure the Ollama service is running.
+4. **Tesseract OCR** (Optional): if you plan to use Tesseract for OCR.
+    - Install the Tesseract binary:
+      - macOS: `brew install tesseract`
+      - Ubuntu/Debian: `sudo apt-get install tesseract-ocr`
+    - Ensure it’s discoverable: `which tesseract` and `tesseract --version`
 
 
 ### Installation & Local Setup
@@ -76,42 +91,44 @@ T-REX uses the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) d
     git clone https://github.com/TimLukaHorstmann/T-REX.git
     cd T-REX
     ```
-2.  **Create and activate Conda environment:**
-    *   Ensure you have Conda installed ([Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/products/distribution)).
-    *   Create the environment from the provided file:
-        ```bash
-        conda env create -f environment.yml 
-        ```
-    *   Activate the new environment (likely named `trex-env` as defined in `environment.yml`):
-        ```bash
-        conda activate trex-env 
-        ```
+2.  **Sync dependencies (first time only):**
+    ```bash
+    uv sync
+    ```
 
-3.  **Run the Backend (Local Development):**
-    *   Ensure your Conda environment is active and the Ollama service (with required models) is running (see Prerequisites).
-    *   Navigate to the backend directory:
+3.  **Run Everything (Single Command, Dev):**
+    *   Ensure the Ollama service (with required models) is running (see Prerequisites).
+    *   From the project root, run:
         ```bash
-        cd backend/api
+        ./dev.sh
         ```
-    *   Start the FastAPI development server:
-        ```bash
-        uvicorn main:app --reload --host 0.0.0.0 --port 8000 
-        ```
-        *(This server is suitable for development. It will automatically reload when code changes.)*
+    *   Then open: `http://localhost:8000`
 
-4.  **Serve the Frontend (Local Development):**
-    *   Open a ***new terminal***.
-    *   Navigate to the frontend directory from the project root:
-        ```bash
-        cd frontend 
-        ```
-    *   Start a simple Python HTTP server:
-        ```bash
-        python3 -m http.server 8080 
-        ```
-        *(This serves the static HTML, CSS, and JS files.)*
+    Notes:
+    - The FastAPI app also serves the frontend from `frontend/`, so `/` loads the UI and `/api/*` serves backend endpoints. Dataset assets are served under `/static/data/*`.
+    - Live reload is enabled; changes under `backend/api` auto-reload the server.
 
-5.  **Access the App:** Open your browser to `http://localhost:8080`. The frontend will make requests to the backend running on port 8000.
+4.  **Alternative (Separate Servers):**
+    If you prefer running frontend and backend separately:
+    *   Backend:
+        ```bash
+        uvicorn main:app --reload --host 0.0.0.0 --port 8000 --app-dir backend/api
+        ```
+    *   Frontend (new terminal):
+        ```bash
+        cd frontend && python3 -m http.server 8080
+        ```
+    This requires a dev proxy to avoid CORS and path issues because the frontend fetches relative `/api/*` paths. The recommended approach is the single-command dev server above.
+
+### OCR Options
+- Recommended: **Ollama Granite 3.2 Vision** (pull `granite3.2-vision`). In the UI, select OCR engine “Ollama” + model `granite3.2-vision`.
+- Optional: **Tesseract OCR** (system binary required on PATH)
+  - Install the Tesseract binary:
+    - macOS: `brew install tesseract`
+    - Ubuntu/Debian: `sudo apt-get install tesseract-ocr`
+  - Ensure it’s discoverable: `which tesseract` and `tesseract --version`
+  - Advanced: If tesseract is not on PATH, set environment variable `TESSERACT_CMD` to the full path (e.g., `/opt/homebrew/bin/tesseract`).
+  - Python pieces (`pytesseract`, `pillow`) are already listed in `pyproject.toml` and installed via `uv sync`.
 
 **Note on Deployment:**
 The steps above describe a basic local development setup. For deploying T-REX to a server (like the live demo at `t-rex.r2.enst.fr`), you would typically:
@@ -224,4 +241,3 @@ Performance comparison of different models on the TabFact dataset as reported by
 | LPA-Ranking w/ Discriminator (Caption) [Chen et al., 2020](https://openreview.net/forum?id=rkeJRhNYDH) | 65.3 | 65.1 | 2020 |
 | Table-BERT-Horizontal-T+F-Template [Chen et al., 2020](https://openreview.net/forum?id=rkeJRhNYDH) | 65.1 | 66.1 | 2020 |
 | BERT classifier w/o Table [Chen et al., 2020](https://openreview.net/forum?id=rkeJRhNYDH) | 50.5 | 50.9 | 2020 |
-

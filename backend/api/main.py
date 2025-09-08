@@ -20,9 +20,14 @@ NON_ENGLISH_ALLOWED = ["gemma3", "llama3.2", "cogito"]
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
 # --- Static Files ---
+# BASE_DIR -> absolute path to backend/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Serve dataset/static artifacts from backend/data under /static/data
 data_path = os.path.join(BASE_DIR, "data")
 app.mount("/static/data", StaticFiles(directory=data_path), name="data")
+
+FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend"))
 
 # --- Rate Limiting ---
 limiter = Limiter(key_func=get_remote_address, default_limits=["20/minute"])
@@ -75,3 +80,7 @@ async def ocr(
         return JSONResponse(content={"csv_text": csv_text})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
+
+# --- Mount Frontend ---
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

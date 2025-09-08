@@ -3,11 +3,16 @@ import csv
 import json
 import re
 import httpx
+import os
+import shutil
 import pytesseract
 from PIL import Image
 
-# Set tesseract executable path
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+# Configure tesseract binary location if available
+# Priority: env TESSERACT_CMD -> PATH discovery -> leave default (let pytesseract try PATH)
+_tess_cmd = os.environ.get("TESSERACT_CMD") or shutil.which("tesseract")
+if _tess_cmd:
+    pytesseract.pytesseract.tesseract_cmd = _tess_cmd
 
 async def process_ocr(engine: str, model: str, image_bytes: bytes, OLLAMA_API_URL: str) -> str:
     """
