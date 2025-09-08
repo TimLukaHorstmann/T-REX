@@ -2387,6 +2387,9 @@ function getThinkingTagsForModel(model) {
       return { start: "<think>", end: "</think>" };
     case "cogito":
       return { start: "<think>", end: "</think>" };
+    case "qwen3:8b":
+      // Qwen models may emit <think> blocks in some prompts; support if present
+      return { start: "<think>", end: "</think>" };
     default:
       return { start: "<think>", end: "</think>" };
   }
@@ -2509,7 +2512,7 @@ function updateModelOptionsBasedOnLanguage() {
   const buttonBubble = modelSelectorBtn.querySelector('.model-param-bubble'); // Get the bubble in the button
 
   // Define models that support multiple languages
-  const multilingualModels = ["cogito", "gemma3"];
+  const multilingualModels = ["cogito", "gemma3", "qwen3:8b"];
   let firstAvailableModelValue = null;
   let currentSelectionDisabled = false;
   const currentSelectedValue = modelSelect.value;
@@ -2687,6 +2690,9 @@ function updateTranslations() {
       switch (modelValue) {
         case "phi4":
           translationKey = "phi4Desc";
+          break;
+        case "qwen3:8b":
+          translationKey = "qwen3Desc";
           break;
         case "cogito":
           translationKey = "cogitoDesc";
