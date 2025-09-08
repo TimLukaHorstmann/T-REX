@@ -16,7 +16,7 @@
 ## 🚀 Key Features
 
 - **Live Fact-Checking**: Paste or upload CSV tables or images (OCR), or select from the TabFact dataset.
-- **Multiple LLMs:** Support for multiple models including Phi‑4, Qwen3‑8B, Cogito, DeepSeek‑R1, and Gemma3.
+- **Multiple LLMs:** Support for multiple models including GPT-OSS (20B), Phi‑4 (14B), Qwen3 (8B), Cogito (8B), DeepSeek‑R1 (7B), and Gemma3 (4B).
 - **Visual Explainability:** Highlights cells identified by the model as relevant for the verification.
 - **Precomputed Results Exploration:** Explore results from various LLMs on the TabFact benchmark dataset with performance metrics and intuitive visualizations.
 - **Multilingual Support:** English, French, German, Spanish, Portuguese, Chinese, Arabic, Russian  
@@ -46,7 +46,7 @@ T-REX got accepted at [ECML-PKDD 2025](https://ecmlpkdd-storage.s3.eu-central-1.
 - **Frontend:** HTML, CSS, JavaScript, Plotly.js, Chart.js, Choices.js
 - **Backend:** Python, FastAPI, Uvicorn
 - **Inference Engine:** Ollama
-- **LLMs:** Phi‑4 (14B), Qwen3‑8B (8B), Cogito v1 Preview (8B), DeepSeek‑R1‑Distill‑Qwen‑7B (7B), and Gemma 3 (4B)
+- **LLMs:** GPT-OSS (20B), Phi‑4 (14B), Qwen3‑8B (8B), Cogito v1 Preview (8B), DeepSeek‑R1‑Distill‑Qwen‑7B (7B), and Gemma 3 (4B)
 - **OCR:** Tesseract, Granite3.2-vision (Ollama) 
 
 ## 📚 Dataset & Credits
@@ -69,8 +69,9 @@ T-REX uses the [**TabFact**](https://github.com/wenhuchen/Table-Fact-Checking) d
       brew install uv
       ```
 3.  **Ollama:** Install from [https://ollama.com/](https://ollama.com/).
-    - Pull the required models:
+    - Pull the required models (depending on which ones you would like to use):
       ```bash
+      ollama pull gpt-oss:20b
       ollama pull phi4
       ollama pull qwen3:8b
       ollama pull deepseek-r1:latest
