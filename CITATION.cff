@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: If you use T-REX in your research, please cite the ECML PKDD 2025 demo paper.
+type: conference-paper
+title: T-REX: Table -- Refute or Entail eXplainer
+authors:
+  - family-names: Horstmann
+    given-names: Tim Luka
+    affiliation: Institut Polytechnique de Paris
+  - family-names: Geisenberger
+    given-names: Baptiste
+    affiliation: Institut Polytechnique de Paris
+  - family-names: Alam
+    given-names: Mehwish
+    affiliation: Institut Polytechnique de Paris
+year: 2025
+doi: 10.1007/978-3-032-06129-4_33
+url: http://dx.doi.org/10.1007/978-3-032-06129-4_33
+publisher:
+  name: Springer
+  city: Cham
+collection-title: Lecture Notes in Computer Science
+volume: "16022"
+pages: 590-596
+conference:
+  name: Machine Learning and Knowledge Discovery in Databases. Applied Data Science Track and Demo Track, European Conference, ECML PKDD 2025
+  location: Porto, Portugal
+  date-start: 2025-09-15
+  date-end: 2025-09-19

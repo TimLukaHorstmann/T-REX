@@ -147,19 +147,16 @@ If you use **T-REX** in academic work, please cite our ECML-PKDD 2025 demo paper
 
 ```bibtex
 @inproceedings{Horstmann2025TREX,
-  author    = {Tim~Luka Horstmann and Baptiste Geisenberger
-               and Mehwish Alam},
-  title     = {{T\mbox{-}REX}: Table - Refute or Entail eXplainer},
-  booktitle = {Machine Learning and Knowledge Discovery in Databases.
-               Demo Track, European Conference, ECML~PKDD 2025, Porto,
-               Portugal, September 15–19 2025, Proceedings},
+  author    = {Tim Luka Horstmann and Baptiste Geisenberger and Mehwish Alam},
+  title     = {T-REX: Table -- Refute or Entail eXplainer},
+  booktitle = {Machine Learning and Knowledge Discovery in Databases. Applied Data Science Track and Demo Track, European Conference, ECML PKDD 2025, Porto, Portugal, September 15--19, 2025, Proceedings},
   series    = {Lecture Notes in Computer Science},
-  volume    = {**to appear**},
-  year      = {2025},
+  volume    = {16022},
+  pages     = {590--596},
   publisher = {Springer, Cham},
-  pages     = {**to appear**},
-  doi       = {**to appear**},
-  url       = {**to appear**}
+  year      = {2025},
+  doi       = {10.1007/978-3-032-06129-4_33},
+  url       = {http://dx.doi.org/10.1007/978-3-032-06129-4_33}
 }
 ```
 
